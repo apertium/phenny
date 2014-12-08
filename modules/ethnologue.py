@@ -69,9 +69,7 @@ def parse_num_speakers(s):
             if i.replace(',', '').replace('.', '').isdigit():
                 hits.append(int(i.replace(',', '').replace('.', '')))
     if hits:
-        if 'ethnic population' in s.lower():
-            return shorten_num(hits[0])
-        return shorten_num(hits[-1])
+        return shorten_num(max(hits))
     return 'No primary'
 
 def ethnologue(phenny, input):

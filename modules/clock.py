@@ -7,6 +7,7 @@ Licensed under the Eiffel Forum License 2.
 http://inamidst.com/phenny/
 """
 
+import os
 import re
 import math
 import time
@@ -15,6 +16,8 @@ import socket
 import struct
 import datetime
 import web
+from bs4 import BeautifulSoup
+from urllib.request import urlopen
 from decimal import Decimal as dec
 from tools import deprecated
 
@@ -200,6 +203,89 @@ TimeZones.update(TZ3)
 
 r_local = re.compile(r'\([a-z]+_[A-Z]+\)')
 
+def stripHtmlTags(htmlTxt):
+    if htmlTxt is None:
+        return None
+    else:
+        return ''.join(htmlTxt.findAll(text=True))
+
+def GetTime(phenny):
+    """Returns a data of timezones"""
+    data = {}
+    addr=urlopen('http://24timezones.com/current_time_zone.php').read()
+    soup=BeautifulSoup(addr)
+    table=soup.find('table')
+    getTime=False
+    errNo=False
+    phenny.reply('Updating a database..')
+    for tds in table.find_all('td'):
+        if getTime==True:
+            ctu=stripHtmlTags(tds)
+            data[ctz]=ctu
+            print(data[ctz]+' | '+ctz)
+            getTime=False
+        elif getTime==False:
+            ctz=stripHtmlTags(tds)
+            getTime=True
+    return data
+
+def write_TZBase(filename, data):
+    with open(filename, 'w', encoding="utf-16") as f:
+        for k, v in data.items():
+            f.write('{}${}\n'.format(k, v))
+
+def read_TZBase(filename):
+    data = {}
+    with open(filename, 'r', encoding="utf-16") as f:
+        for line in f.readlines():
+            if line == '\n':
+                continue
+            code, name = line.replace('\n', '').split('$')
+            data[code] = name
+    return data
+
+def Prepare(phenny):
+    name = 'tz_data.db'
+    f1 = os.path.join(os.path.expanduser('~/.phenny'), name)
+    if os.path.exists(f1):
+        try:
+            data = read_TZBase(f1)
+            return True
+        except ValueError:
+            print('time zones database read failed, refreshing it')
+            write_TZBase(f1, GetTime(phenny))
+            data = read_TZBase(f1)
+            return True
+    else:
+        print('time zones database has not found, please use .tz function for getting it')
+        return False
+
+def refresh_TZdatabase(phenny, raw=None):
+    if raw.admin or raw is None:
+        name = 'tz_data.db'
+        f1 = os.path.join(os.path.expanduser('~/.phenny'), name)
+        write_TZBase(f1, GetTime(phenny))
+        phenny.say('Time zones database has updated!')
+    else:
+        phenny.say('Only admins can execute that command!')
+refresh_TZdatabase.name='tz'
+refresh_TZdatabase.commands = ['tz']
+refresh_TZdatabase.example = '.tz'
+
+def GetTimeFromData(phenny, input):
+    if Prepare(phenny)==False:
+        return False
+    else:
+        name = 'tz_data.db'
+        f1 = os.path.join(os.path.expanduser('~/.phenny'), name)
+        data = read_TZBase(f1)
+        for (slug, title) in data.items():
+            if slug == input.group(2):
+                phenny.reply(title+' in '+slug)
+                return True
+    return False
+
+
 def f_time(phenny, input): 
     """Returns the current time."""
     tz = input.group(2) or 'GMT'
@@ -243,8 +329,9 @@ def f_time(phenny, input):
                 proc = subprocess.Popen(cmd, shell=True, stdout=PIPE)
                 phenny.reply(proc.communicate()[0])
             else: 
-                error = "Sorry, I don't know about the '%s' timezone." % tz
-                phenny.reply(error)
+                if GetTimeFromData(phenny, input)==False:
+                    error = "Sorry, I don't know about the '%s' timezone." % tz
+                    phenny.reply(error)
         else: 
             timenow = time.gmtime(time.time() + (t * 3600))
             msg = time.strftime("%a, %d %b %Y %H:%M:%S " + str(tz), timenow)

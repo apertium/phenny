@@ -212,21 +212,27 @@ def stripHtmlTags(htmlTxt):
 def GetTime(phenny):
     """Returns a data of timezones"""
     data = {}
-    addr=urlopen('http://24timezones.com/current_time_zone.php').read()
+    addr=urlopen('http://en.wikipedia.org/wiki/List_of_tz_database_time_zones').read()
     soup=BeautifulSoup(addr)
     table=soup.find('table')
     getTime=False
     errNo=False
-    phenny.reply('Updating a database..')
-    for tds in table.find_all('td'):
-        if getTime==True:
-            ctu=stripHtmlTags(tds)
-            data[ctz]=ctu
-            print(data[ctz]+' | '+ctz)
-            getTime=False
-        elif getTime==False:
-            ctz=stripHtmlTags(tds)
-            getTime=True
+    print('Updating a database..')
+    for trs in table.find_all('tr'):
+        tmr=0
+        for tds in trs.find_all('td'):
+            tmr=tmr+1
+            if tmr==3:
+                ctz=stripHtmlTags(tds)[stripHtmlTags(tds).find('/')+1:].replace('_',' ')
+            if tmr==5:
+                ctu=stripHtmlTags(tds)
+                if ctu[ctu.find(':')+1]=='0':
+                    ctu=ctu[:ctu.find(':')]
+                else:
+                    ctu=ctu[:ctu.find(':')]+'.5'
+                if ctu[0]=='−':
+                    ctu='-'+ctu[1:]
+                data[ctz]=ctu
     return data
 
 def write_TZBase(filename, data):
@@ -281,7 +287,10 @@ def GetTimeFromData(phenny, input):
         data = read_TZBase(f1)
         for (slug, title) in data.items():
             if slug == input.group(2):
-                phenny.reply(title+' in '+slug)
+                offset = float(title) * 3600
+                timenow = time.gmtime(time.time() + offset)
+                msg = time.strftime("%a, %d %b %Y %H:%M:%S " + str(input.group(2)), timenow)
+                phenny.reply(msg)
                 return True
     return False
 

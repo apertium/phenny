@@ -139,28 +139,6 @@ def read_dict(filename):
             data[code] = offset
     return data
 
-def refresh_database(phenny, raw=None):
-    if raw.admin or raw is None:
-        f = filename(phenny)
-        phenny.tz_data = scrape_wiki_zones()
-        write_dict(f, phenny.tz_data)
-        phenny.say('Timezone database successfully written')
-    else:
-        phenny.say('Only admins can execute that command!')
-refresh_database.name = 'refresh_timezone_database'
-refresh_database.commands = ['tz update']
-refresh_database.thread = True
-
-def thread_check(phenny, raw):
-    for t in threading.enumerate():
-        if t.name == refresh_database.name:
-            phenny.say('A timezone updating thread is currently running')
-            break
-    else:
-        phenny.say('No timezone updating thread running')
-thread_check.name = 'timezone_thread_check'
-thread_check.commands = ['tz status']
-
 def setup(phenny):
     f = filename(phenny)
     if os.path.exists(f):
@@ -224,6 +202,28 @@ def npl(phenny, input):
     else: phenny.say('No data received, sorry')
 npl.commands = ['npl']
 npl.priority = 'high'
+
+def refresh_database_tz(phenny, raw=None):
+    if raw.admin or raw is None:
+        f = filename(phenny)
+        phenny.tz_data = scrape_wiki_zones()
+        write_dict(f, phenny.tz_data)
+        phenny.say('Timezone database successfully written')
+    else:
+        phenny.say('Only admins can execute that command!')
+refresh_database_tz.name = 'refresh_timezone_database'
+refresh_database_tz.commands = ['tzdb update']
+refresh_database_tz.thread = True
+
+def thread_check_tz(phenny, raw):
+    for t in threading.enumerate():
+        if t.name == refresh_database_tz.name:
+            phenny.say('A timezone updating thread is currently running')
+            break
+    else:
+        phenny.say('No timezone updating thread running')
+thread_check_tz.name = 'tzst'
+thread_check_tz.commands = ['tzdb status']
 
 if __name__ == '__main__': 
     print(__doc__.strip())

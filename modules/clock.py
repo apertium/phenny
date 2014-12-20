@@ -38,40 +38,51 @@ def f_time(phenny, input):
         tz = People[input.nick]
 
     TZ = tz.upper()
+    longs=int(len(tz))
+    skip=False
     if len(tz) > 30: return
-
-    if (TZ == 'UTC') or (TZ == 'Z'): 
-        msg = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
-        phenny.reply(msg)
-    elif r_local.match(tz): # thanks to Mark Shoulsdon (clsn)
-        locale.setlocale(locale.LC_TIME, (tz[1:-1], 'UTF-8'))
-        msg = time.strftime("%A, %d %B %Y %H:%M:%SZ", time.gmtime())
-        phenny.reply(msg)
-    elif TZ in phenny.tz_data: 
-        offset = phenny.tz_data[TZ] * 3600
-        timenow = time.gmtime(time.time() + offset)
-        msg = time.strftime("%a, %d %b %Y %H:%M:%S " + str(TZ), timenow)
-        phenny.reply(msg)
-    elif tz and tz[0] in ('+', '-') and 4 <= len(tz) <= 6: 
-        timenow = time.gmtime(time.time() + (int(tz[:3]) * 3600))
-        msg = time.strftime("%a, %d %b %Y %H:%M:%S " + str(tz), timenow)
-        phenny.reply(msg)
-    else: 
-        try: t = float(tz)
-        except ValueError: 
-            import os, re, subprocess
-            r_tz = re.compile(r'^[A-Za-z]+(?:/[A-Za-z_]+)*$')
-            if r_tz.match(tz) and os.path.isfile('/usr/share/zoneinfo/' + tz): 
-                cmd, PIPE = 'TZ=%s date' % tz, subprocess.PIPE
-                proc = subprocess.Popen(cmd, shell=True, stdout=PIPE)
-                phenny.reply(proc.communicate()[0])
-            else: 
-                error = "Sorry, I don't know about the '%s' timezone." % tz
-                phenny.reply(error)
-        else: 
-            timenow = time.gmtime(time.time() + (t * 3600))
+    for (slug, title) in phenny.tz_data.items():
+        if slug[:longs]==TZ:
+            offset = phenny.tz_data[slug] * 3600
+            timenow = time.gmtime(time.time() + offset)
+            msg = time.strftime("%a, %d %b %Y %H:%M:%S " + str(slug), timenow)
+            phenny.reply(msg)
+            skip=True
+            break
+    if skip ==False:
+        if (TZ == 'UTC') or (TZ == 'Z'): 
+            msg = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+            phenny.reply(msg)
+        elif r_local.match(tz): # thanks to Mark Shoulsdon (clsn)
+            locale.setlocale(locale.LC_TIME, (tz[1:-1], 'UTF-8'))
+            msg = time.strftime("%A, %d %B %Y %H:%M:%SZ", time.gmtime())
+            phenny.reply(msg)
+        elif TZ in phenny.tz_data: 
+            if skip==False:
+                offset = phenny.tz_data[TZ] * 3600
+                timenow = time.gmtime(time.time() + offset)
+                msg = time.strftime("%a, %d %b %Y %H:%M:%S " + str(TZ), timenow)
+                phenny.reply(msg)
+        elif tz and tz[0] in ('+', '-') and 4 <= len(tz) <= 6: 
+            timenow = time.gmtime(time.time() + (int(tz[:3]) * 3600))
             msg = time.strftime("%a, %d %b %Y %H:%M:%S " + str(tz), timenow)
             phenny.reply(msg)
+        else: 
+            try: t = float(tz)
+            except ValueError: 
+                import os, re, subprocess
+                r_tz = re.compile(r'^[A-Za-z]+(?:/[A-Za-z_]+)*$')
+                if r_tz.match(tz) and os.path.isfile('/usr/share/zoneinfo/' + tz): 
+                    cmd, PIPE = 'TZ=%s date' % tz, subprocess.PIPE
+                    proc = subprocess.Popen(cmd, shell=True, stdout=PIPE)
+                    phenny.reply(proc.communicate()[0])
+                else: 
+                    error = "Sorry, I don't know about the '%s' timezone." % tz
+                    phenny.reply(error)
+            else: 
+                timenow = time.gmtime(time.time() + (t * 3600))
+                msg = time.strftime("%a, %d %b %Y %H:%M:%S " + str(tz), timenow)
+                phenny.reply(msg)
 f_time.name = 'time'
 f_time.commands = ['time']
 f_time.example = '.time UTC'

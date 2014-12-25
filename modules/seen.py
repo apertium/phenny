@@ -37,8 +37,7 @@ def f_seen(phenny, input):
         phenny.reply(".seen <nick> - Reports when <nick> was last seen.")
         return
     
-    if not f_seen.conn:
-        f_seen.conn = sqlite3.connect(phenny.seen_db)
+    f_seen.conn = sqlite3.connect(phenny.seen_db)
 
     cNick = ""
     c = f_seen.conn.cursor()

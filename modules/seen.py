@@ -10,9 +10,24 @@ import time, os, shelve, datetime
 import sqlite3
 from tools import deprecated
 
+def setup(self):
+    fn = self.nick + '-' + self.config.host + '.logger.db'
+    self.seen_db = os.path.join(os.path.expanduser('~/.phenny'), fn)
+    self.seen_conn = sqlite3.connect(self.seen_db)
+
+    c = self.seen_conn.cursor()
+    c.execute('''create table if not exists lines_by_nick (
+        channel     varchar(255),
+        nick        varchar(255),
+        lines       unsigned big int not null default 0,
+        characters  unsigned big int not null default 0,
+        last_time   timestamp default CURRENT_TIMESTAMP,
+        quote       text,
+        unique (channel, nick) on conflict replace
+    );''')
+
 def f_seen(phenny, input):
     """.seen <nick> - Reports when <nick> was last seen."""
-
     try:
         nick = str(input.group(2)).lower()
     except UnboundLocalError:
@@ -21,14 +36,12 @@ def f_seen(phenny, input):
     if nick == "none":
         phenny.reply(".seen <nick> - Reports when <nick> was last seen.")
         return
-
-    fn = phenny.nick + '-' + phenny.config.host + '.logger.db'
-    seen_db = os.path.join(os.path.expanduser('~/.phenny'), fn)
-    seen_conn = sqlite3.connect(seen_db)
     
+    if not seen.conn:
+        f_seen.conn = sqlite3.connect(phenny.seen_db)
 
     cNick = ""
-    c = seen_conn.cursor()
+    c = f_seen.conn.cursor()
     c.execute("SELECT * FROM lines_by_nick WHERE nick = ?", (nick,))
     try:
         cLastTime = str(c.fetchone()[5])
@@ -58,6 +71,7 @@ def f_seen(phenny, input):
 f_seen.name = 'seen'
 f_seen.example = '.seen firespeaker'
 f_seen.rule = (['seen'], r'(\S+)')
+f_seen.conn = None
 
 @deprecated 
 def f_note(self, origin, match, args):

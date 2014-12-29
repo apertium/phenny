@@ -27,7 +27,7 @@ def f_seen(phenny, input):
     cNick = ""
     cChannel = ""
     c = logger_conn.cursor()
-    c.execute("select * from lines_by_nick where nick = ?", (nick,))
+    c.execute("select * from lines_by_nick where nick = ? order by datetime(last_time) desc limit 1", (nick,))
     cl = c.fetchone()
     try:
         cNick = cl[1]

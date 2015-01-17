@@ -81,6 +81,11 @@ def create_default_config(fn):
     # mailing_lists = {
     #     'friendly-name': ('list-address@example.com', '#channel-to-broadcast-to')
     # }
+    
+    # Amount of time between two pesters (in minutes). Default set to 60 minutes (1 hr)
+    minutes_to_pester = 60
+    # Time between dismissal and re-pester (in minutes). Default set to 300 minutes (5 hrs)
+    pester_after_dismiss = 300
 
     # EOF
     """), file=f)

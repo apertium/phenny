@@ -21,6 +21,14 @@ def f_seen(phenny, input):
     if nick == "none":
         phenny.reply(".seen <nick> - Reports when <nick> was last seen.")
         return
+    
+    if nick == input.nick.lower():
+        phenny.reply("Go look in a mirror.")
+        return
+    
+    if nick == phenny.config.nick.lower():
+        phenny.reply("Be bop boop, I've always been here.")
+        return
 
     logger_conn = sqlite3.connect(phenny.logger_db, detect_types=sqlite3.PARSE_DECLTYPES)
     

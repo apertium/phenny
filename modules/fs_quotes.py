@@ -100,13 +100,13 @@ def randquote(phenny, input):
         ('User-agent', web.Grab().version),
         ('Referer', "http://quotes.firespeaker.org/"),
     ]
-
+    maxlen = 20000
 
     try:
         if topic == "" or topic==None:
-            req = opener.open("http://quotes.firespeaker.org/random.php")
+            req = opener.open("http://quotes.firespeaker.org/random.php?maxlen=%s" % (maxlen))
         else:
-            req = opener.open("http://quotes.firespeaker.org/random.php&topic=%s" % (web.quote(topic)))
+            req = opener.open("http://quotes.firespeaker.org/random.php?maxlen=%s&topic=%s" % (maxlen,web.quote(topic)))
         data = req.read().decode('utf-8')
         data = json.loads(data)
     except (HTTPError, IOError, ValueError):

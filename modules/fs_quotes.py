@@ -56,6 +56,24 @@ topics = {"particles": "\"particle\" stands for \"defeat\" -spectie",
 	"zfe": "http://quotes.firespeaker.org/?who=zfe"
 	}
 
+def breaklong(phrases, joinstr = " "):
+    message = []
+    count = 0
+    for phrase in phrases:
+        # IRC max is 512, but freenode splits around 380ish, make 300 to have plenty of wiggle room
+        if count + len(joinstr) + len(phrase) > 300:
+            message.append("\n" + phrase)
+            count = len(phrase)
+        else:
+            if message:
+                count = len(phrase)
+            else:
+                count += len(joinstr) + len(phrase)
+            message.append(phrase)
+    return joinstr.join(message).split('\n')
+
+buff = []
+
 def information(phenny, input):
 	""".information (<topic>) get information on a topic"""
 	global topics
@@ -75,7 +93,7 @@ information.priority = 'low'
 
 def randquote(phenny, input):
     """.randquote (<topic>) - Get a random short quote from quotes.firespeaker.org (about topic)."""
-
+    global buff
 
     topic = input.group(2)
 
@@ -110,19 +128,35 @@ def randquote(phenny, input):
 
     if data['quote'] != None:
         quote = data['quote'].replace('</p>', '').replace('<p>', '').replace('\n', '  ').replace('<em>', '_').replace('</em>', '_').replace('&mdash;', '—')
-        if len(quote) > 256:
-            quote = quote[:256] + "....."
-        response = quote+" - "+data['short_url']
+        response = data['short_url'] + ' - ' + quote
+        buff.extend(breaklong(response))
+        res = buff.pop()
+        if buff:
+            res += ' ({0} more messages)'.format(len(buff))
     else:
         phenny.say("Sorry, no quotes returned!")
         return
 
-    phenny.say(response)
+    phenny.say(res)
+
 randquote.name = 'randquote'
 randquote.commands = ['randquote']
 randquote.example = '.randquote (linguistics)'
 randquote.priority = 'low'
 
+def more(phenny, input):
+    global buff
+    if buff:
+        res = buff.pop()
+        if buff:
+            res += ' ({0} more messages)'.format(len(buff))
+        phenny.say(res)
+        return
+
+more.name = 'more'
+more.commands = ['more']
+more.example = '.more'
+more.priority = 'low'
 #urbandict.rule = (['urb'], r'(.*)')
 
 if __name__ == '__main__':

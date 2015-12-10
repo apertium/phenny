@@ -110,6 +110,8 @@ def randquote(phenny, input):
 
     if data['quote'] != None:
         quote = data['quote'].replace('</p>', '').replace('<p>', '').replace('\n', '  ').replace('<em>', '_').replace('</em>', '_').replace('&mdash;', '—')
+        if len(quote) > 256:
+            quote = quote[:256] + "....."
         response = quote+" - "+data['short_url']
     else:
         phenny.say("Sorry, no quotes returned!")

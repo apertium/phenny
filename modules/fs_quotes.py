@@ -92,9 +92,9 @@ information.priority = 'low'
 
 
 def randquote(phenny, input):
-    """.randquote (<topic>) - Get a random short quote from quotes.firespeaker.org (about topic)."""
+    """.randquote (<topic>) - Get a random quote from quotes.firespeaker.org (about topic)."""
     global buff
-
+    buff = []
     topic = input.group(2)
 
     # create opener
@@ -104,13 +104,12 @@ def randquote(phenny, input):
         ('Referer', "http://quotes.firespeaker.org/"),
     ]
 
-    maxlen = 200
 
     try:
         if topic == "" or topic==None:
-            req = opener.open("http://quotes.firespeaker.org/random.php?len=%s" % maxlen)
+            req = opener.open("http://quotes.firespeaker.org/random.php")
         else:
-            req = opener.open("http://quotes.firespeaker.org/random.php?len=%s&topic=%s" % (maxlen,web.quote(topic)))
+            req = opener.open("http://quotes.firespeaker.org/random.php&topic=%s" % (web.quote(topic)))
         data = req.read().decode('utf-8')
         data = json.loads(data)
     except (HTTPError, IOError, ValueError):
@@ -129,7 +128,11 @@ def randquote(phenny, input):
     if data['quote'] != None:
         quote = data['quote'].replace('</p>', '').replace('<p>', '').replace('\n', '  ').replace('<em>', '_').replace('</em>', '_').replace('&mdash;', '—')
         response = data['short_url'] + ' - ' + quote
-        buff.extend(breaklong(response))
+        broke = breaklong(response)
+        if isinstance(broke, list):
+            buff.extend(broke)
+        else:
+            buff.append(broke)
         res = buff.pop()
         if buff:
             res += ' ({0} more messages)'.format(len(buff))

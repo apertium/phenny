@@ -56,21 +56,18 @@ topics = {"particles": "\"particle\" stands for \"defeat\" -spectie",
 	"zfe": "http://quotes.firespeaker.org/?who=zfe"
 	}
 
-def breaklong(phrases, joinstr = " "):
-    message = []
-    count = 0
-    for phrase in phrases:
-        # IRC max is 512, but freenode splits around 380ish, make 300 to have plenty of wiggle room
-        if count + len(joinstr) + len(phrase) > 300:
-            message.append("\n" + phrase)
-            count = len(phrase)
-        else:
-            if message:
-                count = len(phrase)
-            else:
-                count += len(joinstr) + len(phrase)
-            message.append(phrase)
-    return joinstr.join(message).split('\n')
+def breaklong(phr):
+    line = phr
+    li = []
+    maxchars = 300
+    while line != '':
+        extra = ""
+        if len(line) > maxchars:
+            extra = line[maxchars:]
+            line = line[:maxchars]
+        li.append(line)
+        line = extra
+    return li
 
 buff = []
 

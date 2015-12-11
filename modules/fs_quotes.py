@@ -130,7 +130,7 @@ def randquote(phenny, input):
             buff.extend(broke)
         else:
             buff.append(broke)
-        res = buff.pop()
+        res = buff.pop(0)
         if buff:
             res += ' ({0} more messages)'.format(len(buff))
     else:
@@ -147,7 +147,7 @@ randquote.priority = 'low'
 def more(phenny, input):
     global buff
     if buff:
-        res = buff.pop()
+        res = buff.pop(0)
         if buff:
             res += ' ({0} more messages)'.format(len(buff))
         phenny.say(res)

@@ -56,6 +56,21 @@ topics = {"particles": "\"particle\" stands for \"defeat\" -spectie",
 	"zfe": "http://quotes.firespeaker.org/?who=zfe"
 	}
 
+def breaklong(phr):
+    line = phr
+    li = []
+    maxchars = 300
+    while line != '':
+        extra = ""
+        if len(line) > maxchars:
+            extra = line[maxchars:]
+            line = line[:maxchars]
+        li.append(line)
+        line = extra
+    return li
+
+buff = []
+
 def information(phenny, input):
 	""".information (<topic>) get information on a topic"""
 	global topics
@@ -74,9 +89,9 @@ information.priority = 'low'
 
 
 def randquote(phenny, input):
-    """.randquote (<topic>) - Get a random short quote from quotes.firespeaker.org (about topic)."""
-
-
+    """.randquote (<topic>) - Get a random quote from quotes.firespeaker.org (about topic)."""
+    global buff
+    buff = []
     topic = input.group(2)
 
     # create opener
@@ -86,13 +101,11 @@ def randquote(phenny, input):
         ('Referer', "http://quotes.firespeaker.org/"),
     ]
 
-    maxlen = 200
-
     try:
         if topic == "" or topic==None:
-            req = opener.open("http://quotes.firespeaker.org/random.php?len=%s" % maxlen)
+            req = opener.open("http://quotes.firespeaker.org/random.php")
         else:
-            req = opener.open("http://quotes.firespeaker.org/random.php?len=%s&topic=%s" % (maxlen,web.quote(topic)))
+            req = opener.open("http://quotes.firespeaker.org/random.php?topic=%s" % (web.quote(topic)))
         data = req.read().decode('utf-8')
         data = json.loads(data)
     except (HTTPError, IOError, ValueError):
@@ -110,17 +123,39 @@ def randquote(phenny, input):
 
     if data['quote'] != None:
         quote = data['quote'].replace('</p>', '').replace('<p>', '').replace('\n', '  ').replace('<em>', '_').replace('</em>', '_').replace('&mdash;', '—')
-        response = quote+" - "+data['short_url']
+        response = data['short_url'] + ' - ' + quote
+        broke = breaklong(response)
+        if isinstance(broke, list):
+            buff.extend(broke)
+        else:
+            buff.append(broke)
+        res = buff.pop(0)
+        if buff:
+            res += ' ({0} more messages)'.format(len(buff))
     else:
         phenny.say("Sorry, no quotes returned!")
         return
 
-    phenny.say(response)
+    phenny.say(res)
+
 randquote.name = 'randquote'
 randquote.commands = ['randquote']
 randquote.example = '.randquote (linguistics)'
 randquote.priority = 'low'
 
+def more(phenny, input):
+    global buff
+    if buff:
+        res = buff.pop(0)
+        if buff:
+            res += ' ({0} more messages)'.format(len(buff))
+        phenny.say(res)
+        return
+
+more.name = 'more'
+more.commands = ['more']
+more.example = '.more'
+more.priority = 'low'
 #urbandict.rule = (['urb'], r'(.*)')
 
 if __name__ == '__main__':

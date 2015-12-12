@@ -17,9 +17,12 @@ import datetime
 import web
 import os
 import threading
+import csv
+import zipfile, urllib.request, shutil
 from lxml import html
 from decimal import Decimal as dec
 from tools import deprecated
+
 
 r_local = re.compile(r'\([a-z]+_[A-Z]+\)')
 
@@ -60,6 +63,7 @@ def f_time(phenny, input):
             phenny.reply(msg)
             skip=True
             break
+    
     if skip ==False:
         if (TZ == 'UTC') or (TZ == 'Z'): 
             msg = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
@@ -68,7 +72,7 @@ def f_time(phenny, input):
             locale.setlocale(locale.LC_TIME, (tz[1:-1], 'UTF-8'))
             msg = time.strftime("%A, %d %B %Y %H:%M:%SZ", time.gmtime())
             phenny.reply(msg)
-        elif TZ in phenny.tz_data: 
+        elif TZ in phenny.tz_data:
             offset = phenny.tz_data[TZ] * 3600
             timenow = time.gmtime(time.time() + offset)
             msg = time.strftime("%a, %d %b %Y %H:%M:%S " + str(TZ), timenow)
@@ -87,7 +91,7 @@ def f_time(phenny, input):
                     proc = subprocess.Popen(cmd, shell=True, stdout=PIPE)
                     phenny.reply(proc.communicate()[0])
                 else: 
-                    error = "Sorry, I don't know about the '%s' timezone." % tz
+                    error = "Sorry, I don't know about the '%s' timezone. Suggest the city on http://www.citytimezones.info" % tz
                     phenny.reply(error)
             else: 
                 timenow = time.gmtime(time.time() + (t * 3600))
@@ -114,6 +118,43 @@ def scrape_wiki_zones():
                 offset = 0
             offset = int(offset)
         data[code] = offset
+
+    file_url = "http://www.citytimezones.info/database/cities_csv.zip"
+    file_name = "cities_csv.zip"
+
+    with urllib.request.urlopen(file_url) as response, open(file_name, 'wb') as out_file:
+        shutil.copyfileobj(response, out_file)
+        with zipfile.ZipFile(file_name) as zf:
+            a = zf.extractall()
+            print(zf)
+            
+    with open("cities.txt", "rt", encoding="UTF8") as csvfile:
+        csvreader = csv.reader(csvfile)
+        for row in csvreader:
+            tmr = 0
+            for elem in row:
+                tmr=tmr+1
+                if tmr==1:
+                    ctz=elem
+                elif tmr==2:
+                    if re.match("\(GMT\)", elem):
+                        ctu="+00:00"
+                    else:
+                        r = re.compile("\(GMT([+-]*\d*:\d*)\)")
+                        m = r.match(elem)
+                        if m.group(1) != None:
+                            ctu = m.group(1)
+                        else:
+                            return
+                    if ctu[ctu.find(':')+1]=='0':
+                        ctu=ctu[:ctu.find(':')]
+                    else:
+                        ctu=ctu[:ctu.find(':')]+'.5'
+                    if ctu[0]=='−':
+                        ctu='-'+ctu[1:]
+                    data[ctz.upper()]=float(ctu)
+                else:
+                    break
     url = 'http://en.wikipedia.org/wiki/List_of_tz_database_time_zones'
     resp = web.get(url)
     h = html.document_fromstring(resp)
@@ -135,6 +176,7 @@ def scrape_wiki_zones():
                 if ctu[0]=='−':
                     ctu='-'+ctu[1:]
                 data[ctz.upper()]=float(ctu)
+                                    
     return data
 
 def filename(phenny):
@@ -184,7 +226,8 @@ thread_check_tz.commands = ['tzdb status']
 
 def setup(phenny):
     f = filename(phenny)
-    if os.path.exists(f):
+    # Recreate the file if it has been modified less than 31 days ago
+    if os.path.exists(f) and (time.time() - os.path.getmtime(f))/(60*60*24) < 31:
         try:
             phenny.tz_data = read_dict(f)
         except ValueError:
@@ -247,7 +290,7 @@ npl.commands = ['npl']
 npl.priority = 'high'
 
 def time_zone(phenny, input):
-    """Usage: .tz <time><from timezone> in <destination> - Convert time to destination zone."""
+    """Usage: .tz <time><from timezone> in <destination> - Convert time to destination zone. Example: (.tz 355EST in CET) or (.tz 355EST in London)."""
     
     format_regex = re.compile("(\d*)([a-zA-Z]*)\sin\s([a-zA-z]*)")
     input_txt = input.group(2)
@@ -267,7 +310,7 @@ def time_zone(phenny, input):
         time_hours = int(int(regex_match.groups()[0])/100)
         time_mins = int(regex_match.groups()[0])%100
         if (time_hours >= 24) or (time_hours < 0) or (time_mins >= 60) or (time_mins < 0):
-            phenny.reply("Please enter a vald time :P")
+            phenny.reply("Please enter a valid time :P")
             return
         time_diff_hours = int(to_tz_match-from_tz_match)
         time_diff_minutes = int(((to_tz_match-from_tz_match)-time_diff_hours)*60)

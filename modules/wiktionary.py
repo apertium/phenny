@@ -136,11 +136,8 @@ def format(word, definitions, number=2):
             result += ', '.join(n)
     return result.strip(' .,')
 
-def w(phenny, input): 
-    """Look up a word on Wiktionary."""
-    if not input.group(2):
-        return phenny.reply("Nothing to define.")
-    word = input.group(2)
+
+def wikitionary_lookup(phenny, word, to_user=None):
     etymology, definitions = wiktionary(phenny, word)
 
     if definitions:
@@ -154,7 +151,10 @@ def w(phenny, input):
 
         if len(result) > 300: 
             result = result[:295] + '[...]'
-        phenny.say(result)
+        if to_user:
+            phenny.say(to_user+", "+result)
+        else:
+            phenny.say(result)
     else:
         apiResponse = json.loads(str(web.get(wikisearchapi.format(word))))
         if len(apiResponse['query']['search']):
@@ -163,8 +163,48 @@ def w(phenny, input):
         else:
             phenny.say("Couldn't find any definitions for %s." % word)
 
-w.commands = ['w']
+
+def w(phenny, input): 
+    """Look up a word on Wiktionary."""
+    if not input.group(2):
+        return phenny.reply("Nothing to define.")
+    word = input.group(2)
+
+    if "->" in word: return
+    if "→" in word: return
+
+    match_point_cmd = r'point\s(\S*)\s(.*)'
+    matched_point = re.compile(match_point_cmd).match(word)
+    if matched_point:
+        to_nick = matched_point.groups()[0]
+        word2 = matched_point.groups()[1]
+        
+        wikitionary_lookup(phenny, word2, to_user=to_nick)
+        return
+
+
+    wikitionary_lookup(phenny, word)
+
+w.rule = r'\.(w)\s(.*)'
 w.example = '.w bailiwick'
+
+
+def w2 (phenny, input):
+    nick, _, __, lang, word = input.groups()
+    wikitionary_lookup(phenny, word, to_user=nick)
+
+
+w2.rule = r'(\S*)(:|,)\s\.(w)(\.[a-z]{2,3})?\s(.*)'
+w2.example = 'svineet: .w Seppuku'
+
+
+def w3(phenny, input):
+    _, lang, word, __, nick = input.groups()
+    wikitionary_lookup(phenny, word, to_user=nick)
+
+w3.rule = r'\.(w)(\.[a-z]{2,3})?\s(.*)\s(->|→)\s(\S*)'
+w3.example = '.w Seppuku -> svineet'
+
 
 def ety(phenny, input): 
     """Find the etymology of a word."""

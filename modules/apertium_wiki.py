@@ -3,6 +3,7 @@
 apertium_wiki.py - Phenny Wikipedia Module
 """
 
+import re
 import web, json
 from lxml import etree
 import lxml.html
@@ -10,6 +11,7 @@ import lxml.html.clean
 
 wikiuri = 'http://wiki.apertium.org/wiki/%s'
 wikisearchuri = 'http://wiki.apertium.org/api.php?action=query&list=search&srlimit=1&format=json&srsearch=%s&srwhat=%s'
+
 
 def format_term(term):
    term = web.quote(term)
@@ -29,14 +31,7 @@ def format_subsection(section):
    section = section.replace('%', '.')
    return section
 
-def awik(phenny, input):
-   """Search for something on Apertium wiki."""
-   origterm = input.groups()[1]
-
-   if not origterm: 
-      return phenny.say('Perhaps you meant ".wik Zen"?')
-   #origterm = origterm.encode('utf-8')
-
+def apertium_wiki(phenny, origterm, to_nick=None):
    term = format_term(origterm)
    
    try:
@@ -81,8 +76,53 @@ def awik(phenny, input):
       words.pop()
       sentence = ' '.join(words) + ' [...]'
 
-   phenny.say(sentence + ' - ' + wikiuri % (format_term_display(term)))
+   if to_nick:
+      phenny.say(to_nick + ', ' + sentence + ' - ' + wikiuri % (format_term_display(term)))      
+   else:
+      phenny.say(sentence + ' - ' + wikiuri % (format_term_display(term)))
 
-awik.commands = ['awik']
-awik.example = '.awik Begiak'
+
+def awik(phenny, input):
+   """Search for something on Apertium wiki or 
+   point another user to a page on Apertium wiki"""
+   origterm = input.groups()[1]
+
+   if "->" in origterm: return
+   if "→" in origterm: return
+
+   if not origterm: 
+      return phenny.say('Perhaps you meant ".wik Zen"?')
+   #origterm = origterm.encode('utf-8')
+
+   match_point_cmd = r'point\s(\S*)\s(.*)'
+   matched_point = re.compile(match_point_cmd).match(origterm)
+   to_nick = None
+   if matched_point:
+       to_nick = matched_point.groups()[0]
+       origterm = matched_point.groups()[1]
+
+   apertium_wiki(phenny, origterm, to_nick=to_nick)
+
+
+awik.rule = r'\.(awik)\s(.*)'
+awik.example = '.awik Begiak or .awik point svineet Begiak'
 awik.priority = 'high'
+
+
+def awik2(phenny, input):
+   nick, _, __, lang, origterm = input.groups()
+   apertium_wiki(phenny, origterm, nick)
+
+
+awik2.rule = r'(\S*)(:|,)\s\.(awik)(\.[a-z]{2,3})?\s(.*)'
+awik2.example = 'svineet: .awik Begiak'
+awik2.priority = 'high'
+
+
+def awik3(phenny, input):
+   _, lang, origterm, __, nick = input.groups()
+   apertium_wiki(phenny, origterm, nick)
+
+
+awik3.rule = r'\.(awik)(\.[a-z]{2,3})?\s(.*)\s(->|→)\s(\S*)'  
+awik3.example = '.awik Linguistics -> svineet'

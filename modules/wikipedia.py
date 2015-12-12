@@ -20,6 +20,7 @@ wikisearch = 'https://%s.wikipedia.org/wiki/Special:Search?' \
 
 langs = ['ar', 'bg', 'ca', 'cs', 'da', 'de', 'en', 'es', 'eo', 'eu', 'fa', 'fr', 'ko', 'hi', 'hr', 'id', 'it', 'he', 'lt', 'hu', 'ms', 'nl', 'ja', 'no', 'pl', 'pt', 'kk', 'ro', 'ru', 'sk', 'sl', 'sr', 'fi', 'sv', 'tr', 'uk', 'vi', 'vo', 'war', 'zh']
 
+
 def format_term(term):
     term = web.unquote(term)
     term = web.quote(term)
@@ -75,7 +76,7 @@ def parse_wiki_page(url, term, section = None):
 
     return sentence + ' - ' + url
 
-def wikipedia(phenny, origterm, lang):
+def wikipedia(phenny, origterm, lang, to_user = None):
     origterm = origterm.strip()
     lang = lang.strip()
 
@@ -100,23 +101,67 @@ def wikipedia(phenny, origterm, lang):
     if result is not None: 
         #Disregarding [0], the snippet
         url = result.split("|")[-1]
-        phenny.say(parse_wiki_page(url, term, section))
-            
+        if to_user:
+            phenny.say(to_user + ', ' + parse_wiki_page(url, term, section))
+        else:
+            phenny.say(parse_wiki_page(url, term, section))
     else:
         phenny.say('Can\'t find anything in Wikipedia for "{0}".'.format(origterm))
 
+
+def point_to(phenny, origterm, lang, nick):
+    wikipedia(phenny, origterm, lang, to_user=nick)
+
+
 def wik(phenny, input): 
-    """Search for something on Wikipedia"""
+    """Search for something on Wikipedia or point 
+    another user to a Wikipedia page"""
+    if "->" in input.group(3): return
+    if "→" in input.group(3): return
+
     origterm = input.group(3)
     if input.group(2):
         lang = input.group(2)
     else:
         lang = "en"
 
+    match_point_cmd = r'point\s(\S*)\s(.*)'
+    matched_point = re.compile(match_point_cmd).match(origterm)
+    if matched_point:
+        to_nick = matched_point.groups()[0]
+        origterm2 = matched_point.groups()[1]
+        
+        point_to(phenny, origterm2, lang, to_nick)
+        return
+    
     wikipedia(phenny, origterm, lang)
+
 wik.rule = r'\.(wik|wiki|wikipedia)(\.[a-z]{2,3})?\s(.*)'
-#wik.commands = ['wik', 'wiki', 'wikipedia']
-wik.priority = 'high'
+wik.priority = 'low'
+wik.example = '.wik Human or .wik point svineet Human'
+
+
+def wik2(phenny, input):
+    nick, _, __, lang, origterm = input.groups()
+    if not lang: lang = "en"
+
+    point_to(phenny, origterm, lang, nick)
+
+wik2.rule = r'(\S*)(:|,)\s\.(wik|wiki|wikipedia)(\.[a-z]{2,3})?\s(.*)'
+wik2.priority = 'high'
+wik2.example = 'svineet: .wik Linguistics'
+
+
+def wik3(phenny, input):
+    _, lang, origterm, __, nick = input.groups()
+    if not lang: lang = "en"
+
+    point_to(phenny, origterm, lang, nick)
+
+wik3.rule = r'\.(wik|wiki|wikipedia)(\.[a-z]{2,3})?\s(.*)\s(->|→)\s(\S*)'
+wik3.priority = 'high'
+wik3.example = '.wik Linguistics -> svineet'
+
 
 if __name__ == '__main__': 
     print(__doc__.strip())

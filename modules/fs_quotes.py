@@ -56,19 +56,6 @@ topics = {"particles": "\"particle\" stands for \"defeat\" -spectie",
 	"zfe": "http://quotes.firespeaker.org/?who=zfe"
 	}
 
-def breaklong(phr):
-    line = phr
-    li = []
-    maxchars = 300
-    while line != '':
-        extra = ""
-        if len(line) > maxchars:
-            extra = line[maxchars:]
-            line = line[:maxchars]
-        li.append(line)
-        line = extra
-    return li
-
 buff = []
 
 def information(phenny, input):
@@ -122,21 +109,14 @@ def randquote(phenny, input):
     #response = "{0} - {1}".format(result['definition'].strip()[:256], url)
 
     if data['quote'] != None:
-        quote = data['quote'].replace('</p>', '').replace('<p>', '').replace('\n', '  ').replace('<em>', '_').replace('</em>', '_').replace('&mdash;', '—')
+        quote = data['quote'].replace('</p>', '').replace('<p>', '').replace('<em>', '_').replace('</em>', '_').replace('&mdash;', '—')
         response = data['short_url'] + ' - ' + quote
-        broke = breaklong(response)
-        if isinstance(broke, list):
-            buff.extend(broke)
-        else:
-            buff.append(broke)
-        res = buff.pop(0)
-        if buff:
-            res += ' ({0} more messages)'.format(len(buff))
     else:
         phenny.say("Sorry, no quotes returned!")
         return
 
-    phenny.say(res)
+    break_up_fn = lambda s, max_len: s.split('\n')
+    more.add_message(input.nick, phenny, response, break_up=break_up_fn)
 
 randquote.name = 'randquote'
 randquote.commands = ['randquote']

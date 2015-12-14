@@ -7,9 +7,7 @@ Author - mandarj
 def setup(self):
     self.messages = {}
 
-def break_up_fn(string):
-    # break up based on max irc length (430)
-    max_length = 430
+def break_up_fn(string, max_length):
     parts = []
     while len(string) > max_length:
         parts.append(string[:max_length-3] + '...')
@@ -18,7 +16,8 @@ def break_up_fn(string):
     return parts
 
 def add_messages(target, phenny, msg, break_up=break_up_fn):
-    msgs = break_up(msg)
+    max_length = 428 - len(target)
+    msgs = break_up(str(msg), max_length)
     phenny.say(target + ': ' + msgs[0])
     if len(msgs) > 1:
         phenny.say(target + ': you have more messages. Please ".more" to view them.')

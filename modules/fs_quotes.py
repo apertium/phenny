@@ -9,6 +9,7 @@ from urllib.error import HTTPError
 from tools import GrumbleError
 import web
 import json
+import more
 
 #FIXME: need to implement
 #def quote(phenny, input):
@@ -123,19 +124,6 @@ randquote.commands = ['randquote']
 randquote.example = '.randquote (linguistics)'
 randquote.priority = 'low'
 
-def more(phenny, input):
-    global buff
-    if buff:
-        res = buff.pop(0)
-        if buff:
-            res += ' ({0} more messages)'.format(len(buff))
-        phenny.say(res)
-        return
-
-more.name = 'more'
-more.commands = ['more']
-more.example = '.more'
-more.priority = 'low'
 #urbandict.rule = (['urb'], r'(.*)')
 
 if __name__ == '__main__':

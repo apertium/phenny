@@ -7,12 +7,27 @@ Author - mandarj
 def setup(self):
     self.messages = {}
 
-def add_messages(target, msgs, phenny):
-    if target in phenny.messages.keys():
-        for msg in msgs:
-            phenny.messages[target].append(msg)
-    else:
-        phenny.messages[target] = msgs
+def break_up_fn(string):
+    # break up based on max irc length (430)
+    max_length = 430
+    parts = []
+    while len(string) > max_length:
+        parts.append(string[:max_length-3] + '...')
+        string = string[max_length-3:]
+    parts.append(string)
+    return parts
+
+def add_messages(target, phenny, msg, break_up=break_up_fn):
+    msgs = break_up(msg)
+    phenny.say(target + ': ' + msgs[0])
+    if len(msgs) > 1:
+        phenny.say(target + ': you have more messages. Please ".more" to view them.')
+        msgs = msgs[1:]
+        if target in phenny.messages.keys():
+            for m in msgs:
+                phenny.messages[target].append(m)
+        else:
+            phenny.messages[target] = msgs
 
 def more(phenny, input):
     if input.nick in phenny.messages.keys():

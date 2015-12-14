@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python
+#!/usr/bin/env python
 """
 git.py - Github Post-Receive Hooks Module
 """
@@ -331,7 +331,7 @@ def get_commit_info(phenny, repo, sha):
     if repoUrl.find("code.google.com") >= 0:
         locationurl = '/source/detail?r=%s'
     elif repoUrl.find("api.github.com") >= 0:
-        locationurl = 'commits/%s'
+        locationurl = '/commits/%s'
     elif repoUrl.find("bitbucket.org") >= 0:
         locationurl = ''
     html = web.get(repoUrl + locationurl % sha)
@@ -358,34 +358,27 @@ def get_commit_info(phenny, repo, sha):
                          "%Y-%m-%dT%H:%M:%SZ")
     date = time.strftime("%d %b %Y %H:%M:%S", date)
 
-    # hack to convert github API link to commit webpage link
-    link_url = repoUrl[:8] + repoUrl[12:23] + repoUrl[29:] + 'commit/%s' % sha 
+    return author, comment, modified_paths, added_paths, removed_paths, rev,\
+        date
 
-    return (author, comment, modified_paths, added_paths, removed_paths, rev,\
-        date), link_url
-    # return author, comment, modified_paths, added_paths, removed_paths, rev,\
-    #    date
 
 def get_recent_commit(phenny, input):
     '''Get recent commit information for each repository Begiak monitors. This
     command is called as 'begiak: recent'.'''
 
     for repo in phenny.config.git_repositories:
-        html = web.get(phenny.config.git_repositories[repo] + 'commits')
+        html = web.get(phenny.config.git_repositories[repo] + '/commits')
         data = json.loads(html)
         # the * is for unpacking
-        info, url = get_commit_info(phenny, repo, data[0]['sha'])
-        msg = generate_report(repo, *info)
+        msg = generate_report(repo, *get_commit_info())
         phenny.say(msg)
-        phenny.say(url)
-
 # command metadata and invocation
 get_recent_commit.rule = ('$nick', 'recent')
 get_recent_commit.priority = 'medium'
 get_recent_commit.thread = True
 
 
-def retrieve_commit_git(phenny, input):
+def retrieve_commit(phenny, input):
     '''Retreive commit information for a given repository and revision. This
     command is called as 'begiak: info <repo> <rev>'.'''
 
@@ -406,14 +399,11 @@ def retrieve_commit_git(phenny, input):
         phenny.reply("That repository is not monitored by me!")
         return
     try:
-        info, url = get_commit_info(phenny, repo, rev)
-        # info = get_commit_info(phenny, repo, rev)
-        # the * is for unpacking
-        msg = generate_report(repo, *info)
-        phenny.say(msg)
-        phenny.say(url)
+        info = get_commit_info(phenny, repo, rev)
     except:
         phenny.reply("Invalid revision value!")
         return
-
-retrieve_commit_git.rule = ('$nick', 'info(?: +(.*))')
+    # the * is for unpacking
+    msg = generate_report(repo, *info)
+    phenny.say(msg)
+retrieve_commit.rule = ('$nick', 'info(?: +(.*))')

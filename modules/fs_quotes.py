@@ -9,6 +9,7 @@ from urllib.error import HTTPError
 from tools import GrumbleError
 import web
 import json
+import more
 
 #FIXME: need to implement
 #def quote(phenny, input):
@@ -56,21 +57,6 @@ topics = {"particles": "\"particle\" stands for \"defeat\" -spectie",
 	"zfe": "http://quotes.firespeaker.org/?who=zfe"
 	}
 
-def breaklong(phr):
-    line = phr
-    li = []
-    maxchars = 300
-    while line != '':
-        extra = ""
-        if len(line) > maxchars:
-            extra = line[maxchars:]
-            line = line[:maxchars]
-        li.append(line)
-        line = extra
-    return li
-
-buff = []
-
 def information(phenny, input):
 	""".information (<topic>) get information on a topic"""
 	global topics
@@ -88,9 +74,7 @@ information.example = '.information (installing apertium)'
 information.priority = 'low'
 
 
-def randquote_fetcher(phenny, topic, to_user=None):
-    global buff
-    buff = []
+def randquote_fetcher(phenny, topic, to_user):
 
     # create opener
     opener = urllib.request.build_opener()
@@ -120,34 +104,23 @@ def randquote_fetcher(phenny, topic, to_user=None):
     #response = "{0} - {1}".format(result['definition'].strip()[:256], url)
 
     if data['quote'] != None:
-        quote = data['quote'].replace('</p>', '').replace('<p>', '').replace('\n', '  ').replace('<em>', '_').replace('</em>', '_').replace('&mdash;', '—')
+        quote = data['quote'].replace('</p>', '').replace('<p>', '').replace('<em>', '_').replace('</em>', '_').replace('&mdash;', '—')
         response = data['short_url'] + ' - ' + quote
-        broke = breaklong(response)
-        if isinstance(broke, list):
-            buff.extend(broke)
-        else:
-            buff.append(broke)
-        res = buff.pop(0)
-        if buff:
-            res += ' ({0} more messages)'.format(len(buff))
     else:
         phenny.say("Sorry, no quotes returned!")
         return
 
-    if to_user:
-        phenny.say(to_user+', '+res)
-    else:
-        phenny.say(res)
-
+    more.add_messages(to_user, phenny, response, break_up=(lambda x, y: x.split('\n')))
 
 def randquote(phenny, input):
     """.randquote (<topic>) - Get a random quote from quotes.firespeaker.org (about topic)."""
     topic = input.group(2)
 
-    if "->" in topic: return
-    if "→" in topic: return
+    if topic:
+        if "->" in topic: return
+        if "→" in topic: return
 
-    randquote_fetcher(phenny, topic)
+    randquote_fetcher(phenny, topic, input.nick)
 
 randquote.name = 'randquote'
 randquote.commands = ['randquote']
@@ -158,7 +131,7 @@ randquote.priority = 'low'
 def randquote2(phenny, input):
     _, topic, __, nick = input.groups()
 
-    randquote_fetcher(phenny, topic, to_user=nick)
+    randquote_fetcher(phenny, topic, nick)
 
 randquote2.rule = r'\.(randquote)\s(.*)\s(->|→)\s(\S*)'
 randquote2.example = '.randquote Linguistics -> svineet'
@@ -167,7 +140,7 @@ randquote2.example = '.randquote Linguistics -> svineet'
 def randquote3(phenny, input):
     _, __, nick = input.groups()
 
-    randquote_fetcher(phenny, "", to_user=nick)
+    randquote_fetcher(phenny, "", nick)
 
 randquote3.rule = r'\.(randquote)\s(->|→)\s(\S*)'
 randquote3.example = '.randquote -> svineet'
@@ -176,7 +149,7 @@ randquote3.example = '.randquote -> svineet'
 def randquote4(phenny, input):
     nick, _, __, topic = input.groups()
 
-    randquote_fetcher(phenny, topic, to_user=nick)
+    randquote_fetcher(phenny, topic, nick)
 
 randquote4.rule = r'(\S*)(:|,)\s\.(randquote)\s(.*)'
 randquote4.example = 'svineet: .randquote Linguistics'
@@ -185,26 +158,10 @@ randquote4.example = 'svineet: .randquote Linguistics'
 def randquote5(phenny, input):
     nick, _, __ = input.groups()
 
-    randquote_fetcher(phenny, "", to_user=nick)
+    randquote_fetcher(phenny, "", nick)
 
 randquote5.rule = r'(\S*)(:|,)\s\.(randquote)$'
 randquote5.example = 'svineet: .randquote'
-
-
-def more(phenny, input):
-    global buff
-    if buff:
-        res = buff.pop(0)
-        if buff:
-            res += ' ({0} more messages)'.format(len(buff))
-        phenny.say(res)
-        return
-
-more.name = 'more'
-more.commands = ['more']
-more.example = '.more'
-more.priority = 'low'
-#urbandict.rule = (['urb'], r'(.*)')
 
 if __name__ == '__main__':
     print(__doc__.strip())

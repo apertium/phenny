@@ -42,22 +42,64 @@ def formatnumber(n):
         parts.insert(i, ',')
     return ''.join(parts)
 
+
+def google_it(phenny, query, sender, to_user=None):
+    uri = google_search(query)
+    if uri: 
+        if to_user:
+            phenny.say(to_user+', '+uri)
+        else:
+            phenny.reply(uri)
+        if not hasattr(phenny.bot, 'last_seen_uri'):
+            phenny.bot.last_seen_uri = {}
+        phenny.bot.last_seen_uri[sender] = uri
+    elif uri is False: phenny.reply("Problem getting data from Google.")
+    else: phenny.reply("No results found for '%s'." % query)
+
+
 def g(phenny, input): 
     """Queries Google for the specified input."""
     query = input.group(2)
     if not query: 
         return phenny.reply('.g what?')
-    uri = google_search(query)
-    if uri: 
-        phenny.reply(uri)
-        if not hasattr(phenny.bot, 'last_seen_uri'):
-            phenny.bot.last_seen_uri = {}
-        phenny.bot.last_seen_uri[input.sender] = uri
-    elif uri is False: phenny.reply("Problem getting data from Google.")
-    else: phenny.reply("No results found for '%s'." % query)
+
+    if "->" in query: return
+    if "→" in query: return
+
+    match_point_cmd = r'point\s(\S*)\s(.*)'
+    matched_point = re.compile(match_point_cmd).match(query)
+    if matched_point:
+        to_nick = matched_point.groups()[0]
+        query2 = matched_point.groups()[1]
+
+        google_it(phenny, query2, input.sender, to_user=to_nick)
+        return
+
+    google_it(phenny, query, input.sender)
+
 g.commands = ['g']
 g.priority = 'high'
 g.example = '.g swhack'
+
+
+def g2(phenny, input):
+    nick, _, __, query = input.groups()
+
+    google_it(phenny, query, input.sender, to_user=nick)
+
+g2.rule = r'(\S*)(:|,)\s\.(g)\s(.*)'
+g2.example = 'svineet: .g extrapolate'
+
+
+def g3(phenny, input):
+    _, query, __, nick = input.groups()
+
+    google_it(phenny, query, input.sender, to_user=nick)
+
+
+g3.rule = r'\.(g)\s(.*)\s(->|→)\s(\S*)'
+g3.example = '.g extrapolate -> svineet'
+
 
 def gc(phenny, input): 
     """Returns the number of Google results for the specified input."""

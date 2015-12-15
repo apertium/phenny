@@ -26,9 +26,10 @@ from tools import deprecated
 
 r_local = re.compile(r'\([a-z]+_[A-Z]+\)')
 
-def f_time(phenny, input):
-    """.time [timezone] - Show current time in defined timezone. Defaults to GMT."""
-    tz = input.group(2) or 'GMT'
+
+def give_time(phenny, tz, input_nick, to_user=None):
+    if "->" in tz: return
+    if "→" in tz: return
 
     tz_complete = tz.upper()
 
@@ -83,8 +84,8 @@ def f_time(phenny, input):
 
     if tz in People:
         tz = People[tz]
-    elif (not input.group(2)) and input.nick in People:
-        tz = People[input.nick]
+    elif (not tz) and input_nick in People:
+        tz = People[input_nick]
 
     TZ = tz.upper()
     longs=int(len(tz))
@@ -96,27 +97,42 @@ def f_time(phenny, input):
             offset = phenny.tz_data[slug] * 3600 + math_add
             timenow = time.gmtime(time.time() + offset)
             msg = time.strftime("%a, %d %b %Y %H:%M:%S " + str(tz_complete), timenow)
-            phenny.reply(msg)
+            if to_user:
+                phenny.say(to_user+', '+msg)
+            else:
+                phenny.reply(msg)
             skip=True
             break
     
     if skip ==False:
         if (TZ == 'UTC') or (TZ == 'Z'):
             msg = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
-            phenny.reply(msg)
+            if to_user:
+                phenny.say(to_user+', '+msg)
+            else:
+                phenny.reply(msg)
         elif r_local.match(tz): # thanks to Mark Shoulsdon (clsn)
             locale.setlocale(locale.LC_TIME, (tz[1:-1], 'UTF-8'))
             msg = time.strftime("%A, %d %B %Y %H:%M:%SZ", time.gmtime())
-            phenny.reply(msg)
+            if to_user:
+                phenny.say(to_user+', '+msg)
+            else:
+                phenny.reply(msg)
         elif TZ in phenny.tz_data:
             offset = phenny.tz_data[TZ] * 3600 + math_add
             timenow = time.gmtime(time.time() + offset)
             msg = time.strftime("%a, %d %b %Y %H:%M:%S " + str(tz_complete), timenow)
-            phenny.reply(msg)
+            if to_user:
+                phenny.say(to_user+', '+msg)
+            else:
+                phenny.reply(msg)
         elif tz and tz[0] in ('+', '-') and 4 <= len(tz) <= 6:
             timenow = time.gmtime(time.time() + (int(tz[:3]) * 3600))
             msg = time.strftime("%a, %d %b %Y %H:%M:%S " + str(tz_complete), timenow)
-            phenny.reply(msg)
+            if to_user:
+                phenny.say(to_user+', '+msg)
+            else:
+                phenny.reply(msg)
         else:
             try: t = float(tz)
             except ValueError:
@@ -125,17 +141,72 @@ def f_time(phenny, input):
                 if r_tz.match(tz) and os.path.isfile('/usr/share/zoneinfo/' + tz):
                     cmd, PIPE = 'TZ=%s date' % tz, subprocess.PIPE
                     proc = subprocess.Popen(cmd, shell=True, stdout=PIPE)
-                    phenny.reply(proc.communicate()[0])
+                    if to_user:
+                        phenny.say(to_user+', '+proc.communicate()[0])
+                    else:
+                        phenny.reply(proc.communicate()[0])
                 else: 
                     error = "Sorry, I don't know about the '%s' timezone. Suggest the city on http://www.citytimezones.info" % tz
                     phenny.reply(error)
             else:
                 timenow = time.gmtime(time.time() + (t * 3600))
                 msg = time.strftime("%a, %d %b %Y %H:%M:%S " + str(tz_complete), timenow)
-                phenny.reply(msg)
+                if to_user:
+                    phenny.say(to_user+', '+msg)
+                else:
+                    phenny.reply(msg)
+
+def f_time(phenny, input):
+    """.time [timezone] - Show current time in defined timezone. Defaults to GMT."""
+    tz = input.group(2) or 'GMT'
+
+    match_point_cmd = r'point\s(\S*)\s(.*)'
+    matched_point = re.compile(match_point_cmd).match(tz)
+    if matched_point:
+        to_nick = matched_point.groups()[0]
+        tz2 = matched_point.groups()[1]
+
+        give_time(phenny, tz2, input.nick, to_user=to_nick)
+        return
+
+    give_time(phenny, tz, input.nick)
+    
 f_time.name = 'time'
 f_time.commands = ['time']
 f_time.example = '.time UTC'
+
+
+def f_time2(phenny, input):
+    nick, _, __, tz = input.groups()
+
+    give_time(phenny, tz, input.nick, to_user=nick)
+
+f_time2.rule = r'(\S*)(:|,)\s\.(time)\s(.*)'
+
+
+def f_time3(phenny, input):
+    _, __, nick = input.groups()
+
+    give_time(phenny, "", input.nick, to_user=nick)
+
+f_time3.rule = r'\.(time)\s(->|→)\s(\S*)'
+
+
+def f_time4(phenny, input):
+    _, tz, __, nick = input.groups()
+
+    give_time(phenny, tz, input.nick, to_user=nick)
+
+f_time4.rule = r'\.(time)\s(.*)\s(->|→)\s(\S*)'
+
+
+def f_time5(phenny, input):
+    nick, _, __ = input.groups()
+
+    give_time(phenny, "", input.nick, to_user=nick)
+
+f_time5.rule = r'(\S*)(:|,)\s\.(time)$'
+
 
 def scrape_wiki_zones():
     data = {}

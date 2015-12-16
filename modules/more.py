@@ -9,20 +9,28 @@ def setup(self):
 
 def break_up_fn(string, max_length):
     parts = []
+    tmp = ''
     while len(string) > max_length:
-        parts.append(string[:max_length-3] + '...')
-        string = string[max_length-3:]
+        tmp = string[:max_length]
+        if tmp[-1] == ' ':
+            tmp = string[:max_length-3] # or else no space for '...'
+        while not tmp[-1] == ' ':
+            tmp = tmp[:-1]
+        string = string[len(tmp):] # also skips space at the end of tmp
+        parts.append(tmp.strip() + '...')
+        tmp = ''
+
     parts.append(string)
     return parts
 
 def add_messages(target, phenny, msg, break_up=break_up_fn):
-    max_length = 428 - len(target)
+    max_length = 428 - len(target) - 5
     msgs = break_up(str(msg), max_length)
     phenny.say(target + ': ' + msgs[0])
     
     if len(msgs) > 1:
-        phenny.say(target + ': you have more messages. Please ".more" to view them.')
         msgs = msgs[1:]
+        phenny.say(target + ': you have ' + str(len(msgs)) + ' more messages. Please ".more" to view them.')
         if target in phenny.messages.keys():
             for m in msgs:
                 phenny.messages[target].append(m)
@@ -31,11 +39,12 @@ def add_messages(target, phenny, msg, break_up=break_up_fn):
 
 def more(phenny, input):
     if input.nick in phenny.messages.keys():
-        phenny.say(input.nick + ': ' + phenny.messages[input.nick][0])
-        if len(phenny.messages[input.nick]) == 1:
+        msg = phenny.messages[input.nick][0]
+        phenny.messages[input.nick].remove(phenny.messages[input.nick][0])
+        remaining = ' [' + str(len(phenny.messages[input.nick])) + ']' if phenny.messages[input.nick] else ''
+        phenny.say(input.nick + ': ' + msg + remaining)
+        if not phenny.messages[input.nick]:
             del phenny.messages[input.nick]
-        else:
-            phenny.messages[input.nick].remove(phenny.messages[input.nick][0])
     else:
         phenny.say(input.nick + ': you do not have any pending messages.')
 more.name = 'more'

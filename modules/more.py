@@ -12,12 +12,12 @@ def break_up_fn(string, max_length):
     tmp = ''
     while len(string) > max_length:
         tmp = string[:max_length]
-        if ' ' in tmp[-3:]:
-            tmp = string[:max_length-3] # or else no space for '...'
+        if ' ' in tmp[-4:]:
+            tmp = string[:max_length-4] # or else no space for ' ...'
         while not tmp[-1] == ' ':
             tmp = tmp[:-1]
         string = string[len(tmp):] # also skips space at the end of tmp
-        parts.append(tmp.strip() + '...')
+        parts.append(tmp.strip() + ' ...')
         tmp = ''
 
     parts.append(string)
@@ -30,7 +30,7 @@ def add_messages(target, phenny, msg, break_up=break_up_fn):
     
     if len(msgs) > 1:
         msgs = msgs[1:]
-        phenny.say(target + ': you have ' + str(len(msgs)) + ' more messages. Please ".more" to view them.')
+        phenny.say(target + ': you have ' + str(len(msgs)) + ' more message(s). Please type ".more" to view them.')
         phenny.messages[target] = msgs
 
 def more(phenny, input):

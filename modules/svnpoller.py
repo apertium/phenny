@@ -4,7 +4,7 @@
 import re
 import os
 from subprocess import Popen, PIPE
-from xml.etree.ElementTree import parse as xmlparse
+import xml.etree.ElementTree as ET
 from io import StringIO
 import time
 from tools import generate_report
@@ -90,14 +90,13 @@ class SVNPoller:
 			data = pipe.communicate()[0]
 		except IOError:
 			data = ""
-		return xmlparse(StringIO(data.decode()))
+		return ET.fromstring(data.decode())
 
 
 	def get_last_revision(self):
 		global global_revisions
 		tree = self.svn("info")
-		print(tree)
-		revision = tree.find(".//commit").get("revision")
+		revision = tree.find("entry").find("commit").get("revision")
 		global_revisions[self.repo] = int(revision)
 		return int(revision)
 
@@ -140,6 +139,9 @@ class SVNPoller:
 			msg = generate_report(repo, author, comment, modified_paths, added_paths, removed_paths, rev, "")
 		return msg
 
+	def sourceforgeURL(self, rev):
+	    return 'https://sourceforge.net/p/' + self.repo + '/svn/%s' % str(rev)
+
 
 def recentcommits(phenny, input):
 	"""List the most recent SVN commits."""
@@ -147,18 +149,12 @@ def recentcommits(phenny, input):
 	if phenny.config.svn_repositories is None:
 		phenny.say("SVN module cannot function without repositories being set in the config file!")
 		return
-	pollers = {}
 	for repo in phenny.config.svn_repositories:
-		pollers[repo] = SVNPoller(repo, phenny.config.svn_repositories[repo])
-	for repo in phenny.config.svn_repositories:
+		poller = SVNPoller(repo, phenny.config.svn_repositories[repo])
 		#for (msg, revisions) in pollers[repo].check(phenny.revisions):
-		msg = pollers[repo].generateReport(pollers[repo].get_last_revision(), True)
-		url = phenny.config.svn_repositories[repo].rstrip('/')
-		if url.endswith('trunk'):
-			# remove the 'trunk' part from the url
-			url = url[:-5] + '/%s' % rev
-		else:
-			url += '/%s' % rev
+		rev = poller.get_last_revision()
+		msg = poller.generateReport(rev, True)
+		url = poller.sourceforgeURL(rev)
 		if len(msg) > 200:
 			phenny.say(msg[:len(msg)-5] + "[...] " + url)
 		else:
@@ -190,12 +186,7 @@ def retrieve_commit_svn(phenny, input):
 	
 	poller = SVNPoller(repo, phenny.config.svn_repositories[repo])
 	msg = poller.generateReport(rev, True)
-	url = phenny.config.svn_repositories[repo].rstrip('/')
-	if url.endswith('trunk'):
-		# remove the 'trunk' part from the url
-		url = url[:-5] + '/%s' % rev
-	else:
-		url += '/%s' % rev
+	url = poller.sourceforgeURL(rev)
 	phenny.say(msg + ' ' + url)
 retrieve_commit_svn.rule = ('$nick', 'info(?: +(.*))')
 

@@ -370,8 +370,9 @@ def get_recent_commit(phenny, input):
         html = web.get(phenny.config.git_repositories[repo] + '/commits')
         data = json.loads(html)
         # the * is for unpacking
-        msg = generate_report(repo, *get_commit_info())
-        phenny.say(msg)
+        msg = generate_report(repo, *get_commit_info(phenny, repo, data[0]['sha']))
+        # the URL is truncated so that it fits
+        phenny.say(msg + ' ' + data[0]['html_url'][:60])
 # command metadata and invocation
 get_recent_commit.rule = ('$nick', 'recent')
 get_recent_commit.priority = 'medium'

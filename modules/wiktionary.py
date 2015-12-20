@@ -186,7 +186,8 @@ def w(phenny, input):
     wikitionary_lookup(phenny, word)
 
 w.rule = r'\.(w)\s(.*)'
-w.example = '.w bailiwick'
+w.example = '.w bailiwick or nick: .w bailiwick or .w bailiwick -> nick'+\
+            ' or .w point nick bailiwick'
 
 
 def w2 (phenny, input):

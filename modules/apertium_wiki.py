@@ -105,7 +105,8 @@ def awik(phenny, input):
 
 
 awik.rule = r'\.(awik)\s(.*)'
-awik.example = '.awik Begiak or .awik point svineet Begiak'
+awik.example = '.awik Begiak or .awik point nick Begiak or .awik Begiak -> nick'+\
+               ' or nick: .awik Begiak'
 awik.priority = 'high'
 
 

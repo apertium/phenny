@@ -124,7 +124,8 @@ def randquote(phenny, input):
 
 randquote.name = 'randquote'
 randquote.commands = ['randquote']
-randquote.example = '.randquote (linguistics)'
+randquote.example = '.randquote (linguistics) or .randquote (Linguistics) -> svineet'+\
+                    ' or svineet: .randquote (linguistics)'
 randquote.priority = 'low'
 
 

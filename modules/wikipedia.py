@@ -114,8 +114,7 @@ def point_to(phenny, origterm, lang, nick):
 
 
 def wik(phenny, input): 
-    """Search for something on Wikipedia or point 
-    another user to a Wikipedia page"""
+    """Search for something on Wikipedia or point another user to a Wikipedia page"""
     if "->" in input.group(3): return
     if "→" in input.group(3): return
 
@@ -138,7 +137,8 @@ def wik(phenny, input):
 
 wik.rule = r'\.(wik|wiki|wikipedia)(\.[a-z]{2,3})?\s(.*)'
 wik.priority = 'low'
-wik.example = '.wik Human or .wik point svineet Human'
+wik.example = '.wik Human or nick: .wik Human or .wik Human -> nick'+\
+            ' or .wik point nick Human'
 
 
 def wik2(phenny, input):
@@ -161,6 +161,18 @@ def wik3(phenny, input):
 wik3.rule = r'\.(wik|wiki|wikipedia)(\.[a-z]{2,3})?\s(.*)\s(->|→)\s(\S*)'
 wik3.priority = 'high'
 wik3.example = '.wik Linguistics -> svineet'
+
+
+def pointing(phenny, input):
+    """ Begiak also supports pointing users to the output of other commands.
+    For example, .wik India -> nick will make Begiak say:
+    nick, "India, officially the Republic of India (Bhārat Gaṇarājya),
+    [18][19][c] is a country in South Asia" - https://en.wikipedia.org/wiki/India 
+    . Do .awik Begiak for more information on supported commands.
+    """
+    pass
+
+pointing.commands = ['pointing']
 
 
 if __name__ == '__main__': 

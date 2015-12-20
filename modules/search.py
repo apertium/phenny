@@ -79,7 +79,8 @@ def g(phenny, input):
 
 g.commands = ['g']
 g.priority = 'high'
-g.example = '.g swhack'
+g.example = '.g swhack or nick: .g swhack or .g swhack -> nick or '+\
+            '.g point nick swhack'
 
 
 def g2(phenny, input):

@@ -4,7 +4,7 @@
 import re
 import os
 from subprocess import Popen, PIPE
-from xml.etree.ElementTree import parse as xmlparse
+import xml.etree.ElementTree as ET
 from io import StringIO
 import time
 from tools import generate_report
@@ -90,14 +90,13 @@ class SVNPoller:
 			data = pipe.communicate()[0]
 		except IOError:
 			data = ""
-		return xmlparse(StringIO(data.decode()))
+		return ET.fromstring(data.decode())
 
 
 	def get_last_revision(self):
 		global global_revisions
 		tree = self.svn("info")
-		print(tree)
-		revision = tree.find(".//commit").get("revision")
+		revision = tree.find("entry").find("commit").get("revision")
 		global_revisions[self.repo] = int(revision)
 		return int(revision)
 
@@ -154,10 +153,8 @@ def recentcommits(phenny, input):
 	if phenny.config.svn_repositories is None:
 		phenny.say("SVN module cannot function without repositories being set in the config file!")
 		return
-	pollers = {}
 	for repo in phenny.config.svn_repositories:
-		pollers[repo] = SVNPoller(repo, phenny.config.svn_repositories[repo])
-	for repo in phenny.config.svn_repositories:
+		poller = SVNPoller(repo, phenny.config.svn_repositories[repo])
 		#for (msg, revisions) in pollers[repo].check(phenny.revisions):
 		rev = poller.get_last_revision()
 		msg = poller.generateReport(rev, True)

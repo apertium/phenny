@@ -358,8 +358,10 @@ def get_commit_info(phenny, repo, sha):
                          "%Y-%m-%dT%H:%M:%SZ")
     date = time.strftime("%d %b %Y %H:%M:%S", date)
 
-    return author, comment, modified_paths, added_paths, removed_paths, rev,\
-        date
+    url = data['html_url']
+
+    return (author, comment, modified_paths, added_paths, removed_paths, rev,\
+        date), url
 
 def truncate(msg, length):
     while len(msg) > length:
@@ -373,6 +375,7 @@ def get_recent_commit(phenny, input):
     for repo in phenny.config.git_repositories:
         html = web.get(phenny.config.git_repositories[repo] + '/commits')
         data = json.loads(html)
+        # the * is for unpacking
         info, url = get_commit_info(phenny, repo, data[0]['sha'])
         msg = generate_report(repo, *info)
         # the URL is truncated so that it has at least 6 sha characters
@@ -408,7 +411,7 @@ def retrieve_commit(phenny, input):
         phenny.reply("That repository is not monitored by me!")
         return
     try:
-        info = get_commit_info(phenny, repo, rev)
+        info, url = get_commit_info(phenny, repo, rev)
     except:
         phenny.reply("Invalid revision value!")
         return

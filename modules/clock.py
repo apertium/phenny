@@ -173,7 +173,8 @@ def f_time(phenny, input):
     
 f_time.name = 'time'
 f_time.commands = ['time']
-f_time.example = '.time UTC'
+f_time.example = '.time UTC or .time point nick GMT or nick: .time GMT or '+\
+                 '.time GMT -> nick'
 
 
 def f_time2(phenny, input):
@@ -396,11 +397,9 @@ def npl(phenny, input):
 npl.commands = ['npl']
 npl.priority = 'high'
 
-def time_zone(phenny, input):
-    """Usage: .tz <time><from timezone> in <destination> - Convert time to destination zone."""
-    
+
+def time_zone_convert(phenny, input_txt, to_user=None):
     format_regex = re.compile("(\d*)([a-zA-Z\s,-]*)\sin\s([a-zA-z\s]*)")
-    input_txt = input.group(2)
     if not input_txt:
         phenny.reply(time_zone.__doc__.strip())
         return
@@ -452,9 +451,54 @@ def time_zone(phenny, input):
         elif dest_time_hours < 0:
             dest_time_hours = dest_time_hours + 24
 
-        phenny.reply(format(dest_time_hours, '02d') + format(dest_time_mins, '02d') + regex_match.groups()[2].upper())
+        if to_user:
+            phenny.say(to_user + ', ' +
+                       format(dest_time_hours, '02d') +
+                       format(dest_time_mins, '02d') +
+                       regex_match.groups()[2].upper())
+        else:
+            phenny.reply(format(dest_time_hours, '02d') +
+                         format(dest_time_mins, '02d') +
+                         regex_match.groups()[2].upper())
+
+def time_zone(phenny, input):
+    """Usage: .tz <time><from timezone> in <destination> - Convert time to destination zone."""
+    
+    input_txt = input.group(2)
+
+    if "->" in input_txt: return
+    if "→" in input_txt: return
+
+    match_point_cmd = r'point\s(\S*)\s(.*)'
+    matched_point = re.compile(match_point_cmd).match(input_txt)
+    if matched_point:
+        to_nick = matched_point.groups()[0]
+        input_txt2 = matched_point.groups()[1]
+        
+        time_zone_convert(phenny, input_txt2, to_user=to_nick)
+        return
+
+    time_zone_convert(phenny, input_txt)
+    
+
 time_zone.commands = ['tz']
 time_zone.priority = 'high'
+
+
+def time_zone2(phenny, input):
+    _, input_txt, __, nick = input.groups()
+
+    time_zone_convert(phenny, input_txt, to_user=nick)
+
+time_zone2.rule = r'\.(tz)\s(.*)\s(->|→)\s(\S*)'
+
+
+def time_zone3(phenny, input):
+    nick, _, __, input_txt = input.groups()
+
+    time_zone_convert(phenny, input_txt, to_user=nick)
+
+time_zone3.rule = r'(\S*)(:|,)\s\.(tz)\s(.*)'
 
 if __name__ == '__main__':
     print(__doc__.strip())

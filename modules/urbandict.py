@@ -67,7 +67,8 @@ def urbandict(phenny, input):
     
 urbandict.name = 'urb'
 urbandict.rule = (['urb'], r'(.*)')
-urbandict.example = '.urb seppuku'
+urbandict.example = '.urb troll or nick: .urb troll or .urb troll -> nick'+\
+                    ' or .urb point nick troll'
 
 
 def urbandict2(phenny, input):

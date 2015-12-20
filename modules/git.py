@@ -358,8 +358,10 @@ def get_commit_info(phenny, repo, sha):
                          "%Y-%m-%dT%H:%M:%SZ")
     date = time.strftime("%d %b %Y %H:%M:%S", date)
 
-    return author, comment, modified_paths, added_paths, removed_paths, rev,\
-        date
+    url = data['html_url']
+
+    return (author, comment, modified_paths, added_paths, removed_paths, rev,\
+        date), url
 
 
 def get_recent_commit(phenny, input):
@@ -370,9 +372,10 @@ def get_recent_commit(phenny, input):
         html = web.get(phenny.config.git_repositories[repo] + '/commits')
         data = json.loads(html)
         # the * is for unpacking
-        msg = generate_report(repo, *get_commit_info(phenny, repo, data[0]['sha']))
+        info, url = get_commit_info(phenny, repo, data[0]['sha'])
+        msg = generate_report(repo, *info)
         # the URL is truncated so that it fits
-        phenny.say(msg + ' ' + data[0]['html_url'][:60])
+        phenny.say(msg + ' ' + url[:60])
 # command metadata and invocation
 get_recent_commit.rule = ('$nick', 'recent')
 get_recent_commit.priority = 'medium'
@@ -400,11 +403,11 @@ def retrieve_commit(phenny, input):
         phenny.reply("That repository is not monitored by me!")
         return
     try:
-        info = get_commit_info(phenny, repo, rev)
+        info, url = get_commit_info(phenny, repo, rev)
     except:
         phenny.reply("Invalid revision value!")
         return
     # the * is for unpacking
     msg = generate_report(repo, *info)
-    phenny.say(msg)
+    phenny.say(msg + ' ' + url[:60])
 retrieve_commit.rule = ('$nick', 'info(?: +(.*))')

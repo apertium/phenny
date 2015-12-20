@@ -363,6 +363,10 @@ def get_commit_info(phenny, repo, sha):
     return (author, comment, modified_paths, added_paths, removed_paths, rev,\
         date), url
 
+def truncate(msg, length):
+    while len(msg) > length:
+        msg = msg[:msg.rfind(' ')]
+    return msg
 
 def get_recent_commit(phenny, input):
     '''Get recent commit information for each repository Begiak monitors. This
@@ -374,8 +378,12 @@ def get_recent_commit(phenny, input):
         # the * is for unpacking
         info, url = get_commit_info(phenny, repo, data[0]['sha'])
         msg = generate_report(repo, *info)
-        # the URL is truncated so that it fits
-        phenny.say(msg + ' ' + url[:60])
+        # the URL is truncated so that it has at least 6 sha characters
+        url = url[:url.rfind('/') + 7]
+        if len(msg + ' ' + url) <= 430:
+            phenny.say(msg + ' ' + url)
+        else:
+            phenny.say(truncate(msg, 430 - len(url) - 4) + '... ' + url)
 # command metadata and invocation
 get_recent_commit.rule = ('$nick', 'recent')
 get_recent_commit.priority = 'medium'
@@ -409,5 +417,10 @@ def retrieve_commit(phenny, input):
         return
     # the * is for unpacking
     msg = generate_report(repo, *info)
-    phenny.say(msg + ' ' + url[:60])
+    # the URL is truncated so that it has at least 6 sha characters
+    url = url[:url.rfind('/') + 7]
+    if len(msg + ' ' + url) <= 430:
+        phenny.say(msg + ' ' + url)
+    else:
+        phenny.say(truncate(msg, 430 - len(url) - 4) + '... ' + url)
 retrieve_commit.rule = ('$nick', 'info(?: +(.*))')

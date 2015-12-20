@@ -142,6 +142,10 @@ class SVNPoller:
 	def sourceforgeURL(self, rev):
 	    return 'https://sourceforge.net/p/' + self.repo + '/svn/%s' % str(rev)
 
+def truncate(msg, length):
+	while len(msg) > length:
+		msg = msg[:msg.rfind(' ')]
+	return msg
 
 def recentcommits(phenny, input):
 	"""List the most recent SVN commits."""
@@ -155,8 +159,8 @@ def recentcommits(phenny, input):
 		rev = poller.get_last_revision()
 		msg = poller.generateReport(rev, True)
 		url = poller.sourceforgeURL(rev)
-		if len(msg) > 200:
-			phenny.say(msg[:len(msg)-5] + "[...] " + url)
+		if len(msg) > 430:
+			phenny.say(truncate(msg, 430 - len(url) - 4) + "... " + url)
 		else:
 			phenny.say(msg + ' ' + url)
 recentcommits.name = 'recent'
@@ -166,7 +170,7 @@ recentcommits.example = 'begiak: recent'
 #recentcommits.rule = r'.*'
 recentcommits.priority = 'medium'
 recentcommits.thread = True
-			
+
 def retrieve_commit_svn(phenny, input):
 	data = input.group(1).split(' ')
 	
@@ -187,9 +191,11 @@ def retrieve_commit_svn(phenny, input):
 	poller = SVNPoller(repo, phenny.config.svn_repositories[repo])
 	msg = poller.generateReport(rev, True)
 	url = poller.sourceforgeURL(rev)
-	phenny.say(msg + ' ' + url)
+	if len(msg + ' ' + url) <= 430:
+	    phenny.say(msg + ' ' + url)
+	else:
+	    phenny.say(truncate(msg, 430 - len(url) - 4) + '... ' + url)
 retrieve_commit_svn.rule = ('$nick', 'info(?: +(.*))')
-
 
 def pollsvn(phenny, input):
 	global global_revisions, global_filename

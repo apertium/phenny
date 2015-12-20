@@ -374,8 +374,9 @@ def get_recent_commit(phenny, input):
         # the * is for unpacking
         info, url = get_commit_info(phenny, repo, data[0]['sha'])
         msg = generate_report(repo, *info)
-        # the URL is truncated so that it fits
-        phenny.say(msg + ' ' + url[:60])
+        # the URL is truncated so that it has at least 6 sha characters
+        url = url[:url.rfind('/') + 6]
+        phenny.say(msg + ' ' + url[:430])
 # command metadata and invocation
 get_recent_commit.rule = ('$nick', 'recent')
 get_recent_commit.priority = 'medium'
@@ -409,5 +410,7 @@ def retrieve_commit(phenny, input):
         return
     # the * is for unpacking
     msg = generate_report(repo, *info)
-    phenny.say(msg + ' ' + url[:60])
+    # the URL is truncated so that it has at least 6 sha characters
+    url = url[:url.rfind('/') + 6]
+    phenny.say(msg + ' ' + url[:430])
 retrieve_commit.rule = ('$nick', 'info(?: +(.*))')

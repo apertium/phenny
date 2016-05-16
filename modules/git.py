@@ -77,6 +77,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         '''Handles POST requests for all hooks.'''
 
         # read and decode data
+        print('payload received; headers: '+str(self.headers))
         length = int(self.headers['Content-Length'])
         indata = self.rfile.read(length)
         post_data = urllib.parse.parse_qs(indata.decode('utf-8'))
@@ -94,7 +95,10 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         if 'GitHub' in self.headers['User-Agent']:
             event = self.headers['X-Github-Event']
             user = data['sender']['login']
-            repo = data['repository']['name']            
+            if 'repository' in data:
+                repo = data['repository']['name']
+            elif 'organization' in data:
+                repo = data['organization']['login']+' (org)'
             if event == 'commit_comment':
                 commit = data['comment']['commit_id'][:7]
                 comment = data['comment']['body']
@@ -179,9 +183,15 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 team = data['team']['name']
                 msgs.append('repository {:} added to team {:} {:}' \
                             .format(name, team))
+            elif event == 'ping':
+                org = data['organization']
+                sender = data['sender']
+                msgs.append('ping from {:}, org: {:}'\
+                            .format(sender, org))
             else:
                 msgs.append('sorry, event {:} not supported yet.'.format(event))
-                msgs.append(data.keys())
+                msgs.append(str(data.keys()))
+            #print("DEBUG:msgs: "+str(msgs))
         # not github
         elif "commits" in data:
             for commit in data['commits']:
@@ -223,8 +233,14 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                         self.phenny.bot.msg(chan, msg)
 
         # send OK code and notify firespeaker
+        #print("sending 200 response")
         self.send_response(200)
-        # self.phenny.bot.msg("firespeaker", "200 OK")
+        #self.finish()
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+        #self.phenny.bot.msg("firespeaker", "200 OK: ")
+        print("DONE!")
+	
 
     def getBBFiles(self, filelist):
         '''Sort filelist into added, modified, and removed files

@@ -22,8 +22,7 @@ headers = [(
 def sloganize(word): 
     opener = urllib.request.build_opener()
     opener.addheaders = headers
-    response = opener.open(uri + word).read()
-    response = response.decode('utf-8')
+    response = opener.open(uri + word).read().decode('utf-8')
     return response
 
 def slogan(phenny, input): 

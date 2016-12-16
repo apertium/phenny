@@ -295,7 +295,7 @@ def datesort(tell):
 
 def tells(phenny, input):
     """
-Usage: ".tells" for a summary of queued reminders; ".tells [show ]<nick/num>" for reminders queued to a specific nick; ".tells rm <num>" to delete a reminder
+Usage: ".tells" for a summary of queued reminders; ".tells [show] <nick/num>" for reminders queued to a specific nick; ".tells rm <num>" to delete a reminder
     """
     teller = input.nick
     tells = []
@@ -326,7 +326,7 @@ Usage: ".tells" for a summary of queued reminders; ".tells [show ]<nick/num>" fo
                     phenny.reply('No tells found.')
 
                 pmflag = False
-                send_pms = len(filtered_tells) > 2
+                send_pms = len(filtered_tells) > 3
                 for this_index, (msg, tellee) in enumerate(filtered_tells):
                     reminder = '[{}] - {}'.format(tells.index((msg, tellee))+1, formatReminder(msg, tellee))
                     if '**pm**' in reminder or (send_pms and this_index > 1):

@@ -8,6 +8,7 @@ import sqlite3
 from humanize import naturaltime
 import requests
 
+
 def setup(self):
     fn = self.nick + '-' + self.config.host + '.posted.db'
     self.posted_db = os.path.join(os.path.expanduser('~/.phenny'), fn)

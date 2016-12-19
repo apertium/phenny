@@ -192,7 +192,9 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 msgs.append('sorry, event {:} not supported yet.'.format(event))
                 msgs.append(str(data.keys()))
             #print("DEBUG:msgs: "+str(msgs))
-        # not github
+        elif 'Jenkins' in self.headers['User-Agent']:
+            msgs.append('Jenkins: {}'.format(data['message']))
+        # not github or Jenkins
         elif "commits" in data:
             for commit in data['commits']:
                 try:

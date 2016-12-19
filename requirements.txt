@@ -3,4 +3,4 @@ mock
 nose
 requests
 feedparser
-ago
+humanize

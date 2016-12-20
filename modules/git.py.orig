@@ -192,7 +192,13 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 msgs.append('sorry, event {:} not supported yet.'.format(event))
                 msgs.append(str(data.keys()))
             #print("DEBUG:msgs: "+str(msgs))
+<<<<<<< HEAD
+        elif 'Jenkins' in self.headers['User-Agent']:
+            msgs.append('Jenkins: {}'.format(data['message']))
+        # not github or Jenkins
+=======
         # not github
+>>>>>>> 6d47ac1... updates for less crashing of repo pollers and monitors
         elif "commits" in data:
             for commit in data['commits']:
                 try:

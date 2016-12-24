@@ -8,6 +8,7 @@ import web, json
 from lxml import etree
 import lxml.html
 import lxml.html.clean
+from modules.posted import check_posted
 
 wikiuri = 'http://wiki.apertium.org/wiki/%s'
 wikisearchuri = 'http://wiki.apertium.org/api.php?action=query&list=search&srlimit=1&format=json&srsearch=%s&srwhat=%s'
@@ -32,7 +33,7 @@ def format_subsection(section):
     section = section.replace('%', '.')
     return section
 
-def apertium_wiki(phenny, origterm, to_nick=None):
+def apertium_wiki(phenny, input, origterm, to_nick=None):
     term = format_term(origterm)
     
     try:
@@ -77,6 +78,8 @@ def apertium_wiki(phenny, origterm, to_nick=None):
         words.pop()
         sentence = ' '.join(words) + ' [...]'
 
+    if hasattr(input, 'sender'):
+        check_posted(phenny, input, wikiuri % (format_term_display(term)))
     if to_nick:
         phenny.say(to_nick + ', ' + sentence + ' - ' + wikiuri % (format_term_display(term)))      
     else:
@@ -102,7 +105,7 @@ def awik(phenny, input):
          to_nick = matched_point.groups()[0]
          origterm = matched_point.groups()[1]
 
-    apertium_wiki(phenny, origterm, to_nick=to_nick)
+    apertium_wiki(phenny, input, origterm, to_nick=to_nick)
 
 
 awik.rule = r'\.(awik)\s(.*)'
@@ -113,7 +116,7 @@ awik.priority = 'high'
 
 def awik2(phenny, input):
     nick, _, __, lang, origterm = input.groups()
-    apertium_wiki(phenny, origterm, nick)
+    apertium_wiki(phenny, input, origterm, nick)
 
 
 awik2.rule = r'(\S*)(:|,)\s\.(awik)(\.[a-z]{2,3})?\s(.*)'
@@ -123,7 +126,7 @@ awik2.priority = 'high'
 
 def awik3(phenny, input):
     _, lang, origterm, __, nick = input.groups()
-    apertium_wiki(phenny, origterm, nick)
+    apertium_wiki(phenny, input, origterm, nick)
 
 
 awik3.rule = r'\.(awik)(\.[a-z]{2,3})?\s(.*)\s(->|→)\s(\S*)'  

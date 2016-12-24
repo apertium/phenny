@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # coding=utf-8
-"""
-apertium_translate.py - Phenny Translation Module
-"""
+'''
+apy.py - Apertium APy Module
+'''
 
 import re
 import urllib.request
@@ -11,6 +11,7 @@ import web
 from tools import GrumbleError, translate
 from modules import more
 import operator
+from humanize import naturaldelta
 
 headers = [(
     'User-Agent', 'Mozilla/5.0' +
@@ -18,8 +19,20 @@ headers = [(
     'Gecko/20071127 Firefox/2.0.0.11'
 )]
 
-Apy_errorData = 'Sorry, apertium APy did not return any data ☹'
-Apy_errorHttp = 'Sorry, apertium APy gave HTTP error %s: %s ☹'
+Apy_errorData = 'Sorry, Apertium APy did not return any data.'
+
+
+def handle_error(error):
+    response = error.read()
+    err = json.loads(response.decode('utf-8'))
+    if 'explanation' in err:
+        raise GrumbleError('Error {:d}: {:s}'.format(err['code'], err['explanation']))
+    raise GrumbleError('Error {:d}: {:s}'.format(err['code'], err['message']))
+
+
+def check_no_data(resp_data):
+    if not resp_data['responseData']:
+        raise GrumbleError(APy_errorData)
 
 
 def translate(phenny, translate_me, input_lang, output_lang='en'):
@@ -29,22 +42,26 @@ def translate(phenny, translate_me, input_lang, output_lang='en'):
     input_lang, output_lang = web.quote(input_lang), web.quote(output_lang)
     translate_me = web.quote(translate_me)
 
-    response = opener.open(phenny.config.APy_url+'/translate?q='+translate_me+'&langpair='+input_lang+"|"+output_lang).read()
+    try:
+        response = opener.open(phenny.config.APy_url + '/translate?q=' + translate_me +
+                               '&langpair=' + input_lang + '|' + output_lang).read()
+    except urllib.error.HTTPError as error:
+        handle_error(error)
+        return
 
     responseArray = json.loads(response.decode('utf-8'))
-    if int(responseArray['responseStatus']) != 200:
-        raise GrumbleError(Apy_errorHttp % (responseArray['responseStatus'], responseArray['responseDetails']))
     if responseArray['responseData']['translatedText'] == []:
         raise GrumbleError(Apy_errorData)
 
     translated_text = responseArray['responseData']['translatedText']
     return translated_text
 
+
 def apertium_translate(phenny, input):
-    """Translates a phrase using APy."""
+    '''Translates a phrase using APy.'''
     line = input.group(2)
     if not line:
-        raise GrumbleError("Need something to translate!")
+        raise GrumbleError('Need something to translate!')
 
     pairs = []
     guidelines = line.split('|')
@@ -60,30 +77,37 @@ def apertium_translate(phenny, input):
         raise GrumbleError('Phrase must be under 350 characters.')
 
     msg = translate_me
-    translated = ""
+    translated = ''
     for (input_lang, output_lang) in pairs:
         if input_lang == output_lang:
-            raise GrumbleError('Stop trying to confuse me!  Pick different languages ;)')
+            raise GrumbleError('Stop trying to confuse me! Pick different languages ;)')
         msg = translate(phenny, msg, input_lang, output_lang)
         if not msg:
-            raise GrumbleError('The %s to %s translation failed, sorry!' % (input_lang, output_lang))
+            raise GrumbleError('The {:s} to {:s} translation failed, sorry!'.format(input_lang, output_lang))
         msg = web.decode(msg)
         translated = msg
 
     phenny.reply(translated)
 
+apertium_translate.name = 't'
+apertium_translate.commands = ['t']
+apertium_translate.example = '.t I like pie en-es'
+apertium_translate.priority = 'high'
+
+
 def apertium_listlangs(phenny, input):
-    """Lists languages available for translation from/to."""
+    '''Lists languages available for translation from/to.'''
     opener = urllib.request.build_opener()
     opener.addheaders = headers
 
-    response = opener.open(phenny.config.APy_url+'/listPairs').read()
+    try:
+        response = opener.open(phenny.config.APy_url+'/listPairs').read()
+    except urllib.error.HTTPError as error:
+        handle_error(error)
+        return
 
     langs = json.loads(response.decode('utf-8'))
-    if int(langs['responseStatus']) != 200:
-        raise GrumbleError(Apy_errorHttp % (langs['responseStatus'], langs['responseDetails']))
-    if langs['responseData'] == []:
-        raise GrumbleError(Apy_errorData)
+    check_no_data(langs)
 
     outlangs = []
     for pair in langs['responseData']:
@@ -92,44 +116,49 @@ def apertium_listlangs(phenny, input):
         if pair['targetLanguage'] not in outlangs:
             outlangs.append(pair['targetLanguage'])
 
-    extra = "; more info: .listpairs lg"
+    extra = '; more info: .listpairs lg'
 
     first = True
-    allLangs = ""
+    allLangs = ''
     for lang in outlangs:
         if not first:
-            allLangs += ", "
+            allLangs += ', '
         else:
             first = False
         allLangs += lang
     phenny.say(allLangs + extra)
 
+apertium_listlangs.name = 'listlangs'
+apertium_listlangs.commands = ['listlangs']
+apertium_listlangs.example = '.listlangs'
+apertium_listlangs.priority = 'low'
+
+
 def apertium_listpairs(phenny, input):
-    """Lists translation pairs available to apertium translation"""
+    '''Lists translation pairs available to apertium translation'''
     lang = input.group(2)
 
     opener = urllib.request.build_opener()
     opener.addheaders = headers
 
-    response = opener.open(phenny.config.APy_url+'/listPairs').read()
+    try:
+        response = opener.open(phenny.config.APy_url+'/listPairs').read()
+    except urllib.error.HTTPError as error:
+        handle_error(error)
+        return
 
     langs = json.loads(response.decode('utf-8'))
-
-    langs = json.loads(response.decode('utf-8'))
-    if langs['responseData'] is []:
-        raise GrumbleError(Apy_errorData)
-    if int(langs['responseStatus']) != 200:
-        raise GrumbleError(Apy_errorHttp % (langs['responseStatus'], langs['responseDetails']))
+    check_no_data(langs)
 
     if not lang:
-        allpairs = ""
+        allpairs = ''
         first = True
         for pair in langs['responseData']:
             if not first:
-                allpairs += ","
+                allpairs += ','
             else:
                 first = False
-            allpairs += "%s→%s" % (pair['sourceLanguage'], pair['targetLanguage'])
+            allpairs += '{:s}  →  {:s}'.format(pair['sourceLanguage'], pair['targetLanguage'])
         phenny.say(allpairs)
     else:
         toLang = []
@@ -140,27 +169,33 @@ def apertium_listpairs(phenny, input):
             if pair['targetLanguage'] == lang:
                 toLang.append(pair['sourceLanguage'])
         first = True
-        froms = ""
+        froms = ''
         for lg in fromLang:
             if not first:
-                froms += ", "
+                froms += ', '
             else:
                 first = False
             froms += lg
         first = True
-        tos = ""
+        tos = ''
         for lg in toLang:
             if not first:
-                tos += ", "
+                tos += ', '
             else:
                 first = False
             tos += lg
-        finals = tos + (" → %s → " % lang) + froms
+        finals = tos + ('  →  {:s}  →  '.format(lang)) + froms
 
         phenny.say(finals)
 
+apertium_listpairs.name = 'listpairs'
+apertium_listpairs.commands = ['listpairs']
+apertium_listpairs.example = '.listpairs ca'
+apertium_listpairs.priority = 'low'
+
+
 def apertium_analyse(phenny, input):
-    """Analyse text using Apertium APY"""
+    '''Analyse text using Apertium APy'''
     lang, text = input.groups()
 
     opener = urllib.request.build_opener()
@@ -172,25 +207,26 @@ def apertium_analyse(phenny, input):
     try:
         response = opener.open(constructed_url).read()
     except urllib.error.HTTPError as error:
-        response = error.read()
-        jobj = json.loads(response.decode('utf-8'))
-        if 'explanation' in jobj:
-            phenny.say('The following error occurred: ' + jobj['explanation'])
-        else:
-            phenny.say('An error occurred: ' + str(error))
+        handle_error(error)
         return
 
     jobj = json.loads(response.decode('utf-8'))
     messages = []
     for analysis, original in jobj:
-        messages.append(original + " → " + analysis)
+        messages.append(original + '  →  ' + analysis)
 
     more.add_messages(input.nick, phenny,
-                      "\n".join(messages),
+                      '\n'.join(messages),
                       break_up=lambda x, y: x.split('\n'))
 
+apertium_analyse.name = 'analyse'
+apertium_analyse.rule = r'\.analy[sz]e\s(\S*)\s(.*)'
+apertium_analyse.example = '.analyse kaz Сен бардың ба'
+apertium_analyse.priority = 'medium'
+
+
 def apertium_generate(phenny, input):
-    """Use Apertium APY's generate functionality"""
+    '''Use Apertium APy's generate functionality'''
     lang, text = input.groups()
 
     opener = urllib.request.build_opener()
@@ -202,26 +238,25 @@ def apertium_generate(phenny, input):
     try:
         response = opener.open(constructed_url).read()
     except urllib.error.HTTPError as error:
-        response = error.read()
-        jobj = json.loads(response.decode('utf-8'))
-        if 'explanation' in jobj:
-            phenny.say('The following error occurred: ' + jobj['explanation'])
-        else:
-            phenny.say('An error occurred: ' + str(error))
+        handle_error(error)
         return
 
     jobj = json.loads(response.decode('utf-8'))
     messages = []
     for generation, original in jobj:
-        messages.append(original + " → " + generation)
+        messages.append(original + '  →  ' + generation)
 
-    more.add_messages(input.nick, phenny,
-        "\n".join(messages),
-        break_up=lambda x, y: x.split('\n'))
+    more.add_messages(input.nick, phenny, '\n'.join(messages), break_up=lambda x, y: x.split('\n'))
+
+apertium_generate.name = 'generate'
+apertium_generate.rule = r'\.(?:generate|gen)\s(\S*)\s(.*)'
+apertium_generate.example = '.gen kaz ^сен<v><tv><imp><p2><sg>$'
+apertium_generate.priority = 'medium'
+
 
 def apertium_identlang(phenny, input):
-    """Identify Language using Apertium APY"""
-    lang, text = input.groups()
+    '''Identify the language for a given input.'''
+    text = input.group(1)
 
     opener = urllib.request.build_opener()
     opener.addheaders = headers
@@ -232,17 +267,22 @@ def apertium_identlang(phenny, input):
         response = opener.open(constructed_url).read()
         jsdata = json.loads(response.decode('utf-8'))
     except urllib.error.HTTPError as error:
-        response = error.read()
-        phenny.say(response)
+        handle_error(error)
+        return
 
     messages = []
     for key, value in jsdata.items():
-        messages.append(key + " = " + str(value))
-    more.add_messages(input.nick, phenny,
-        "\n".join(messages),
-        break_up=lambda x, y: x.split('\n'))
+        messages.append(key + ' = ' + str(value))
+    more.add_messages(input.nick, phenny, '\n'.join(messages), break_up=lambda x, y: x.split('\n'))
+
+apertium_identlang.name = 'identlang'
+apertium_identlang.commands = ['identlang']
+apertium_identlang.example = '.identlang Whereas disregard and contempt for which have outraged the conscience of mankind'
+apertium_identlang.priority = 'high'
+
 
 def apertium_stats(phenny, input):
+    '''Fetch function and usage statistics from APy.'''
     opener = urllib.request.build_opener()
     opener.addheaders = headers
 
@@ -251,98 +291,103 @@ def apertium_stats(phenny, input):
     try:
         response = opener.open(constructed_url).read()
         jdata = json.loads(response.decode('utf-8'))
-        holdingPipes = jdata['responseData']['holdingPipes']
-        uptime = jdata['responseData']['uptime']
         periodStats = jdata['responseData']['periodStats']
+        runningPipes = jdata['responseData']['runningPipes']
+        holdingPipes = jdata['responseData']['holdingPipes']
         useCount = jdata['responseData']['useCount']
+        uptime = jdata['responseData']['uptime']
     except urllib.error.HTTPError as error:
-        response = error.read()
-        phenny.say(response)
+        handle_error(error)
+        return
 
-    messages = []
-    for key, value in periodStats.items():
-        messages.append(key + " = " + str(value))
-    f_message = "HoldingPipes: " + str(holdingPipes) + " UpTime: " + str(uptime) + " Period Stats: " + " ".join(messages)
-    messages = []
-    for key, value in useCount.items():
-        messages.append(key + " = " + str(value))
-    lines = sorted(useCount.items(), key=operator.itemgetter(1),reverse=True)
+    # rudimentary pluralizer
+    def plural(num, word, be=False):
+        if num == 1:
+            if be:
+                return 'is ' + str(num) + ' ' + word
+            return str(num) + ' ' + word
+        if be:
+            return 'are ' + str(num) + ' ' + word + 's'
+        return str(num) + ' ' + word + 's'
 
-    n_lines = []
-    for x in lines:
-        n_lines.append("".join(str(x))
-            .replace("(", "")
-            .replace(")", "")
-            .replace("'", "")
-            .replace(",", ":"))
+    phenny.say('In the last hour, APy has processed {:s}, totalling {:s} '
+               'and {:.2f} seconds, averaging {:.2f} characters per second.'.format(
+                   plural(periodStats['requests'], 'request'), plural(periodStats['totChars'], 'character'),
+                   periodStats['totTimeSpent'], periodStats['charsPerSec']))
+    phenny.say('There {:s}:'.format(plural(len(runningPipes), 'running translation pipe', be=True)))
+    for langs in runningPipes:
+        phenny.say('  {:s}: {:s}, used {:s}'.format(
+            langs, plural(runningPipes[langs], 'instance'), plural(useCount[langs], 'time')))
+    phenny.say('There {:s}.'.format(plural(holdingPipes, 'holding pipe', be=True)))
+    phenny.say('APy has been up for {:s}.'.format(naturaldelta(uptime)))
 
-    max_length = 428
-    for y in range(len(n_lines)):
-         rs = f_message + " Use Count: " + ", ".join(n_lines[:y+1])
-         if len(rs) + 2 + len(n_lines[y+1]) >= max_length:
-             break
+apertium_stats.name = 'apystats'
+apertium_stats.commands = ['apystats']
+apertium_stats.example = '.apystats'
+apertium_stats.priority = 'low'
 
-    phenny.say(rs)
 
 def apertium_calccoverage(phenny, input):
-    """Get Coverage using Apertium APY"""
+    '''Calculate translation coverage for a language and a given input.'''
     lang, text = input.groups()
 
     opener = urllib.request.build_opener()
     opener.addheaders = headers
 
-    constructed_url = phenny.config.APy_url + '/getCoverage?lang=' + web.quote(lang)
+    constructed_url = phenny.config.APy_url + '/calcCoverage?lang=' + web.quote(lang)
     constructed_url += '&q=' + web.quote(text.strip())
 
     try:
         response = opener.open(constructed_url).read()
-        jsdata = json.loads(response.decode('utf-8'))
     except urllib.error.HTTPError as error:
-        response = error.read()
-        phenny.say(response)
-    messages = []
-    for key, value in jsdata.items():
-        messages.append(key + " = " + str(value))
-    more.add_messages(input.nick, phenny,
-        "\n".join(messages),
-        break_up=lambda x, y: x.split('\n'))
+        handle_error(error)
+        return
 
-apertium_listpairs.name = 'listpairs'
-apertium_listpairs.commands = ['listpairs']
-apertium_listpairs.example = '.listpairs ca'
-apertium_listpairs.priority = 'low'
-
-apertium_listlangs.name = 'listlangs'
-apertium_listlangs.commands = ['listlangs']
-apertium_listlangs.example = '.listlangs'
-apertium_listlangs.priority = 'low'
-
-apertium_translate.name = 't'
-apertium_translate.commands = ['t']
-apertium_translate.example = '.t I like pie en-es'
-apertium_translate.priority = 'high'
-
-apertium_analyse.name = 'analyse'
-apertium_analyse.rule = r'\.analy[sz]e\s(\S*)\s(.*)'
-apertium_analyse.example = '.analyse kaz Сен бардың ба'
-apertium_analyse.priority = 'high'
-
-apertium_generate.name = 'generate'
-apertium_generate.rule = r'\.(?:generate|gen)\s(\S*)\s(.*)'
-apertium_generate.example = '.gen kaz ^сен<v><tv><imp><p2><sg>$'
-apertium_generate.priority = 'high'
-
-apertium_identlang.name = 'identlang'
-apertium_identlang.commands = ['identlang']
-apertium_identlang.example = '.identlang Whereas disregard and contempt for which have outraged the conscience of mankind'
-apertium_identlang.priority = 'high'
-
-apertium_stats.name = 'apystats'
-apertium_stats.commands = ['apystats']
-apertium_stats.example = '.apystats'
-apertium_stats.priority = 'high'
+    jsdata = json.loads(response.decode('utf-8'))
+    phenny.say('Coverage is {:.1%}'.format(jsdata[0]))
 
 apertium_calccoverage.name = 'calccoverage'
-apertium_calccoverage.commands = ['calccoverage']
+apertium_calccoverage.rule = '.calccoverage\s(\S*)\s(.*)'
 apertium_calccoverage.example = '.calccoverage en-es Whereas disregard and contempt for which have outraged the conscience of mankind'
-apertium_calccoverage.priority = 'high'
+apertium_calccoverage.priority = 'medium'
+
+
+def apertium_perword(phenny, input):
+    '''Perform APy's tagger, morph, translate, and biltrans functions on individual words.'''
+    valid_funcs = ['tagger', 'disambig', 'biltrans', 'translate', 'morph']
+
+    # validate requested functions
+    funcs = input.group(2).split(' ')
+    for func in funcs:
+        if func not in valid_funcs:
+            phenny.say('The requested functions must be from the set ' + str(valid_funcs) + '.')
+            return
+
+    opener = urllib.request.build_opener()
+    opener.addheaders = headers
+
+    request_url = phenny.config.APy_url + '/perWord?lang=' + web.quote(input.group(1)) + '&modes='
+    for func in funcs[:-1]:
+        request_url += func + '+'
+    request_url += funcs[-1]
+    request_url += '&q=' + web.quote(input.group(3))
+
+    try:
+        response = opener.open(request_url).read()
+    except urllib.error.HTTPError as error:
+        handle_error(error)
+        return
+
+    jsdata = json.loads(response.decode('utf-8'))
+    for word in jsdata:
+        phenny.say(word['input'] + ':')
+        for func in funcs:
+            msg = '  {:9s}: '.format(func)
+            for out in word[func]:
+                msg += '{:s} '.format(out)
+            phenny.say(msg)
+
+apertium_perword.name = 'perword'
+apertium_perword.rule = '.perword\s(\S+)\s\((.+)\)\s(.+)'
+apertium_perword.example = '.perword fr (tagger morph) Bonjour tout le monde!'
+apertium_perword.priority = 'medium'

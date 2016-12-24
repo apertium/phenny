@@ -16,6 +16,8 @@ import web
 
 # githooks port
 PORT = 1234
+# maximum message length (see msg() in irc.py)
+MAX_MSG_LEN = 430
 
 # module-global variables
 Handler = None
@@ -101,25 +103,31 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 repo = data['organization']['login']+' (org)'
             if event == 'commit_comment':
                 commit = data['comment']['commit_id'][:7]
-                comment = data['comment']['body']
                 url = data['comment']['html_url']
                 url = url[:url.rfind('/') + 7]
-                msgs.append('{:}: {:} * new comment on commit {:}: {:} {:}' \
+                comment = truncate(
+                    '{:}: {:} * new comment on commit {:}:  {:}'
+                    .format(repo, user, commit, url),
+                    data['comment']['body'])
+                msgs.append('{:}: {:} * new comment on commit {:}: {:} {:}'
                             .format(repo, user, commit, comment, url))
             elif event == 'create' or event == 'delete':
                 ref = data['ref']
                 type_ = data['ref_type']
-                msgs.append('{:}: {:} * {:} {:} {:}d {:}' \
+                msgs.append('{:}: {:} * {:} {:} {:}d {:}'
                             .format(repo, user, type_, ref, event))
             elif event == 'fork':
                 url = data['forkee']['html_url']
-                msgs.append('{:}: {:} forked this repo {:}' \
+                msgs.append('{:}: {:} forked this repo {:}'
                             .format(repo, user, url))
             elif event == 'issue_comment':
                 number = data['issue']['number']
-                comment = data['comment']['body']
                 url = data['issue']['html_url']
-                msgs.append('{:}: {:} * new comment on issue #{:}: {:} {:}' \
+                comment = truncate(
+                    '{:}: {:} * new comment on issue #{:}:  {:}'
+                    .format(repo, user, number, url),
+                    data['comment']['body'])
+                msgs.append('{:}: {:} * new comment on issue #{:}: {:} {:}'
                             .format(repo, user, number, comment, url))
             elif event == 'issues':
                 number = data['issue']['number']
@@ -127,16 +135,16 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 action = data['action']
                 url = data['issue']['html_url']
                 opt = ''
-                if data['issue']['assignee'] is not None:
+                if data['issue']['assignee']:
                     opt = 'to ' + data['issue']['assignee']
                 elif 'label' in data:
                     opt = 'with ' + data['label']['name']
-                msgs.append('{:}: {:} * issue #{:} "{:}" {:} {:} {:}' \
+                msgs.append('{:}: {:} * issue #{:} "{:}" {:} {:} {:}'
                             .format(repo, user, number, title, action, opt, url))
             elif event == 'member':
                 new_user = data['member']['login']
                 action = data['action']
-                msgs.append('{:}: {:} * user {:} {:} as collaborator {:}' \
+                msgs.append('{:}: {:} * user {:} {:} as collaborator {:}'
                             .format(repo, user, new_user, action))
             elif event == 'membership':
                 new_user = data['member']['login']
@@ -144,7 +152,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 prep = ['to', 'from'][int(action == 'removed')]
                 scope = data['scope']
                 name = data['team']['name']
-                msgs.append('{:}: user {:} {:} {:} {:} {:} {:}' \
+                msgs.append('{:}: user {:} {:} {:} {:} {:} {:}'
                             .format(repo, new_user, action, prep, scope, name))
             elif event == 'pull_request':
                 number = data['number']
@@ -152,46 +160,49 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 action = data['action']
                 url = data['pull_request']['html_url']
                 opt = ''
-                if data['pull_request']['assignee'] is not None:
+                if data['pull_request']['assignee']:
                     opt = 'to ' + data['pull_request']['assignee']
-                msgs.append('{:}: {:} * pull request #{:} "{:}" {:} {:} {:}' \
+                msgs.append('{:}: {:} * pull request #{:} "{:}" {:} {:} {:}'
                             .format(repo, user, number, title, action, opt, url))
             elif event == 'pull_request_review_comment':
                 number = data['pull_request']['number']
-                comment = data['comment']['body']
                 url = data['comment']['html_url']
-                msgs.append('{:}: {:} * new comment on pull request #{:}: {:} {:}' \
+                comment = truncate(
+                    '{:}: {:} * new comment on pull request #{:}:  {:}'
+                    .format(repo, user, number, url),
+                    data['comment']['body'])
+                msgs.append('{:}: {:} * new comment on pull request #{:}: {:} {:}'
                             .format(repo, user, number, comment, url))
             elif event == 'push':
                 for commit in data['commits']:
-                    msgs.append(self.return_data("github", data, commit) \
-                            + ' ' + commit['url'][:commit['url'].rfind('/') + 7])
+                    msgs.append(self.return_data("github", data, commit) + ' ' +
+                                commit['url'][:commit['url'].rfind('/') + 7])
             elif event == 'release':
                 tag = data['release']['tag_name']
                 action = data['action']
                 url = data['release']['html_url']
-                msgs.append('{:}: {:} * release {:} {:} {:}' \
+                msgs.append('{:}: {:} * release {:} {:} {:}'
                             .format(repo, user, tag, action, url))
             elif event == 'repository':
                 name = data['repository']['name']
                 action = data['action']
                 url = data['repository']['url']
-                msgs.append('new repository {:} {:} by {:} {:}' \
+                msgs.append('new repository {:} {:} by {:} {:}'
                             .format(name, action, user, url, url))
             elif event == 'team_add':
                 name = data['repository']['full_name']
                 team = data['team']['name']
-                msgs.append('repository {:} added to team {:} {:}' \
+                msgs.append('repository {:} added to team {:} {:}'
                             .format(name, team))
             elif event == 'ping':
                 org = data['organization']
                 sender = data['sender']
-                msgs.append('ping from {:}, org: {:}'\
+                msgs.append('ping from {:}, org: {:}'
                             .format(sender, org))
             else:
                 msgs.append('sorry, event {:} not supported yet.'.format(event))
                 msgs.append(str(data.keys()))
-            #print("DEBUG:msgs: "+str(msgs))
+#            print("DEBUG:msgs: "+str(msgs))
         elif 'Jenkins' in self.headers['User-Agent']:
             msgs.append('Jenkins: {}'.format(data['message']))
         # not github or Jenkins
@@ -226,23 +237,22 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         # post all messages to all channels
         # except where specified in the config
         for msg in msgs:
-            if msg != None:
+            if msg:
                 if hasattr(self.phenny.config, 'git_channels') and repo in self.phenny.config.git_channels:
-                   for chan in self.phenny.config.git_channels[repo]:
-                       self.phenny.bot.msg(chan, msg)
+                    for chan in self.phenny.config.git_channels[repo]:
+                        self.phenny.bot.msg(chan, msg)
                 else:
-                   for chan in self.phInput.chans:
+                    for chan in self.phInput.chans:
                         self.phenny.bot.msg(chan, msg)
 
         # send OK code and notify firespeaker
-        #print("sending 200 response")
+#        print("sending 200 response")
         self.send_response(200)
-        #self.finish()
+#        self.finish()
         self.send_header("Content-type", "text/html")
         self.end_headers()
-        #self.phenny.bot.msg("firespeaker", "200 OK: ")
+#        self.phenny.bot.msg("firespeaker", "200 OK: ")
         print("DONE!")
-	
 
     def getBBFiles(self, filelist):
         '''Sort filelist into added, modified, and removed files
@@ -383,13 +393,15 @@ def get_commit_info(phenny, repo, sha):
 
     url = data['html_url']
 
-    return (author, comment, modified_paths, added_paths, removed_paths, rev,\
-        date), url
+    return (author, comment, modified_paths, added_paths, removed_paths,
+            rev, date), url
 
-def truncate(msg, length):
-    while len(msg) > length:
-        msg = msg[:msg.rfind(' ')]
-    return msg
+
+def truncate(non_trunc, trunc):
+    while len(non_trunc + trunc) > MAX_MSG_LEN:
+        trunc = trunc[:trunc.rfind(' ')] + '...'
+    return trunc
+
 
 def get_recent_commit(phenny, input):
     '''Get recent commit information for each repository Begiak monitors. This
@@ -403,10 +415,7 @@ def get_recent_commit(phenny, input):
         msg = generate_report(repo, *info)
         # the URL is truncated so that it has at least 6 sha characters
         url = url[:url.rfind('/') + 7]
-        if len(msg + ' ' + url) <= 430:
-            phenny.say(msg + ' ' + url)
-        else:
-            phenny.say(truncate(msg, 430 - len(url) - 4) + '... ' + url)
+        phenny.say('{:s} {:s}'.format(truncate(' ' + url, msg), url))
 # command metadata and invocation
 get_recent_commit.rule = ('$nick', 'recent')
 get_recent_commit.priority = 'medium'
@@ -442,8 +451,6 @@ def retrieve_commit(phenny, input):
     msg = generate_report(repo, *info)
     # the URL is truncated so that it has at least 6 sha characters
     url = url[:url.rfind('/') + 7]
-    if len(msg + ' ' + url) <= 430:
-        phenny.say(msg + ' ' + url)
-    else:
-        phenny.say(truncate(msg, 430 - len(url) - 4) + '... ' + url)
+    phenny.say('{:s} {:s}'.format(truncate(' ' + url, msg), url))
+# command metadata and invocation
 retrieve_commit.rule = ('$nick', 'info(?: +(.*))')

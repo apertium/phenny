@@ -278,9 +278,10 @@ def apertium_stats(phenny, input):
 
     max_length = 428
     for y in range(len(n_lines)):
-         rs = f_message + " Use Count: " + ", ".join(replaced_messages[:y+1])
-         if len(rs) + 2 + len(replace_messages[y+1]) >= max_length:
+         rs = f_message + " Use Count: " + ", ".join(n_lines[:y+1])
+         if len(rs) + 2 + len(n_lines[y+1]) >= max_length:
              break
+
     phenny.say(rs)
 
 def apertium_calccoverage(phenny, input):

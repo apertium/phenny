@@ -17,11 +17,18 @@ import web
 # githooks port
 PORT = 1234
 # maximum message length (see msg() in irc.py)
+# overriden if MAX_MSG_LEN exists in the config
 MAX_MSG_LEN = 430
 
 # module-global variables
 Handler = None
 httpd = None
+
+
+def truncate(non_trunc, trunc):
+    while len(non_trunc + trunc) > MAX_MSG_LEN:
+        trunc = trunc[:trunc.rfind(' ')] + '...'
+    return trunc
 
 
 # githooks handler
@@ -246,12 +253,9 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                         self.phenny.bot.msg(chan, msg)
 
         # send OK code and notify firespeaker
-#        print("sending 200 response")
         self.send_response(200)
-#        self.finish()
         self.send_header("Content-type", "text/html")
         self.end_headers()
-#        self.phenny.bot.msg("firespeaker", "200 OK: ")
         print("DONE!")
 
     def getBBFiles(self, filelist):
@@ -267,10 +271,12 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
 def setup_server(phenny, input):
     '''Set up and start hooks server.'''
 
-    global Handler, httpd
+    global Handler, httpd, MAX_MSG_LEN
     Handler = MyHandler
     Handler.phenny = phenny
     Handler.phInput = input
+    if hasattr(phenny.config, 'MAX_MSG_LEN'):
+        MAX_MSG_LEN = phenny.config.MAX_MSG_LEN
     httpd = socketserver.TCPServer(("", PORT), Handler)
     phenny.say("Server is up and running on port %s" % PORT)
     httpd.serve_forever()
@@ -395,12 +401,6 @@ def get_commit_info(phenny, repo, sha):
 
     return (author, comment, modified_paths, added_paths, removed_paths,
             rev, date), url
-
-
-def truncate(non_trunc, trunc):
-    while len(non_trunc + trunc) > MAX_MSG_LEN:
-        trunc = trunc[:trunc.rfind(' ')] + '...'
-    return trunc
 
 
 def get_recent_commit(phenny, input):

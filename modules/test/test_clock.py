@@ -8,6 +8,7 @@ import datetime
 import unittest
 from mock import MagicMock, Mock, patch
 from modules.clock import f_time, beats, yi, tock, npl
+from nose.tools import nottest
 
 
 class TestClock(unittest.TestCase):
@@ -15,6 +16,7 @@ class TestClock(unittest.TestCase):
         self.phenny = MagicMock()
 
     @patch('time.time')
+    @nottest
     def test_time(self, mock_time):
         mock_time.return_value = 1338674651
         input = Mock(group=lambda x: 'EDT')

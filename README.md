@@ -1,5 +1,5 @@
 # phenny
-[![Build Status](https://travis-ci.org/mutantmonkey/phenny.png?branch=master)](https://travis-ci.org/mutantmonkey/phenny)
+[![Build Status](https://travis-ci.org/goavki/phenny.png?branch=master)](https://travis-ci.org/goavki/phenny)
 
 This is phenny, a Python IRC bot. Originally written by Sean B. Palmer, it has
 been ported to Python3.

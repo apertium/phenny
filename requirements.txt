@@ -4,3 +4,4 @@ nose
 requests
 feedparser
 humanize
+coverage

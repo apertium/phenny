@@ -47,6 +47,17 @@ class TestAPy(unittest.TestCase):
         for moc in mocks:
             moc.reset_mock()
 
+    def check_exceptions(self, bad_list, name, reason=None):
+        if not reason:
+            reason = 'invalid input to {:s}'.format(name.__name__)
+        for inp in bad_list:
+            self.input.group.return_value = inp
+            try:
+                name.__call__(self.phenny, self.input)
+                raise AssertionError('No exception raised for {:s}!'.format(reason))
+            except GrumbleError:
+                pass
+
     def test_translate_langs(self, mock_open):
         # single language
         self.input.group.return_value = 'eng-spa ' + self.texts['eng']
@@ -66,15 +77,6 @@ class TestAPy(unittest.TestCase):
         assert self.phenny.reply.call_args_list == [mock.call(self.texts[lg]) for lg in langs]
         self.reset_mocks(self.phenny, mock_open)
 
-        # self-translation
-        self.input.group.return_value = 'en-en Translate to the same language?'
-        try:
-            apy.apertium_translate(self.phenny, self.input)
-            raise AssertionError('No exception raised for self-translation!')
-        except GrumbleError:
-            pass
-        self.reset_mocks(self.phenny, mock_open)
-
     @mock.patch('modules.apy.handle_error')
     def test_translate_non_langs(self, mock_handle, mock_open):
         mock_handle.side_effect = GrumbleError('some message')
@@ -88,13 +90,10 @@ class TestAPy(unittest.TestCase):
         self.reset_mocks(self.phenny, mock_open, mock_handle)
 
         # bad input
-        for inp in [self.texts['spa'], 'spa ' + self.texts['spa'], 'spa-eng']:
-            self.input.group.return_value = inp
-            try:
-                apy.apertium_translate(self.phenny, self.input)
-                raise AssertionError('No exception raised for missing translation parameters!')
-            except GrumbleError:
-                pass
+        self.check_exceptions([self.texts['spa'], 'spa ' + self.texts['spa'], 'spa-eng'],
+                              apy.apertium_translate)
+        self.check_exceptions(['en-en Translate to the same language?'],
+                              apy.apertium_translate, 'self-translation')
         self.reset_mocks(self.phenny, mock_open, mock_handle)
 
         # non-existent language with actual language
@@ -107,18 +106,14 @@ class TestAPy(unittest.TestCase):
         assert mock_handle.called
         self.phenny.reply.assert_called_once_with(self.texts['eng'])
         self.phenny.say.assert_called_once_with('spa-zzz: some message')
-        self.reset_mocks(self.phenny, mock_open, mock_handle)
 
     def test_translate_admin(self, mock_open):
         self.input.group.return_value = 'eng-spa ' + self.texts['eng_long']
 
         # restricted length for non-admin
         self.input.admin = False
-        try:
-            apy.apertium_translate(self.phenny, self.input)
-            raise AssertionError('No exception raised for long non-admin translation!')
-        except GrumbleError:
-            pass
+        self.check_exceptions(['eng-spa ' + self.texts['eng_long']],
+                              apy.apertium_translate, 'long non-admin translation!')
         self.reset_mocks(self.phenny, mock_open)
 
         # non-restricted length for admin
@@ -131,15 +126,16 @@ class TestAPy(unittest.TestCase):
         self.reset_mocks(self.phenny, mock_open)
 
     def test_lists(self, mock_open):
+        langs = ['eng', 'spa', 'fra']
+        pairs = [('eng', 'spa'), ('spa', 'eng'), ('spa', 'fra')]
         mock_open.return_value.read.return_value = bytes(dumps(
-            {'responseData': [{'sourceLanguage': 'eng', 'targetLanguage': 'spa'},
-                              {'sourceLanguage': 'spa', 'targetLanguage': 'eng'},
-                              {'sourceLanguage': 'spa', 'targetLanguage': 'fra'}]}), 'utf-8')
+            {'responseData': [{'sourceLanguage': inlg, 'targetLanguage': outlg}
+                              for inlg, outlg in pairs]}), 'utf-8')
 
         # single languages
         apy.apertium_listlangs(self.phenny, self.input)
         mock_open.assert_called_once_with(self.phenny.config.APy_url + '/listPairs')
-        for lang in ['eng', 'spa', 'fra']:
+        for lang in langs:
             assert lang in self.phenny.say.call_args[0][0]
         self.reset_mocks(self.phenny, mock_open)
 
@@ -147,28 +143,39 @@ class TestAPy(unittest.TestCase):
         self.input.group.return_value = ''
         apy.apertium_listpairs(self.phenny, self.input)
         mock_open.assert_called_once_with(self.phenny.config.APy_url + '/listPairs')
-        for pair in ['eng  →  spa', 'spa  →  eng', 'spa  →  fra']:
-            assert pair in self.phenny.say.call_args[0][0]
+        for pair in pairs:
+            assert '{:s}  →  {:s}'.format(*pair) in self.phenny.say.call_args[0][0]
         self.reset_mocks(self.phenny, mock_open)
 
         # language pairs for a given language
-        self.input.group.return_value = 'spa'
+        lang = 'spa'
+        self.input.group.return_value = lang
+        to_lang = []
+        from_lang = []
+        for pair in pairs:
+            if pair[0] == lang:
+                to_lang.append(pair[1])
+            if pair[1] == lang:
+                from_lang.append(pair[0])
         apy.apertium_listpairs(self.phenny, self.input)
         mock_open.assert_called_once_with(self.phenny.config.APy_url + '/listPairs')
-        self.phenny.say.assert_called_once_with('eng  →  spa  →  eng, fra')
+        apy_from_lang, lang, apy_to_lang = self.phenny.say.call_args[0][0].split('  →  ')
+        assert set(to_lang) == set(apy_to_lang.split(', '))
+        assert set(from_lang) == set(apy_from_lang.split(', '))
         self.reset_mocks(self.phenny, mock_open)
 
     @mock.patch('modules.apy.more.add_messages')
     def test_analyze_generate(self, mock_addmsgs, mock_open):
         # analyze
-        anas = [['analyze/analyze<tags>', 'analyze'], ['this/this<tags>', 'this']]
-        self.input.group.return_value = 'eng analyze this'
+        words = ['analyze', 'this']
+        anas = [['{0}/{0}<tags>'.format(word), word] for word in words]
+        self.input.group.return_value = 'eng ' + ' '.join(words)
         mock_open.return_value.read.return_value = bytes(dumps(anas), 'utf-8')
         apy.apertium_analyse(self.phenny, self.input)
         mock_open.assert_called_once_with('{:s}/analyse?lang={:s}&q={:s}'.format(
-            self.phenny.config.APy_analyseURL, 'eng', quote('analyze this')))
+            self.phenny.config.APy_analyseURL, 'eng', quote(' '.join(words))))
         msgs = '\n'.join(['{:s}  →  {:s}'.format(orig, ana) for ana, orig in anas])
-        assert mock_addmsgs.call_args[0] == (self.input.nick, self.phenny, msgs)
+        assert mock_addmsgs.call_args[0][2] == msgs
         self.reset_mocks(mock_open, mock_addmsgs)
 
         # generate
@@ -179,8 +186,12 @@ class TestAPy(unittest.TestCase):
         mock_open.assert_called_once_with('{:s}/generate?lang={:s}&q={:s}'.format(
             self.phenny.config.APy_analyseURL, 'eng', quote('^generate<tags>$')))
         msgs = '\n'.join(['{:s}  →  {:s}'.format(orig, gen) for gen, orig in gens])
-        assert mock_addmsgs.call_args[0] == (self.input.nick, self.phenny, msgs)
+        assert mock_addmsgs.call_args[0][2] == msgs
         self.reset_mocks(mock_open, mock_addmsgs)
+
+        # bad input
+        self.check_exceptions([' '.join(words), 'eng'], apy.apertium_analyse)
+        self.check_exceptions([' '.join(words), 'eng'], apy.apertium_generate)
 
     @mock.patch('modules.apy.more.add_messages')
     def test_identlang(self, mock_addmsgs, mock_open):
@@ -190,8 +201,8 @@ class TestAPy(unittest.TestCase):
         apy.apertium_identlang(self.phenny, self.input)
         mock_open.assert_called_once_with('{:s}/identifyLang?q={:s}'.format(
             self.phenny.config.APy_url, quote(self.texts['eng'])))
-        msgs = '\n'.join(['{:s} = {:s}'.format(lg, str(val)) for lg, val in langs.items()])
-        assert mock_addmsgs.call_args[0] == (self.input.nick, self.phenny, msgs)
+        msgs = set(['{:s} = {:s}'.format(lg, str(val)) for lg, val in langs.items()])
+        assert set(mock_addmsgs.call_args[0][2].split('\n')) == msgs
         self.reset_mocks(mock_open, mock_addmsgs)
 
     def test_stats(self, mock_open):
@@ -204,6 +215,7 @@ class TestAPy(unittest.TestCase):
         self.reset_mocks(mock_open)
 
     def test_coverage(self, mock_open):
+        # good input
         self.input.group.return_value = 'eng ' + self.texts['eng']
         mock_open.return_value.read.return_value = bytes(dumps([0.9]), 'utf-8')
         apy.apertium_calccoverage(self.phenny, self.input)
@@ -211,6 +223,9 @@ class TestAPy(unittest.TestCase):
             self.phenny.config.APy_url, 'eng', quote(self.texts['eng'])))
         self.phenny.say.assert_called_once_with('Coverage is 90.0%')
         self.reset_mocks(self.phenny, mock_open)
+
+        # bad input
+        self.check_exceptions(['eng', self.texts['eng'], 'eng-spa'], apy.apertium_calccoverage)
 
     def test_perword(self, mock_open):
         # valid perword functions
@@ -233,10 +248,8 @@ class TestAPy(unittest.TestCase):
         assert self.phenny.say.call_args_list == calls
         self.reset_mocks(self.phenny, mock_open)
 
-        # invalid perword function 'nonfunc'
-        self.input.group.return_value = 'fra (tagger nonfunc) word'
-        try:
-            apy.apertium_perword(self.phenny, self.input)
-            raise AssertionError('No exception raised for invalid perword function!')
-        except GrumbleError:
-            pass
+        # bad input
+        self.check_exceptions(['fra (tagger nonfunc) word'], apy.apertium_perword,
+                              'invalid perword function')
+        self.check_exceptions(['fra', 'fra (tagger)', '(tagger)', 'fra word',
+                               '(tagger morph) word'], apy.apertium_perword)

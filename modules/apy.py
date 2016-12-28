@@ -324,8 +324,7 @@ def apertium_perword(phenny, input):
     # validate requested functions
     funcs = cmd.group(2).split(' ')
     if not set(funcs) <= valid_funcs:
-        phenny.say('The requested functions must be from the set {:s}.'.format(str(valid_funcs)))
-        return
+        raise GrumbleError('The requested functions must be from the set {:s}.'.format(str(valid_funcs)))
 
     opener = urllib.request.build_opener()
     opener.addheaders = headers

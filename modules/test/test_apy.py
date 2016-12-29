@@ -174,7 +174,7 @@ class TestAPy(unittest.TestCase):
         apy.apertium_analyse(self.phenny, self.input)
         mock_open.assert_called_once_with('{:s}/analyse?lang={:s}&q={:s}'.format(
             self.phenny.config.APy_analyseURL, 'eng', quote(' '.join(words))))
-        msgs = '\n'.join(['{:s}  →  {:s}'.format(orig, ana) for ana, orig in anas])
+        msgs = '\n'.join('{:s}  →  {:s}'.format(orig, ana) for ana, orig in anas)
         assert mock_addmsgs.call_args[0][2] == msgs
         self.reset_mocks(mock_open, mock_addmsgs)
 
@@ -185,7 +185,7 @@ class TestAPy(unittest.TestCase):
         apy.apertium_generate(self.phenny, self.input)
         mock_open.assert_called_once_with('{:s}/generate?lang={:s}&q={:s}'.format(
             self.phenny.config.APy_analyseURL, 'eng', quote('^generate<tags>$')))
-        msgs = '\n'.join(['{:s}  →  {:s}'.format(orig, gen) for gen, orig in gens])
+        msgs = '\n'.join('{:s}  →  {:s}'.format(orig, gen) for gen, orig in gens)
         assert mock_addmsgs.call_args[0][2] == msgs
         self.reset_mocks(mock_open, mock_addmsgs)
 
@@ -201,7 +201,7 @@ class TestAPy(unittest.TestCase):
         apy.apertium_identlang(self.phenny, self.input)
         mock_open.assert_called_once_with('{:s}/identifyLang?q={:s}'.format(
             self.phenny.config.APy_url, quote(self.texts['eng'])))
-        msgs = set(['{:s} = {:s}'.format(lg, str(val)) for lg, val in langs.items()])
+        msgs = set('{:s} = {:s}'.format(lg, str(val)) for lg, val in langs.items())
         assert set(mock_addmsgs.call_args[0][2].split('\n')) == msgs
         self.reset_mocks(mock_open, mock_addmsgs)
 

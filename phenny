@@ -92,6 +92,8 @@ def create_default_config(fn):
     # default = 300 (5 hrs))
     pester_after_dismiss = 300
 
+    sf_issues_url = ''
+
     # EOF
     """), file=f)
     f.close()

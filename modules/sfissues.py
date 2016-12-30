@@ -1,6 +1,6 @@
 import feedparser
  
-def get_Headlines(rss_url):
+def get_headlines(rss_url):
     tickets = []
     feed = feedparser.parse(rss_url)
     for ticket_item in feed['items']:
@@ -11,7 +11,7 @@ def bugs(phenny, input):
     messages = []
     rep_messages = []
     url = phenny.config.sf_issues_url 
-    messages.extend(get_Headlines(url))
+    messages.extend(get_headlines(url))
     for items in messages:
         if items[0] != '#':
             rep_messages.append(items)

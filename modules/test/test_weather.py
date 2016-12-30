@@ -5,12 +5,20 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 
 import re
 import unittest
+import requests
 from mock import MagicMock, Mock, patch
 from modules.weather import location, local, code, f_weather
 
 
 class TestWeather(unittest.TestCase):
     def setUp(self):
+        for dom, name in [('https://nominatim.openstreetmap.org', 'Location'),
+                          ('http://www.flightstats.com', 'Airport'),
+                          ('http://tgftp.nws.noaa.gov', 'NOAA weather')]:
+            try:
+                requests.get(dom).raise_for_status()
+            except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError):
+                self.skipTest('{:s} data domain is down, skipping test.'.format(name))
         self.phenny = MagicMock()
 
     def test_locations(self):
@@ -36,7 +44,7 @@ class TestWeather(unittest.TestCase):
             ('80201', check_places("Denver", "Colorado")),
 
             ("Berlin", check_places("Berlin", "Deutschland")),
-            ("Paris", check_places("Paris", "France métropolitaine")),
+            ("Paris", check_places("Paris", "Île-de-France")),
             ("Vilnius", check_places("Vilnius", "Lietuva")),
 
             ('Blacksburg, VA', check_places("Blacksburg", "Virginia")),

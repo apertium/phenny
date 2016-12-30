@@ -29,7 +29,7 @@ def tfw(phenny, input, fahrenheit=False, celsius=False, mev=False):
         phenny.say("WHERE THE FUCK IS THAT? Try another location.")
         return
 
-    uri = 'http://weather.noaa.gov/pub/data/observations/metar/stations/%s.TXT'
+    uri = 'http://tgftp.nws.noaa.gov/data/observations/metar/stations/%s.TXT'
     try:
         bytes = web.get(uri % icao_code)
     except AttributeError:

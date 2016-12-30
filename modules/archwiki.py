@@ -14,7 +14,7 @@ import re
 import web
 import wiki
 
-wikiapi = 'https://wiki.archlinux.org/api.php?action=query&list=search&srsearch={0}&limit=1&prop=snippet&format=json'
+wikiapi = 'https://wiki.archlinux.org/api.php?action=query&list=search&srsearch={0}&limit=1&format=json'
 wikiuri = 'https://wiki.archlinux.org/index.php/{0}'
 wikisearch = 'https://wiki.archlinux.org/index.php/Special:Search?' \
                           + 'search={0}&fulltext=Search'

@@ -7,12 +7,21 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 import re
 import unittest
 import tools
+import requests
 from mock import MagicMock, Mock
 from modules import tfw
 
 
 class TestTfw(unittest.TestCase):
     def setUp(self):
+        try:
+            requests.get('https://nominatim.openstreetmap.org').raise_for_status()
+        except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError):
+            self.skipTest('OpenStreetMap API is down, skipping test.')
+        try:
+            requests.get('http://tgftp.nws.noaa.gov').raise_for_status()
+        except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError):
+            self.skipTest('NOAA weather data unavailable, skipping test.')
         self.phenny = MagicMock()
 
     def test_badloc(self):

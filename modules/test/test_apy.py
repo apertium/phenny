@@ -52,11 +52,9 @@ class TestAPy(unittest.TestCase):
             reason = 'invalid input to {:s}'.format(name.__name__)
         for inp in bad_list:
             self.input.group.return_value = inp
-            try:
+            with self.assertRaises(GrumbleError,
+                                   msg='No exception raised for {:s}!'.format(reason)):
                 name.__call__(self.phenny, self.input)
-                raise AssertionError('No exception raised for {:s}!'.format(reason))
-            except GrumbleError:
-                pass
 
     def test_translate_langs(self, mock_open):
         # single language
@@ -73,8 +71,10 @@ class TestAPy(unittest.TestCase):
             ' '.join(['spa-' + lg for lg in langs]), self.texts['spa'])
         mock_open.return_value.read.side_effect = [self.fake_json(lg) for lg in langs]
         apy.apertium_translate(self.phenny, self.input)
-        assert mock_open.call_args_list == [mock.call(self.format_query('spa', lg)) for lg in langs]
-        assert self.phenny.reply.call_args_list == [mock.call(self.texts[lg]) for lg in langs]
+        self.assertEqual(mock_open.call_args_list,
+                         [mock.call(self.format_query('spa', lg)) for lg in langs])
+        self.assertEqual(self.phenny.reply.call_args_list,
+                         [mock.call(self.texts[lg]) for lg in langs])
         self.reset_mocks(self.phenny, mock_open)
 
     @mock.patch('modules.apy.handle_error')
@@ -85,7 +85,7 @@ class TestAPy(unittest.TestCase):
         self.input.group.return_value = 'spa-zzz ' + self.texts['spa']
         mock_open.side_effect = HTTPError('url', 400, 'msg', 'hdrs', 'fp')
         apy.apertium_translate(self.phenny, self.input)
-        assert mock_handle.called
+        self.assertTrue(mock_handle.called)
         self.phenny.say.assert_called_once_with('spa-zzz: some message')
         self.reset_mocks(self.phenny, mock_open, mock_handle)
 
@@ -101,9 +101,9 @@ class TestAPy(unittest.TestCase):
         mock_open.side_effect = [mock.MagicMock(read=lambda: self.fake_json('eng')),
                                  HTTPError('url', 400, 'msg', 'hdrs', 'fp')]
         apy.apertium_translate(self.phenny, self.input)
-        assert mock_open.call_args_list == [mock.call(self.format_query('spa', 'eng')),
-                                            mock.call(self.format_query('spa', 'zzz'))]
-        assert mock_handle.called
+        self.assertEqual(mock_open.call_args_list, [mock.call(self.format_query('spa', 'eng')),
+                                                    mock.call(self.format_query('spa', 'zzz'))])
+        self.assertTrue(mock_handle.called)
         self.phenny.reply.assert_called_once_with(self.texts['eng'])
         self.phenny.say.assert_called_once_with('spa-zzz: some message')
 
@@ -136,7 +136,7 @@ class TestAPy(unittest.TestCase):
         apy.apertium_listlangs(self.phenny, self.input)
         mock_open.assert_called_once_with(self.phenny.config.APy_url + '/listPairs')
         for lang in langs:
-            assert lang in self.phenny.say.call_args[0][0]
+            self.assertIn(lang, self.phenny.say.call_args[0][0])
         self.reset_mocks(self.phenny, mock_open)
 
         # language pairs
@@ -144,7 +144,7 @@ class TestAPy(unittest.TestCase):
         apy.apertium_listpairs(self.phenny, self.input)
         mock_open.assert_called_once_with(self.phenny.config.APy_url + '/listPairs')
         for pair in pairs:
-            assert '{:s}  →  {:s}'.format(*pair) in self.phenny.say.call_args[0][0]
+            self.assertIn('{:s}  →  {:s}'.format(*pair), self.phenny.say.call_args[0][0])
         self.reset_mocks(self.phenny, mock_open)
 
         # language pairs for a given language
@@ -160,8 +160,8 @@ class TestAPy(unittest.TestCase):
         apy.apertium_listpairs(self.phenny, self.input)
         mock_open.assert_called_once_with(self.phenny.config.APy_url + '/listPairs')
         apy_from_lang, lang, apy_to_lang = self.phenny.say.call_args[0][0].split('  →  ')
-        assert set(to_lang) == set(apy_to_lang.split(', '))
-        assert set(from_lang) == set(apy_from_lang.split(', '))
+        self.assertEqual(set(to_lang), set(apy_to_lang.split(', ')))
+        self.assertEqual(set(from_lang), set(apy_from_lang.split(', ')))
         self.reset_mocks(self.phenny, mock_open)
 
     @mock.patch('modules.apy.more.add_messages')
@@ -175,7 +175,7 @@ class TestAPy(unittest.TestCase):
         mock_open.assert_called_once_with('{:s}/analyse?lang={:s}&q={:s}'.format(
             self.phenny.config.APy_analyseURL, 'eng', quote(' '.join(words))))
         msgs = '\n'.join('{:s}  →  {:s}'.format(orig, ana) for ana, orig in anas)
-        assert mock_addmsgs.call_args[0][2] == msgs
+        self.assertEqual(mock_addmsgs.call_args[0][2], msgs)
         self.reset_mocks(mock_open, mock_addmsgs)
 
         # generate
@@ -186,7 +186,7 @@ class TestAPy(unittest.TestCase):
         mock_open.assert_called_once_with('{:s}/generate?lang={:s}&q={:s}'.format(
             self.phenny.config.APy_analyseURL, 'eng', quote('^generate<tags>$')))
         msgs = '\n'.join('{:s}  →  {:s}'.format(orig, gen) for gen, orig in gens)
-        assert mock_addmsgs.call_args[0][2] == msgs
+        self.assertEqual(mock_addmsgs.call_args[0][2], msgs)
         self.reset_mocks(mock_open, mock_addmsgs)
 
         # bad input
@@ -202,7 +202,7 @@ class TestAPy(unittest.TestCase):
         mock_open.assert_called_once_with('{:s}/identifyLang?q={:s}'.format(
             self.phenny.config.APy_url, quote(self.texts['eng'])))
         msgs = set('{:s} = {:s}'.format(lg, str(val)) for lg, val in langs.items())
-        assert set(mock_addmsgs.call_args[0][2].split('\n')) == msgs
+        self.assertEqual(set(mock_addmsgs.call_args[0][2].split('\n')), msgs)
         self.reset_mocks(mock_open, mock_addmsgs)
 
     def test_stats(self, mock_open):
@@ -245,7 +245,7 @@ class TestAPy(unittest.TestCase):
             calls.append(mock.call(word['input'] + ':'))
             for func in funcs:
                 calls.append(mock.call('  {:9s}: {:s}'.format(func, ' '.join(word[func]))))
-        assert self.phenny.say.call_args_list == calls
+        self.assertEqual(self.phenny.say.call_args_list, calls)
         self.reset_mocks(self.phenny, mock_open)
 
         # bad input

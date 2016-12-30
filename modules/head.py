@@ -80,17 +80,15 @@ head.example = '.head http://www.w3.org/'
 
 r_title = re.compile(r'(?ims)<title[^>]*>(.*?)</title\s*>')
 r_entity = re.compile(r'&[A-Za-z0-9#]+;')
-
+r_url = r'((?:(?:https?:(?://)?)|w{3})[a-zA-Z0-9-._+]+(?::[0-9]+)?(?:/[a-zA-Z0-9-+_~/.,;&=?!#%]+?)?)\)?(?:$|(?:[.,:;](?: |$)))'
 
 def noteuri(phenny, input):
     uri = input.group(1)
     if not hasattr(phenny.bot, 'last_seen_uri'):
         phenny.bot.last_seen_uri = {}
     phenny.bot.last_seen_uri[input.sender] = uri
-noteuri.rule = r'.*(http[s]?://[^<> "\x01]+)[,.]?'
+noteuri.rule = r'.*' + r_url
 noteuri.priority = 'low'
-
-
 
 def snarfuri(phenny, input):
     uri = input.group(2)
@@ -98,7 +96,7 @@ def snarfuri(phenny, input):
 
     if title:
         phenny.msg(input.sender, title)
-snarfuri.rule = r'([^\.].*)?(http[s]?://[^<> "\x01]+)[,.]?'
+snarfuri.rule = r'([^\.].*)?' + r_url
 snarfuri.priority = 'low'
 snarfuri.thread = True
 

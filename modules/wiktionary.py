@@ -157,7 +157,10 @@ def wikitionary_lookup(phenny, word, to_user=None):
             phenny.say(result)
     else:
         apiResponse = json.loads(str(web.get(wikisearchapi.format(word))))
-        if len(apiResponse['query']['search']):
+        if 'suggestion' in apiResponse['query']['searchinfo']:
+            word = apiResponse['query']['searchinfo']['suggestion']
+            phenny.say("Perhaps you meant %s?" % repr(word))
+        elif len(apiResponse['query']['search']):
             word = apiResponse['query']['search'][0]['title']
             phenny.say("Perhaps you meant %s?" % repr(word))
         else:

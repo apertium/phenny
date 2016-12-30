@@ -17,8 +17,13 @@ r_from = re.compile(r'(?i)([+-]\d+):00 from')
 
 
 def location(q):
-    uri = 'https://nominatim.openstreetmap.org/search/?q={query}&format=json'.\
-        format(query=web.quote(q))
+    try:
+        r = int(q)
+        uri = 'https://nominatim.openstreetmap.org/search/?postalcode={query}&format=json'\
+            .format(query=web.quote(q))
+    except ValueError:
+        uri = 'https://nominatim.openstreetmap.org/search/?q={query}&format=json'\
+            .format(query=web.quote(q))
     results = web.get(uri)
     data = json.loads(results)
 
@@ -80,7 +85,7 @@ def f_weather(phenny, input):
         phenny.say("No ICAO code found, sorry")
         return
 
-    uri = 'http://weather.noaa.gov/pub/data/observations/metar/stations/%s.TXT'
+    uri = 'http://tgftp.nws.noaa.gov/data/observations/metar/stations/%s.TXT'
     try:
         bytes = web.get(uri % icao_code)
     except AttributeError:

@@ -2,11 +2,10 @@
 test_head.py - tests for the HTTP metadata utilities module
 author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
-
 import re
 import unittest
 from web import HTTPError
-from mock import MagicMock, Mock, patch
+from mock import MagicMock, patch
 from modules.head import head, snarfuri
 
 @patch('modules.head.web.head')

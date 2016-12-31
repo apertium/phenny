@@ -3,21 +3,19 @@
 test_wiktionary.py - tests for the wiktionary module
 author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
-
 import re
 import unittest
-import requests
-from mock import MagicMock, Mock
+from mock import MagicMock
 from modules import wiktionary
+from tools import is_up
 
 
 class TestWiktionary(unittest.TestCase):
     def setUp(self):
-        try:
-            requests.get('https://en.wiktionary.org').raise_for_status()
-        except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError):
+        if not is_up('https://en.wiktionary.org'):
             self.skipTest('Wiktionary is down, skipping test.')
         self.phenny = MagicMock()
+        self.input = MagicMock()
 
     def test_wiktionary(self):
         w = wiktionary.wiktionary(self.phenny, 'test')
@@ -29,20 +27,20 @@ class TestWiktionary(unittest.TestCase):
         self.assertEqual(len(w[1]), 0)
 
     def test_w(self):
-        input = Mock(group=lambda x: 'test')
-        wiktionary.w(self.phenny, input)
+        self.input.group.return_value = 'test'
+        wiktionary.w(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
         m = re.match('^test — noun: .*$', out, flags=re.UNICODE)
         self.assertTrue(m)
 
     def test_w_none(self):
         word = 'boook'
-        input = Mock(group=lambda x: word)
-        wiktionary.w(self.phenny, input)
+        self.input.group.return_value = word
+        wiktionary.w(self.phenny, self.input)
         self.phenny.say.assert_called_once_with('Perhaps you meant \'book\'?')
         self.phenny.say.reset_mock()
 
         word = 'vnuericjnrfu'
-        input = Mock(group=lambda x: word)
-        wiktionary.w(self.phenny, input)
+        self.input.group.return_value = word
+        wiktionary.w(self.phenny, self.input)
         self.phenny.say.assert_called_once_with("Couldn't find any definitions for {0}.".format(word))

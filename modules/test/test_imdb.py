@@ -2,29 +2,30 @@
 test_imdb.py - tests for the imdb module
 author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
-
 import re
 import unittest
-from mock import MagicMock, Mock
+from mock import MagicMock
 from modules.imdb import imdb_search, imdb
+from tools import is_up
 
 
 class TestImdb(unittest.TestCase):
     def setUp(self):
+        if not is_up('http://omdbapi.com'):
+            self.skipTest('OMDb server is down, skipping test.')
         self.phenny = MagicMock()
+        self.input = MagicMock()
 
     def test_imdb_search(self):
         data = imdb_search('Hackers')
-
-        assert 'Plot' in data
-        assert 'Title' in data
-        assert 'Year' in data
-        assert 'imdbID' in data
+        self.assertIn('Plot', data)
+        self.assertIn('Title', data)
+        self.assertIn('Year', data)
+        self.assertIn('imdbID', data)
 
     def test_imdb(self):
-        input = Mock(group=lambda x: 'Antitrust')
-        imdb(self.phenny, input)
-
+        self.input.group.return_value = 'Antitrust'
+        imdb(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
         pattern = re.compile(
             r'^.* \(.*\): .* http://imdb.com/title/[a-z\d]+$',
@@ -32,8 +33,6 @@ class TestImdb(unittest.TestCase):
         self.assertRegex(out, pattern)
 
     def test_imdb_none(self):
-        input = Mock(group=lambda x: None)
-        imdb(self.phenny, input)
-
-        self.phenny.say.assert_called_once_with(
-            ".imdb what?")
+        self.input.group.return_value = None
+        imdb(self.phenny, self.input)
+        self.phenny.say.assert_called_once_with(".imdb what?")

@@ -11,7 +11,9 @@ import http.client
 import os
 import re
 import urllib.request, urllib.parse, urllib.error, json
+import requests
 import web
+from time import time
 
 headers = {
    'User-Agent': 'Mozilla/5.0' + '(X11; U; Linux i686)' + 'Gecko/20071127 Firefox/2.0.0.11'
@@ -93,6 +95,17 @@ def get_page(domain, url, encoding='utf-8', port=80): #get the HTML of a webpage
     conn.request("GET", url, headers=headers)
     res = conn.getresponse()
     return res.read().decode(encoding)
+
+up_down = {}
+def is_up(url):
+    global up_down
+    if (url not in up_down) or (time() - up_down[url][1] > 600):
+        try:
+            requests.get(url).raise_for_status()
+            up_down[url] = (True, time())
+        except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError):
+            up_down[url] = (False, time())
+    return up_down[url][0]
 
 def translate(phenny, translate_me, input_lang, output_lang='en'): 
     input_lang, output_lang = urllib.parse.quote(input_lang), urllib.parse.quote(output_lang)

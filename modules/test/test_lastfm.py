@@ -2,11 +2,11 @@
 test_lastfm.py - tests for the lastfm module
 author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
-
 import re
 import unittest
-from mock import MagicMock, Mock
+from mock import MagicMock
 from modules.lastfm import now_playing
+from tools import is_up
 
 
 class TestLastfm(unittest.TestCase):
@@ -14,21 +14,24 @@ class TestLastfm(unittest.TestCase):
     user2 = 'telnoratti'
 
     def setUp(self):
+        if not is_up('https://ws.audioscrobbler.com'):
+            self.skipTest('LastFM server is down, skipping test.')
         self.phenny = MagicMock()
+        self.input = MagicMock()
 
     def test_now_playing(self):
-        input = Mock(group=lambda x: self.user1)
-        now_playing(self.phenny, input)
-
+        self.input.group.return_value = self.user1
+        now_playing(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
-        m = re.match('^{0} listened to ".+" by .+ on .+ .*$'.format(self.user1), out, flags=re.UNICODE)
+        m = re.match('^{0} listened to ".+" by .+ on .+ .*$'.format(self.user1),
+                     out, flags=re.UNICODE)
         self.assertTrue(m)
 
     def test_now_playing_sender(self):
-        input = Mock(group=lambda x: '')
-        input.nick = self.user1
-        now_playing(self.phenny, input)
-
+        self.input.group.return_value = ''
+        self.input.nick = self.user1
+        now_playing(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
-        m = re.match('^{0} listened to ".+" by .+ on .+ .*$'.format(self.user1), out, flags=re.UNICODE)
+        m = re.match('^{0} listened to ".+" by .+ on .+ .*$'.format(self.user1),
+                     out, flags=re.UNICODE)
         self.assertTrue(m)

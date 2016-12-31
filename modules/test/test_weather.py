@@ -2,12 +2,11 @@
 test_weather.py - tests for the weather module
 author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
-
 import re
 import unittest
-import requests
-from mock import MagicMock, Mock, patch
+from mock import MagicMock, patch
 from modules.weather import location, local, code, f_weather
+from tools import is_up
 
 
 class TestWeather(unittest.TestCase):
@@ -15,11 +14,10 @@ class TestWeather(unittest.TestCase):
         for dom, name in [('https://nominatim.openstreetmap.org', 'Location'),
                           ('http://www.flightstats.com', 'Airport'),
                           ('http://tgftp.nws.noaa.gov', 'NOAA weather')]:
-            try:
-                requests.get(dom).raise_for_status()
-            except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError):
+            if not is_up(dom):
                 self.skipTest('{:s} data domain is down, skipping test.'.format(name))
         self.phenny = MagicMock()
+        self.input = MagicMock()
 
     def test_locations(self):
         def check_places(*args):
@@ -60,20 +58,17 @@ class TestWeather(unittest.TestCase):
         self.assertEqual(icao, 'KSFO')
 
     def test_airport(self):
-        input = Mock(group=lambda x: 'KIAD')
-        f_weather(self.phenny, input)
-        
-        assert self.phenny.say.called is True
+        self.input.group.return_value = 'KIAD'
+        f_weather(self.phenny, self.input)
+        self.assertTrue(self.phenny.say.called)
 
     def test_place(self):
-        input = Mock(group=lambda x: 'Blacksburg')
-        f_weather(self.phenny, input)
-        
-        assert self.phenny.say.called is True
+        self.input.group.return_value = 'Blacksburg'
+        f_weather(self.phenny, self.input)
+        self.assertTrue(self.phenny.say.called)
 
     def test_notfound(self):
-        input = Mock(group=lambda x: 'Hell')
-        f_weather(self.phenny, input)
-        
+        self.input.group.return_value = 'Hell'
+        f_weather(self.phenny, self.input)
         self.phenny.say.called_once_with('#phenny',
                 "No NOAA data available for that location.")

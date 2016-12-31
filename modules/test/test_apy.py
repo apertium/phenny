@@ -3,7 +3,6 @@
 test_apy.py: unit tests for the APy module (apy.py)
 author: shardulc
 '''
-
 import unittest
 import mock
 import modules.apy as apy

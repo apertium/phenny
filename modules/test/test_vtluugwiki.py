@@ -2,26 +2,25 @@
 test_vtluugwiki.py - tests for the VTLUUG wiki module
 author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
-
 import re
 import unittest
-import requests
-from mock import MagicMock, Mock
+from mock import MagicMock
 from modules import vtluugwiki
+from tools import is_up
+
 
 # these tests are probably skipped because the vtluug.org website appears to be
 # permanently down
 class TestVtluugwiki(unittest.TestCase):
     def setUp(self):
-        try:
-            requests.get('https://vtluug.org/wiki/').raise_for_status()
-        except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError):
+        if not is_up('https://vtluug.org/wiki/'):
             self.skipTest('VTLUUG wiki is down, skipping test.')
         self.phenny = MagicMock()
+        self.input = MagicMock()
 
     def test_vtluug(self):
-        input = Mock(groups=lambda: ['', "VT-Wireless"])
-        vtluugwiki.vtluug(self.phenny, input)
+        self.input.groups.return_value = ['', "VT-Wireless"]
+        vtluugwiki.vtluug(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
         m = re.match('^.* - https:\/\/vtluug\.org\/wiki\/VT-Wireless$',
                 out, flags=re.UNICODE)
@@ -29,14 +28,14 @@ class TestVtluugwiki(unittest.TestCase):
 
     def test_vtluug_invalid(self):
         term = "EAP-TLS#netcfg"
-        input = Mock(groups=lambda: ['', term])
-        vtluugwiki.vtluug(self.phenny, input)
+        self.input.groups.return_value = ['', term]
+        vtluugwiki.vtluug(self.phenny, self.input)
         self.phenny.say.assert_called_once_with( "Can't find anything in "\
                 "the VTLUUG Wiki for \"{0}\".".format(term))
 
     def test_vtluug_none(self):
         term = "Ajgoajh"
-        input = Mock(groups=lambda: ['', term])
-        vtluugwiki.vtluug(self.phenny, input)
+        self.input.groups.return_value = ['', term]
+        vtluugwiki.vtluug(self.phenny, self.input)
         self.phenny.say.assert_called_once_with( "Can't find anything in "\
                 "the VTLUUG Wiki for \"{0}\".".format(term))

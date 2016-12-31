@@ -21,7 +21,7 @@ class TestHs(unittest.TestCase):
 
     def test_search(self):
         data = search('john')
-        assert len(data) >= 1
+        self.assertTrue(len(data) >= 1)
         self.assertIn('uid', data[0])
         self.assertIn('cn', data[0])
 

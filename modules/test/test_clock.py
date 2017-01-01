@@ -6,7 +6,7 @@ import re
 import datetime
 import unittest
 from mock import MagicMock, patch
-from modules.clock import f_time, beats, yi, tock, npl
+from modules.clock import f_time, beats, yi, tock, npl, refresh_database_tz
 from nose.tools import nottest
 from tools import is_up
 
@@ -17,13 +17,19 @@ class TestClock(unittest.TestCase):
         self.phenny = MagicMock()
         self.input = MagicMock()
 
-    @nottest
     def test_time(self, mock_time):
         mock_time.return_value = 1338674651
+        self.input.nick = '#phenny'
         self.input.group.return_value = 'EDT'
+        self.phenny.nick = 'phenny'
+        self.phenny.config.host = 'irc.freenode.net'
+
+        if not is_up('http://en.wikipedia.org') or not is_up('http://www.citytimezones.info'):
+            self.skipTest('Online timezone info unavailable, skipping test.')
+        refresh_database_tz(self.phenny)
+
         f_time(self.phenny, self.input)
-        self.phenny.msg.called_once_with('#phenny',
-                "Sat, 02 Jun 2012 18:04:11 EDT")
+        self.phenny.msg.called_once_with('#phenny', "Sat, 02 Jun 2012 18:04:11 EDT")
 
     def test_beats_zero(self, mock_time):
         mock_time.return_value = 0
@@ -56,7 +62,7 @@ class TestClock(unittest.TestCase):
         tock(self.phenny, None)
         out = self.phenny.say.call_args[0][0]
         m = re.match('^.* - tycho.usno.navy.mil$',
-                out, flags=re.UNICODE)
+                     out, flags=re.UNICODE)
         self.assertTrue(m)
 
     def test_npl(self, mock_time):
@@ -65,5 +71,5 @@ class TestClock(unittest.TestCase):
         npl(self.phenny, None)
         out = self.phenny.say.call_args[0][0]
         m = re.match('^.* - ntp1.npl.co.uk$',
-                out, flags=re.UNICODE)
+                     out, flags=re.UNICODE)
         self.assertTrue(m)

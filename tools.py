@@ -101,9 +101,10 @@ def is_up(url):
     global up_down
     if (url not in up_down) or (time() - up_down[url][1] > 600):
         try:
-            requests.get(url).raise_for_status()
+            requests.get(url, timeout=4).raise_for_status()
             up_down[url] = (True, time())
-        except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError):
+        except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError,
+                requests.exceptions.Timeout):
             up_down[url] = (False, time())
     return up_down[url][0]
 

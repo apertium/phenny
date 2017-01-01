@@ -12,6 +12,7 @@ from lxml import etree
 import lxml.html
 import lxml.html.clean
 import web
+from modules.posted import check_posted
 
 wikiapi = 'https://%s.wikipedia.org/w/api.php?action=query&list=search&srsearch={0}&limit=1&prop=snippet&format=json'
 wikiuri = 'https://%s.wikipedia.org/wiki/{0}'
@@ -76,7 +77,7 @@ def parse_wiki_page(url, term, section = None):
 
     return sentence + ' - ' + url
 
-def wikipedia(phenny, origterm, lang, to_user = None):
+def wikipedia(phenny, input, origterm, lang, to_user = None):
     origterm = origterm.strip()
     lang = lang.strip()
 
@@ -101,6 +102,7 @@ def wikipedia(phenny, origterm, lang, to_user = None):
     if result is not None: 
         #Disregarding [0], the snippet
         url = result.split("|")[-1]
+        check_posted(phenny, input, url)
         if to_user:
             phenny.say(to_user + ', ' + parse_wiki_page(url, term, section))
         else:
@@ -109,8 +111,8 @@ def wikipedia(phenny, origterm, lang, to_user = None):
         phenny.say('Can\'t find anything in Wikipedia for "{0}".'.format(origterm))
 
 
-def point_to(phenny, origterm, lang, nick):
-    wikipedia(phenny, origterm, lang, to_user=nick)
+def point_to(phenny, input, origterm, lang, nick):
+    wikipedia(phenny, input, origterm, lang, to_user=nick)
 
 
 def wik(phenny, input): 
@@ -130,10 +132,10 @@ def wik(phenny, input):
         to_nick = matched_point.groups()[0]
         origterm2 = matched_point.groups()[1]
         
-        point_to(phenny, origterm2, lang, to_nick)
+        point_to(phenny, input, origterm2, lang, to_nick)
         return
     
-    wikipedia(phenny, origterm, lang)
+    wikipedia(phenny, input, origterm, lang)
 
 wik.rule = r'\.(wik|wiki|wikipedia)(\.[a-z]{2,3})?\s(.*)'
 wik.priority = 'low'
@@ -145,7 +147,7 @@ def wik2(phenny, input):
     nick, _, __, lang, origterm = input.groups()
     if not lang: lang = "en"
 
-    point_to(phenny, origterm, lang, nick)
+    point_to(phenny, input, origterm, lang, nick)
 
 wik2.rule = r'(\S*)(:|,)\s\.(wik|wiki|wikipedia)(\.[a-z]{2,3})?\s(.*)'
 wik2.priority = 'high'
@@ -156,7 +158,7 @@ def wik3(phenny, input):
     _, lang, origterm, __, nick = input.groups()
     if not lang: lang = "en"
 
-    point_to(phenny, origterm, lang, nick)
+    point_to(phenny, input, origterm, lang, nick)
 
 wik3.rule = r'\.(wik|wiki|wikipedia)(\.[a-z]{2,3})?\s(.*)\s(->|→)\s(\S*)'
 wik3.priority = 'high'

@@ -102,20 +102,25 @@ snarfuri.thread = True
 
 
 def gettitle(phenny, input, uri):
+    if "posted" in phenny.variables:
+        from modules.posted import check_posted
+
     if not ':' in uri:
         uri = 'http://' + uri
     uri = uri.replace('#!', '?_escaped_fragment_=')
 
     if uri.startswith('http://wiki.apertium.org/wiki/'):
         item = uri[len('http://wiki.apertium.org/wiki/'):]
+        check_posted(phenny, input, uri)
         return awik(phenny, re.match(r'(blahblah)?(.*)', item))
     if re.match(r'https?://en.wiktionary.org/wiki/(.*)', uri):
+        check_posted(phenny, input, uri)
         item = re.match(r'https?://en.wiktionary.org/wiki/(.*)', uri).group(1)
         return w(phenny, re.match(r'(blahblah)?(.*)', web.unquote(item)))
     if re.match(r'https?://([a-z]{2,3}).wikipedia.org/wiki/(.*)', uri):
         match = re.match(r'https?://([a-z]{2,3}).wikipedia.org/wiki/(.*)', uri)
         lang, page = match.group(1), match.group(2)
-        return wikipedia(phenny, page, lang)
+        return wikipedia(phenny, input, page, lang)
 
     parts = uri.split(".")
     start = parts[0]
@@ -222,13 +227,10 @@ def gettitle(phenny, input, uri):
             title = title.replace('\r', '')
             title = "[ {0} ]".format(title)
 
-            if "posted" in phenny.variables:
-                from modules.posted import check_posted
-                
-                posted = check_posted(phenny, input, uri)
+            posted = check_posted(phenny, input, uri)
 
-                if posted:
-                    title = "{0} (posted: {1})".format(title, posted)
+            if posted:
+                title = "{0} (posted: {1})".format(title, posted)
 
 
         else:

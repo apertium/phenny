@@ -24,6 +24,7 @@ class TestWikipedia(unittest.TestCase):
             self.skipTest('Wikipedia is down, skipping test.')
         self.phenny = MagicMock(variables=['posted'], nick='phenny')
         self.phenny.config.host = 'irc.freenode.net'
+        posted.DB_DIR = '.'
         posted.setup(self.phenny)
         self.input = MagicMock(sender='#phenny', nick='tester')
 

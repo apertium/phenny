@@ -320,7 +320,7 @@ def read_dict(filename):
     return data
 
 def refresh_database_tz(phenny, raw=None):
-    if raw is None or raw.admin:
+    if raw.admin or raw is None:
         f = filename(phenny)
         phenny.tz_data = scrape_wiki_zones()
         write_dict(f, phenny.tz_data)

@@ -5,7 +5,7 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 import re
 import unittest
 from mock import MagicMock
-from modules import wikipedia
+from modules import wikipedia, posted
 from tools import is_up
 
 
@@ -22,8 +22,10 @@ class TestWikipedia(unittest.TestCase):
     def setUp(self):
         if not is_up('https://en.wikipedia.org'):
             self.skipTest('Wikipedia is down, skipping test.')
-        self.phenny = MagicMock()
-        self.input = MagicMock()
+        self.phenny = MagicMock(variables=['posted'], nick='phenny')
+        self.phenny.config.host = 'irc.freenode.net'
+        posted.setup(self.phenny)
+        self.input = MagicMock(sender='#phenny', nick='tester')
 
     def test_wik(self):
         self.input.group = lambda x: ['', 'wik', '', 'Human back'][x]

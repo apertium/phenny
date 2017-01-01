@@ -6,13 +6,16 @@ import re
 import unittest
 from web import HTTPError
 from mock import MagicMock, patch
+from modules import posted
 from modules.head import head, snarfuri
 
 @patch('modules.head.web.head')
 class TestHead(unittest.TestCase):
     def setUp(self):
-        self.phenny = MagicMock()
-        self.input = MagicMock()
+        self.phenny = MagicMock(variables=['posted'], nick='phenny')
+        self.phenny.config.host = 'irc.freenode.net'
+        posted.setup(self.phenny)
+        self.input = MagicMock(sender='#phenny', nick='tester')
 
     def test_head(self, mock_head):
         self.input.group.return_value = 'https://vtluug.org'
@@ -53,17 +56,18 @@ class TestHead(unittest.TestCase):
             'header in the response.')
 
     @patch('modules.head.web.get')
-    def test_snarfuri(self, mock_get, mock_head):
+    @patch('modules.posted.requests.get')
+    def test_snarfuri(self, mock_rget, mock_wget, mock_head):
         mock_head.return_value = {
             'status': '200',
             'content-type': 'text/html; charset=utf-8'
         }
-        mock_get.return_value = '<html><title>Some Page</title></html>'
+        mock_wget.return_value = '<html><title>Some Page</title></html>'
         self.input.group.return_value = 'https://www.somepage.com'
-        self.input.sender = '#phenny'
+        mock_rget.return_value.url = self.input.group.return_value
         snarfuri(self.phenny, self.input)
         mock_head.assert_called_once_with('https://www.somepage.com')
-        mock_get.assert_called_once_with('https://www.somepage.com')
+        mock_wget.assert_called_once_with('https://www.somepage.com')
         self.assertIn('Some Page', self.phenny.msg.call_args[0][1])
 
     @patch('modules.head.requests.get')
@@ -71,7 +75,6 @@ class TestHead(unittest.TestCase):
         mock_head.side_effect = HTTPError(response=MagicMock(status_code='405'))
         mock_get.side_effect = HTTPError(response=MagicMock(status_code='405'))
         self.input.group.return_value = 'http://405notallowed.com'
-        self.input.sender = '#phenny'
         snarfuri(self.phenny, self.input)
         mock_head.assert_called_once_with('http://405notallowed.com')
         self.assertEqual(mock_get.call_args[0][0], 'http://405notallowed.com')

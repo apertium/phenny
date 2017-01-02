@@ -183,14 +183,15 @@ class Bot(asynchat.async_chat):
                 return
 
         # Split long messages
-        maxlength = 430
-        max_messages_count = 3
-        if len(text) > maxlength:
-            for i in range(max_messages_count):
+        MAX_LENGTH = 430
+        current_length = MAX_LENGTH
+        MAX_MESSAGES_COUNT = 3
+        if len(text) > current_length:
+            for i in range(MAX_MESSAGES_COUNT):
                 # We want to add "..." to last message so we leave place for it
-                if i == max_messages_count-1:
-                    maxlength=maxlength-3
-                message = text[0:maxlength].decode('utf-8','ignore')
+                if i == MAX_MESSAGES_COUNT - 1:
+                    current_length -= 3
+                message = text[0:current_length].decode('utf-8','ignore')
                 line_break = len(message)
                 space_found = 0
                 for j in range(len(message)-1,-1,-1):
@@ -200,12 +201,12 @@ class Bot(asynchat.async_chat):
                         break
                 message = text.decode('utf-8','ignore')[0:line_break]
                 # We want to add "..." to last message
-                if i == max_messages_count-1:
+                if i == MAX_MESSAGES_COUNT - 1:
                     message = message + "..."
                     text = b''
                 self.msg(recipient, message)
                 text=text.decode('utf-8','ignore')[line_break+space_found:].encode('utf-8')
-                if len(text) <= maxlength:
+                if len(text) <= current_length:
                     self.msg(recipient,text.decode('utf-8','ignore'))
                     break
             self.sending.release()

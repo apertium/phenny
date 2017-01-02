@@ -107,17 +107,22 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             if 'repository' in data:
                 repo = data['repository']['name']
             elif 'organization' in data:
-                repo = data['organization']['login']+' (org)'
+                repo = data['organization']['login'] + ' (org)'
             if event == 'commit_comment':
                 commit = data['comment']['commit_id'][:7]
                 url = data['comment']['html_url']
                 url = url[:url.rfind('/') + 7]
-                comment = truncate(
-                    '{:}: {:} * new comment on commit {:}:  {:}'
-                    .format(repo, user, commit, url),
-                    data['comment']['body'])
-                msgs.append('{:}: {:} * new comment on commit {:}: {:} {:}'
-                            .format(repo, user, commit, comment, url))
+                action = data['action']
+                if action == 'deleted':
+                    msgs.append('{:}: {:} * comment deleted on commit {:}: {:}'
+                                .format(repo, user, commit, url))
+                else:
+                    comment = truncate(
+                        '{:}: {:} * comment {:} on commit {:}:  {:}'
+                        .format(repo, user, action, commit, url),
+                        data['comment']['body'])
+                    msgs.append('{:}: {:} * comment {:} on commit {:}: {:} {:}'
+                                .format(repo, user, action, commit, comment, url))
             elif event == 'create' or event == 'delete':
                 ref = data['ref']
                 type_ = data['ref_type']
@@ -130,12 +135,17 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             elif event == 'issue_comment':
                 number = data['issue']['number']
                 url = data['issue']['html_url']
-                comment = truncate(
-                    '{:}: {:} * new comment on issue #{:}:  {:}'
-                    .format(repo, user, number, url),
-                    data['comment']['body'])
-                msgs.append('{:}: {:} * new comment on issue #{:}: {:} {:}'
-                            .format(repo, user, number, comment, url))
+                action = data['action']
+                if action == 'deleted':
+                    msgs.append('{:}: {:} * comment deleted on issue #{:}: {:}'
+                                .format(repo, user, number, url))
+                else:
+                    comment = truncate(
+                        '{:}: {:} * comment {:} on issue #{:}:  {:}'
+                        .format(repo, user, action, number, url),
+                        data['comment']['body'])
+                    msgs.append('{:}: {:} * comment {:} on issue #{:}: {:} {:}'
+                                .format(repo, user, action, number, comment, url))
             elif event == 'issues':
                 number = data['issue']['number']
                 title = data['issue']['title']
@@ -174,12 +184,17 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             elif event == 'pull_request_review_comment':
                 number = data['pull_request']['number']
                 url = data['comment']['html_url']
-                comment = truncate(
-                    '{:}: {:} * new comment on pull request #{:}:  {:}'
-                    .format(repo, user, number, url),
-                    data['comment']['body'])
-                msgs.append('{:}: {:} * new comment on pull request #{:}: {:} {:}'
-                            .format(repo, user, number, comment, url))
+                action = data['action']
+                if action == 'deleted':
+                    msgs.append('{:}: {:} * comment deleted on pull request #{:}: {:}'
+                                .format(repo, user, number, url))
+                else:
+                    comment = truncate(
+                        '{:}: {:} * comment {:} on pull request #{:}:  {:}'
+                        .format(repo, user, action, number, url),
+                        data['comment']['body'])
+                    msgs.append('{:}: {:} * comment {:} on pull request #{:}: {:} {:}'
+                                .format(repo, user, action, number, comment, url))
             elif event == 'push':
                 for commit in data['commits']:
                     msgs.append(self.return_data("github", data, commit) + ' ' +

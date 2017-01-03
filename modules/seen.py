@@ -14,7 +14,7 @@ def f_seen(phenny, input):
     """.seen <nick> - Reports when <nick> was last seen."""
 
     try:
-        nick = str(input.group(2)).lower()
+        nick = str(input.group(2)).casefold()
     except UnboundLocalError:
         pass
 
@@ -34,14 +34,14 @@ def f_seen(phenny, input):
         cChannel = cl[0]
         cLastTime = cl[4]
     except TypeError:
-        phenny.reply("Sorry, I haven't seen %s around." % nick)
+        phenny.reply("Sorry, I haven't seen %s around." % str(input.group(2)))
         return
     c.close()
 
     if cNick != "":
         dt = timesince(cLastTime)
         t = time.strftime('%Y-%m-%d %H:%M:%S UTC', cLastTime.timetuple())
-        msg = "I last saw %s at %s (%s) on %s" % (nick, t, dt, cChannel)
+        msg = "I last saw %s at %s (%s) on %s" % (str(input.group(2)), t, dt, cChannel)
         phenny.reply(msg)
 f_seen.name = 'seen'
 f_seen.example = '.seen firespeaker'

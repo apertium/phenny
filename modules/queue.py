@@ -40,17 +40,17 @@ def search_queue(queue, query):
     return index
 
 def get_queue(queue_data, queue_name, nick):
-    lower_names = {k.lower(): k for k in queue_data.keys()}
-    if queue_name.lower() in lower_names:
-        n = lower_names[queue_name.lower()]
+    lower_names = {k.casefold(): k for k in queue_data.keys()}
+    if queue_name.casefold() in lower_names:
+        n = lower_names[queue_name.casefold()]
         return n, queue_data[n]
-    elif nick.lower() + ':' + queue_name.lower() in lower_names:
-        n = lower_names[nick.lower() + ':' + queue_name.lower()]
+    elif nick.casefold()  + ':' + queue_name.casefold() in lower_names:
+        n = lower_names[nick.casefold() + ':' + queue_name.casefold()]
         return n, queue_data[n]
     else:
         for i in lower_names:
-            if queue_name.lower() == i.split(':')[1]:
-                n = lower_names[i.lower()]
+            if queue_name.casefold() == i.split(':')[1]:
+                n = lower_names[i.casefold()]
                 return n, queue_data[n]
     return None, None
 
@@ -59,7 +59,7 @@ def disambiguate_name(queue_data, queue_name):
     for i in queue_data:
         if queue_name == i:
             return i
-        if queue_name.lower() in i.lower():
+        if queue_name.casefold() in i.casefold():
             matches.append(i)
     return matches[0] if len(matches) == 1 else matches
 
@@ -81,7 +81,7 @@ def queue(phenny, raw):
                 elif len(queue_names) > 0:
                     queue_exact = list(queue_names)
                     for q in queue_names:
-                        if q.split(':')[0] == raw.nick and q[len(raw.nick)+1:] == search:
+                        if q.split(':')[0].casefold() == raw.nick.casefold() and q[len(raw.nick)+1:].casefold() == search.casefold():
                             #current user owns queue with exact name
                             more.add_messages(raw.nick, phenny, print_queue(q, phenny.queue_data[q]))
                             return
@@ -131,7 +131,7 @@ def queue(phenny, raw):
             if raw.group(2):
                 queue_name, queue = get_queue(phenny.queue_data, raw.group(2), raw.nick)
                 if type(queue_name) is str:
-                    if raw.nick == queue['owner'] or raw.admin:
+                    if raw.nick.casefold() == queue['owner'].casefold() or raw.admin:
                         phenny.queue_data.pop(queue_name)
                         write_dict(filename(phenny), phenny.queue_data)
                         phenny.reply('Queue {} deleted.'.format(queue_name))
@@ -147,14 +147,14 @@ def queue(phenny, raw):
             queue_name, queue = get_queue(phenny.queue_data, raw.group(1), raw.nick)
             if raw.group(2):
                 command = raw.group(2).lower()
-                if queue['owner'] == raw.nick or raw.admin:
+                if queue['owner'].casefold() == raw.nick.casefold() or raw.admin:
                     if command == 'add':
                         if raw.group(3):
                             new_queue = raw.group(3).split(',')
                             new_queue = list(map(lambda x: x.strip(), new_queue))
                             queue['queue'] += new_queue
                             write_dict(filename(phenny), phenny.queue_data)
-                            more.add_messages(raw.nick, phenny, print_queue(queue_name, queue))
+                            more.add_messages(raw.nick.lower(), phenny, print_queue(queue_name, queue))
                         else:
                             phenny.reply('Syntax: .queue <name> add <item1>, <item2> ...')
                     elif command == 'swap':

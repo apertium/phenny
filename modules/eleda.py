@@ -45,7 +45,7 @@ def follow(phenny, input): #follow a user
 		data = input.group(2).split(' ')
 		nick = data[0]
 
-		if nick.lower() == phenny.config.nick.lower():
+		if nick.casefold() == phenny.config.nick.casefold():
 			phenny.reply(phenny.config.nick.upper() + " DOES NOT LIKE TO BE FOLLOWED.")
 			return
 
@@ -80,7 +80,7 @@ def follow(phenny, input): #follow a user
 			return
 
 		for i in follows:
-			if i.nick == nick and i.dir == tuple(dir) and i.sender == sender:
+			if i.nick.casefold() == nick.casefold() and i.dir == tuple(dir) and i.sender.casefold() == sender.casefold():
 				phenny.say(sender + " is already following " + nick + " with " + '-'.join(dir) + '.')
 				return
 
@@ -95,7 +95,7 @@ def unfollow(phenny, input): #unfollow a user
 
 	following = False
 	for i in follows:
-		if i.nick == input.groups()[1] and i.sender == input.nick:
+		if i.nick.casefold() == input.groups()[1].casefold() and i.sender.casefold() == input.nick.casefold():
 			#if this person is indeed being followed (and is indeed the creator of the follow)
 			follows.remove(i)
 			following = True
@@ -123,7 +123,7 @@ def checkMessages(phenny, input): #filter through each message in the channel
 
 		translations = {}
 		for i in follows:
-			if i.nick == input.nick:
+			if i.nick.casefold() == input.nick.casefold():
 				if (i.nick, i.dir) not in translations:
 					#this user is being followed, translate them
 					direction = '-'.join(i.dir)

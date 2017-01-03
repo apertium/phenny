@@ -39,7 +39,7 @@ def greeting(phenny, input):
         pass
     
     c = greeting.conndb.cursor()
-    c.execute("SELECT * FROM special_nicks WHERE nick = ?", (nick.lower(),))
+    c.execute("SELECT * FROM special_nicks WHERE nick = ?", (nick.casefold(),))
     try:
         phenny.say(input.nick + ": " + str(c.fetchone()[0]))
         return
@@ -48,9 +48,9 @@ def greeting(phenny, input):
     c.close()
     
     c = greeting.conn.cursor()
-    c.execute("SELECT * FROM lines_by_nick WHERE nick = ?", (nick.lower(),))
+    c.execute("SELECT * FROM lines_by_nick WHERE nick = ?", (nick.casefold(),))
     if c.fetchone() == None:
-        if input.nick != phenny.config.nick:
+        if input.nick.casefold() != phenny.config.nick.casefold():
             phenny.say(greetingmessage)
     c.close()
     greeting.conn.commit()
@@ -73,7 +73,7 @@ def greeting_add(phenny, input):
         
         sqlite_data = {
             'channel': input.sender,
-            'nick': input.group(2).split(" ")[0].lower(),
+            'nick': input.group(2).split(" ")[0].casefold(),
             'message': input.group(2).split(" ", 1)[1]
         }
         
@@ -111,7 +111,7 @@ def greeting_del(phenny, input):
         
         dbconnection = sqlite3.connect(phenny.greeting_db)
         c = dbconnection.cursor()
-        c.execute("DELETE FROM special_nicks WHERE nick = ? AND channel = ?", (input.group(2).split(" ")[0].lower(), input.sender))
+        c.execute("DELETE FROM special_nicks WHERE nick = ? AND channel = ?", (input.group(2).split(" ")[0].casefold(), input.sender))
         c.close()
         dbconnection.commit()
         

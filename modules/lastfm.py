@@ -40,6 +40,7 @@ def setup(self):
 
 def lastfm_set(phenny, input):
     cmd = input.group(2)
+    lowernick = input.nick.casefold()
     if not cmd or len(cmd.strip()) == 0:
         phenny.say("commands: user, verb")
         phenny.say("set <username>: associates your IRC nick with your last.fm username.")
@@ -52,7 +53,7 @@ def lastfm_set(phenny, input):
         if len(value) == 0:
             phenny.say("um.. try again. the format is 'lastfm-set user username'")
             return
-        set_username(input.nick, value)
+        set_username(lowernick, value)
         phenny.say("ok, i'll remember that %s is %s on lastfm" % (input.nick, value))
         return
     if cmd == "verb":
@@ -61,14 +62,14 @@ def lastfm_set(phenny, input):
         if len(past) == 0 or len(present) == 0:
             phenny.say("umm.. try again. the format is 'lastfm-set verb past phrase, present phrase' example: 'lastfm-set verb listened to, listening to'")
             return
-        set_verb(input.nick, past, present)
+        set_verb(lowernick, past, present)
         phenny.say("ok, i'll remember that %s prefers '%s' and '%s'" % (input.nick, past, present))
         return
 
 lastfm_set.rule = (['lastfm-set'], r'(\S+)\s+(?:(.*?),(.*)|(\S+))')
 
 def now_playing(phenny, input):
-    nick = input.nick
+    nick = input.nick.casefold()
     user = ""
     arg = input.group(2)
     if not arg or len(arg.strip()) == 0:

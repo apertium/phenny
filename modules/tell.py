@@ -239,7 +239,7 @@ def message(phenny, input):
     if not input.sender.startswith('#'): return
 
     tellee = input.nick
-    aliases = aliasGroupFor(tellee)
+    aliases = list(map(str.casefold, aliasGroupFor(tellee)))
     channel = input.sender
 
     if not os: return
@@ -250,9 +250,9 @@ def message(phenny, input):
     remkeys = list(reversed(sorted(phenny.reminders.keys())))
     for remkey in remkeys:
         if not remkey.endswith('*') or remkey.endswith(':'): 
-            if remkey in aliases or remkey.lower() in aliases:
+            if remkey.casefold() in aliases:
                 reminders.extend(getReminders(phenny, channel, remkey, tellee))
-        elif tellee.lower().startswith(remkey.rstrip('*:')) or tellee.lower().startswith(remkey.lower().rstrip('*:')): 
+        elif tellee.casefold().startswith(remkey.casefold().rstrip('*:')): 
             reminders.extend(getReminders(phenny, channel, remkey, tellee))
 
     for line in reminders[:maximum]: 

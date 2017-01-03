@@ -26,6 +26,7 @@ def break_up_fn(string, max_length):
 def add_messages(target, phenny, msg, break_up=break_up_fn):
     max_length = 428 - len(target) - 5
     msgs = break_up(str(msg), max_length)
+    lowernick = target.casefold();
 
     if len(msgs) <= 2:
         for msg in msgs:
@@ -34,16 +35,18 @@ def add_messages(target, phenny, msg, break_up=break_up_fn):
         phenny.reply(msgs[0])
         msgs = msgs[1:]
         phenny.reply('you have ' + str(len(msgs)) + ' more message(s). Please type ".more" to view them.')
-        phenny.messages[target] = msgs
+        phenny.messages[lowernick] = msgs
 
 def more(phenny, input):
-    if input.nick in phenny.messages.keys():
-        msg = phenny.messages[input.nick][0]
-        phenny.messages[input.nick].remove(phenny.messages[input.nick][0])
-        remaining = ' (' + str(len(phenny.messages[input.nick])) + ')' if phenny.messages[input.nick] else ''
+    lowernick = input.nick.casefold();
+
+    if lowernick in phenny.messages.keys():
+        msg = phenny.messages[lowernick][0]
+        phenny.messages[lowernick].remove(phenny.messages[lowernick][0])
+        remaining = ' (' + str(len(phenny.messages[lowernick])) + ')' if phenny.messages[lowernick] else ''
         phenny.reply(msg + remaining)
-        if not phenny.messages[input.nick]:
-            del phenny.messages[input.nick]
+        if not phenny.messages[lowernick]:
+            del phenny.messages[lowernick]
 
 more.name = 'more'
 more.rule = r'[.]more'

@@ -80,14 +80,14 @@ head.example = '.head http://www.w3.org/'
 
 r_title = re.compile(r'(?ims)<title[^>]*>(.*?)</title\s*>')
 r_entity = re.compile(r'&[A-Za-z0-9#]+;')
-r_url = r'((?:(?:https?:(?://)?)|w{3})[a-zA-Z0-9-._+]+(?::[0-9]+)?(?:/[a-zA-Z0-9-+_~/.,;&=?!#%]+?)?)\)?(?:$|(?:[.,:;](?: |$)))'
+r_url = r'((?:(?:https?:(?://)?)|w{3})[a-zA-Z0-9-._+]+(?::[0-9]+)?(?:/[a-zA-Z0-9-+_~/.,;&=?!#%]+?)?)\)?(?:$|\s+|(?:[.,:;](?: |$)))'
 
 def noteuri(phenny, input):
     uri = input.group(1)
     if not hasattr(phenny.bot, 'last_seen_uri'):
         phenny.bot.last_seen_uri = {}
     phenny.bot.last_seen_uri[input.sender] = uri
-noteuri.rule = r'.*' + r_url
+noteuri.rule = r'.*?' + r_url
 noteuri.priority = 'low'
 
 def snarfuri(phenny, input):
@@ -96,7 +96,7 @@ def snarfuri(phenny, input):
 
     if title:
         phenny.msg(input.sender, title)
-snarfuri.rule = r'([^\.].*)?' + r_url
+snarfuri.rule = r'([^\.].*?)?' + r_url
 snarfuri.priority = 'low'
 snarfuri.thread = True
 
@@ -125,8 +125,8 @@ def gettitle(phenny, input, uri):
     parts = uri.split(".")
     start = parts[0]
     parts.pop(0)
-    uri = start + "." + web.quote('.'.join(parts))
-    
+    uri = start + "." + web.quote('.'.join(parts), safe='/#')
+
     title = None
     localhost = [
         'http://localhost/', 'http://localhost:80/',
@@ -169,7 +169,7 @@ def gettitle(phenny, input, uri):
                     info = info.headers
                 except web.HTTPError:
                     return None
-                    
+
             if status.startswith('3'):
                 uri = urllib.parse.urljoin(uri, info['Location'])
             else:

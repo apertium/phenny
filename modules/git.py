@@ -133,19 +133,24 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 msgs.append('{:}: {:} forked this repo {:}'
                             .format(repo, user, url))
             elif event == 'issue_comment':
+                if 'pull_request' in data['issue']:
+                    url = data['issue']['pull_request']['html_url']
+                    text = 'pull request'
+                else:
+                    url = data['issue']['html_url']
+                    text = 'issue'
                 number = data['issue']['number']
-                url = data['issue']['html_url']
                 action = data['action']
                 if action == 'deleted':
-                    msgs.append('{:}: {:} * comment deleted on issue #{:}: {:}'
-                                .format(repo, user, number, url))
+                    msgs.append('{:}: {:} * comment deleted on {:} #{:}: {:}'
+                                .format(repo, user, text, number, url))
                 else:
                     comment = truncate(
-                        '{:}: {:} * comment {:} on issue #{:}:  {:}'
-                        .format(repo, user, action, number, url),
+                        '{:}: {:} * comment {:} on {:} #{:}:  {:}'
+                        .format(repo, user, action, text, number, url),
                         data['comment']['body'])
-                    msgs.append('{:}: {:} * comment {:} on issue #{:}: {:} {:}'
-                                .format(repo, user, action, number, comment, url))
+                    msgs.append('{:}: {:} * comment {:} on {:} #{:}: {:} {:}'
+                                .format(repo, user, action, text, number, comment, url))
             elif event == 'issues':
                 number = data['issue']['number']
                 title = data['issue']['title']
@@ -186,14 +191,14 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 url = data['comment']['html_url']
                 action = data['action']
                 if action == 'deleted':
-                    msgs.append('{:}: {:} * comment deleted on pull request #{:}: {:}'
+                    msgs.append('{:}: {:} * review comment deleted on pull request #{:}: {:}'
                                 .format(repo, user, number, url))
                 else:
                     comment = truncate(
-                        '{:}: {:} * comment {:} on pull request #{:}:  {:}'
+                        '{:}: {:} * review comment {:} on pull request #{:}:  {:}'
                         .format(repo, user, action, number, url),
                         data['comment']['body'])
-                    msgs.append('{:}: {:} * comment {:} on pull request #{:}: {:} {:}'
+                    msgs.append('{:}: {:} * review comment {:} on pull request #{:}: {:} {:}'
                                 .format(repo, user, action, number, comment, url))
             elif event == 'push':
                 for commit in data['commits']:

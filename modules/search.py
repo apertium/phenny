@@ -10,134 +10,26 @@ http://inamidst.com/phenny/
 import re
 import web
 
-def google_ajax(query): 
-    """Search using AjaxSearch, and return its JSON."""
-    if isinstance(query, str): 
-        query = query.encode('utf-8')
-    uri = 'https://ajax.googleapis.com/ajax/services/search/web'
-    args = '?v=1.0&safe=off&q=' + web.quote(query)
-    bytes = web.get(uri + args, headers={'Referer': 'https://github.com/sbp/phenny'})
-    return web.json(bytes)
+from googleapiclient.discovery import build
 
-def google_search(query): 
-    results = google_ajax(query)
-    try: return results['responseData']['results'][0]['unescapedUrl']
-    except IndexError: return None
-    except TypeError: 
-        print(results)
-        return False
+my_api_key = "AIzaSyDiWn9tB9NzxIxkohXXN6GNBNPRep6hIWM"
+my_cse_id = "017800230218291994756:re9_m1koe44"
 
-def google_count(query): 
-    results = google_ajax(query)
-    if 'responseData' not in results: return '0'
-    if 'cursor' not in results['responseData']: return '0'
-    if 'estimatedResultCount' not in results['responseData']['cursor']: 
-        return '0'
-    return results['responseData']['cursor']['estimatedResultCount']
+def google_search(search_term, api_key, cse_id, **kwargs):
+    service = build("customsearch", "v1", developerKey=api_key)
+    res = service.cse().list(q=search_term, cx=cse_id, **kwargs).execute()
+    return res['items']
 
-def formatnumber(n): 
-    """Format a number with beautiful commas."""
-    parts = list(str(n))
-    for i in range((len(parts) - 3), 0, -3):
-        parts.insert(i, ',')
-    return ''.join(parts)
+def gsearch(phenny, input):
+    str = input.replace(".g ", "")
+    results = google_search(
+        str, my_api_key, my_cse_id, num=10)
+    for result in results[:5]:
+        phenny.say("{} : {}".format(result['title'], result['link']))
 
-
-def google_it(phenny, query, sender, to_user=None):
-    uri = google_search(query)
-    if uri: 
-        if to_user:
-            phenny.say(to_user+', '+uri)
-        else:
-            phenny.reply(uri)
-        if not hasattr(phenny.bot, 'last_seen_uri'):
-            phenny.bot.last_seen_uri = {}
-        phenny.bot.last_seen_uri[sender] = uri
-    elif uri is False: phenny.reply("Problem getting data from Google.")
-    else: phenny.reply("No results found for '%s'." % query)
-
-
-def g(phenny, input): 
-    """Queries Google for the specified input. (supports pointing)"""
-    query = input.group(2)
-    if not query: 
-        return phenny.reply('.g what?')
-
-    if "->" in query: return
-    if "→" in query: return
-
-    match_point_cmd = r'point\s(\S*)\s(.*)'
-    matched_point = re.compile(match_point_cmd).match(query)
-    if matched_point:
-        to_nick = matched_point.groups()[0]
-        query2 = matched_point.groups()[1]
-
-        google_it(phenny, query2, input.sender, to_user=to_nick)
-        return
-
-    google_it(phenny, query, input.sender)
-
-g.commands = ['g']
-g.priority = 'high'
-g.example = '.g swhack or nick: .g swhack or .g swhack -> nick or '+\
-            '.g point nick swhack'
-
-
-def g2(phenny, input):
-    nick, _, __, query = input.groups()
-
-    google_it(phenny, query, input.sender, to_user=nick)
-
-g2.rule = r'(\S*)(:|,)\s\.(g)\s(.*)'
-g2.example = 'svineet: .g extrapolate'
-
-
-def g3(phenny, input):
-    _, query, __, nick = input.groups()
-
-    google_it(phenny, query, input.sender, to_user=nick)
-
-
-g3.rule = r'\.(g)\s(.*)\s(->|→)\s(\S*)'
-g3.example = '.g extrapolate -> svineet'
-
-
-def gc(phenny, input): 
-    """Returns the number of Google results for the specified input."""
-    query = input.group(2)
-    if not query: 
-        return phenny.reply('.gc what?')
-    num = formatnumber(google_count(query))
-    phenny.say(query + ': ' + num)
-gc.commands = ['gc']
-gc.priority = 'high'
-gc.example = '.gc extrapolate'
-
-r_query = re.compile(
-    r'\+?"[^"\\]*(?:\\.[^"\\]*)*"|\[[^]\\]*(?:\\.[^]\\]*)*\]|\S+'
-)
-
-def gcs(phenny, input): 
-    """Compare the number of Google results for the specified paramters."""
-    if not input.group(2):
-        return phenny.reply("Nothing to compare.")
-    queries = r_query.findall(input.group(2))
-    if len(queries) > 6: 
-        return phenny.reply('Sorry, can only compare up to six things.')
-
-    results = []
-    for i, query in enumerate(queries): 
-        query = query.strip('[]')
-        n = int((formatnumber(google_count(query)) or '0').replace(',', ''))
-        results.append((n, query))
-        if i >= 2: __import__('time').sleep(0.25)
-        if i >= 4: __import__('time').sleep(0.25)
-
-    results = [(term, n) for (n, term) in reversed(sorted(results))]
-    reply = ', '.join('%s (%s)' % (t, formatnumber(n)) for (t, n) in results)
-    phenny.say(reply)
-gcs.commands = ['gcs', 'comp']
-gcs.example = '.gcs Ronaldo Messi'
+gsearch.commands = ['g']
+gsearch.name = 'g'
+gsearch.example = '.g Apertium'
 
 r_bing = re.compile(r'<h2><a href="([^"]+)"')
 

@@ -5,11 +5,7 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
 
 import random
-
-def eightball(phenny, input):
-    """.8ball - Magic 8-ball."""
-
-    strong_yes = [
+STRONG_YES = [
             '45 seconds full throttle',
             'It is certain',
             'It is decidedly so',
@@ -17,14 +13,14 @@ def eightball(phenny, input):
             'Yes--definitely',
             'You may rely on it',
     ]
-    tentative_yes = [
+TENTATIVE_YES = [
             'As I see it, yes',
             'Most likely',
             'Outlook good',
             'Signs point to yes',
             'Yes',
     ]
-    negative = [
+NEGATIVE = [
             'Your request is not bro enough',
             'Reply hazy, try again',
             'Ask again later',
@@ -32,7 +28,7 @@ def eightball(phenny, input):
             'Cannot predict now',
             'Concentrate and ask again',
     ]
-    noncommital = [
+NONCOMMITAL = [
             'I am sorry, too high to respond',
             "Don't count on it",
             'My reply is no',
@@ -41,9 +37,14 @@ def eightball(phenny, input):
             'Very doubtful'
     ]
 
+QUOTES = STRONG_YES + TENTATIVE_YES + NEGATIVE + NONCOMMITAL
+
+def eightball(phenny, input):
+    """.8ball - Magic 8-ball."""
+
+
     # black magic
-    quotes = strong_yes + tentative_yes + negative + noncommital
-    quote = random.choice(quotes)
+    quote = random.choice(QUOTES)
     phenny.reply(quote)
 eightball.commands = ['8ball']
 eightball.name = '8ball'

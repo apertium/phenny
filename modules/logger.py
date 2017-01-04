@@ -30,7 +30,7 @@ def logger(phenny, input):
 
     sqlite_data = {
         'channel': input.sender,
-        'nick': input.nick.lower(),
+        'nick': input.nick.casefold(),
         'msg': input.group(1),
         'chars': len(input.group(1)),
     }

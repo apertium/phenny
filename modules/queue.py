@@ -6,6 +6,7 @@ author: mattr555
 import os
 import pickle
 import random
+from modules import caseless_equal
 from modules import more
 
 commands = '.queue display <name>?; .queue new <name> <items>; .queue delete <name>; .queue <name> add <items>; .queue <name> swap <item/index1>, <item/index2>; .queue <name> move <source_item/index>, <target_item/index>; .queue <name> replace <item/index>, <new_item>; .queue <name> remove <item>; .queue <name> pop; .queue <name> random; .queue <name> reassign <nick>; .queue <name> rename <new_name>'
@@ -49,7 +50,7 @@ def get_queue(queue_data, queue_name, nick):
         return n, queue_data[n]
     else:
         for i in lower_names:
-            if queue_name.casefold() == i.split(':')[1]:
+            if caseless_equal(queue_name, i.split(':')[1]):
                 n = lower_names[i.casefold()]
                 return n, queue_data[n]
     return None, None
@@ -81,7 +82,7 @@ def queue(phenny, raw):
                 elif len(queue_names) > 0:
                     queue_exact = list(queue_names)
                     for q in queue_names:
-                        if q.split(':')[0].casefold() == raw.nick.casefold() and q[len(raw.nick)+1:].casefold() == search.casefold():
+                        if caseless_equal(q.split(':')[0], raw.nick) and caseless_equal(q[len(raw.nick)+1:], search):
                             #current user owns queue with exact name
                             more.add_messages(raw.nick, phenny, print_queue(q, phenny.queue_data[q]))
                             return
@@ -131,7 +132,7 @@ def queue(phenny, raw):
             if raw.group(2):
                 queue_name, queue = get_queue(phenny.queue_data, raw.group(2), raw.nick)
                 if type(queue_name) is str:
-                    if raw.nick.casefold() == queue['owner'].casefold() or raw.admin:
+                    if caseless_equal(raw.nick, queue['owner']) or raw.admin:
                         phenny.queue_data.pop(queue_name)
                         write_dict(filename(phenny), phenny.queue_data)
                         phenny.reply('Queue {} deleted.'.format(queue_name))
@@ -147,7 +148,7 @@ def queue(phenny, raw):
             queue_name, queue = get_queue(phenny.queue_data, raw.group(1), raw.nick)
             if raw.group(2):
                 command = raw.group(2).lower()
-                if queue['owner'].casefold() == raw.nick.casefold() or raw.admin:
+                if caseless_equal(queue['owner'], raw.nick) or raw.admin:
                     if command == 'add':
                         if raw.group(3):
                             new_queue = raw.group(3).split(',')

@@ -12,6 +12,7 @@ import sys
 import urllib.request, urllib.parse, urllib.error
 import web
 from tools import GrumbleError, translate
+from modules import caseless_equal
 
 follows = []
 
@@ -45,7 +46,7 @@ def follow(phenny, input): #follow a user
 		data = input.group(2).split(' ')
 		nick = data[0]
 
-		if nick.casefold() == phenny.config.nick.casefold():
+		if caseless_equal(nick, phenny.config.nick):
 			phenny.reply(phenny.config.nick.upper() + " DOES NOT LIKE TO BE FOLLOWED.")
 			return
 
@@ -80,7 +81,7 @@ def follow(phenny, input): #follow a user
 			return
 
 		for i in follows:
-			if i.nick.casefold() == nick.casefold() and i.dir == tuple(dir) and i.sender.casefold() == sender.casefold():
+			if caseless_equal(i.nick, nick) and i.dir == tuple(dir) and caseless_equal(i.sender, sender):
 				phenny.say(sender + " is already following " + nick + " with " + '-'.join(dir) + '.')
 				return
 
@@ -95,7 +96,7 @@ def unfollow(phenny, input): #unfollow a user
 
 	following = False
 	for i in follows:
-		if i.nick.casefold() == input.groups()[1].casefold() and i.sender.casefold() == input.nick.casefold():
+		if caseless_equal(i.nick, input.groups()[1]) and caseless_equal(i.sender, input.nick):
 			#if this person is indeed being followed (and is indeed the creator of the follow)
 			follows.remove(i)
 			following = True
@@ -123,7 +124,7 @@ def checkMessages(phenny, input): #filter through each message in the channel
 
 		translations = {}
 		for i in follows:
-			if i.nick.casefold() == input.nick.casefold():
+			if caseless_equal(i.nick, input.nick):
 				if (i.nick, i.dir) not in translations:
 					#this user is being followed, translate them
 					direction = '-'.join(i.dir)

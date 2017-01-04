@@ -10,6 +10,7 @@ http://inamidst.com/phenny/
 import os, re, datetime, random
 import web
 from collections import Counter
+from modules import caseless_list
 
 maximum = 4
 lispchannels = frozenset([ '#lisp', '#scheme', '#opendarwin', '#macdev',
@@ -239,7 +240,7 @@ def message(phenny, input):
     if not input.sender.startswith('#'): return
 
     tellee = input.nick
-    aliases = list(map(str.casefold, aliasGroupFor(tellee)))
+    aliases = caseless_list(aliasGroupFor(tellee))
     channel = input.sender
 
     if not os: return

@@ -22,7 +22,7 @@ class TestQueue(unittest.TestCase):
 
     def testBack(self):
         self.input.nick = 'Testseen'
-        self.input.count.return_value = 0 # Mock Attribute to provide the messages
+        self.input.count.return_value = 0
         away.back(self.phenny, self.input)
         self.input = "whereis Testseen"
         away.whereis(self.phenny, self.input)
@@ -30,7 +30,7 @@ class TestQueue(unittest.TestCase):
 
     def testAwayBack(self):
         self.input.nick = 'Testseen'
-        self.input.count.return_value = 0 # Mock Attribute to provide the messages
+        self.input.count.return_value = 0
         away.away(self.phenny, self.input)
         away.back(self.phenny, self.input)
         self.input = "whereis Testseen"
@@ -39,7 +39,7 @@ class TestQueue(unittest.TestCase):
 
     def testBackAway(self):
         self.input.nick = 'Testseen'
-        self.input.count.return_value = 0 # Mock Attribute to provide the messages
+        self.input.count.return_value = 0
         away.back(self.phenny, self.input)
         away.away(self.phenny, self.input)
         self.input = "whereis Testseen"

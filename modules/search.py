@@ -24,7 +24,7 @@ def gsearch(phenny, input):
     str = input.replace(".g ", "")
     results = google_search(
         str, my_api_key, my_cse_id, num=10)
-    for result in results[:5]:
+    for result in results[:1]:
         phenny.say("{} : {}".format(result['title'], result['link']))
 
 gsearch.commands = ['g']

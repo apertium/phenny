@@ -20,7 +20,7 @@ def shorten_num(n):
 
 def scrape_ethnologue_codes():
     data = {}
-    base_url = 'http://www.ethnologue.com/browse/codes/'
+    base_url = 'https://www.ethnologue.com/browse/codes/'
     for letter in ascii_lowercase:
         resp = web.get(base_url + letter)
         h = html.document_fromstring(resp)

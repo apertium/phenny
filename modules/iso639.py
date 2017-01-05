@@ -71,7 +71,7 @@ def iso639(phenny, input):
 
 def scrape_wiki_codes():
     data = {}
-    base_url = 'http://en.wikipedia.org/wiki/List_of_ISO_639'
+    base_url = 'https://en.wikipedia.org/wiki/List_of_ISO_639'
     #639-1
     resp = web.get(base_url + '-1_codes')
     h = html.document_fromstring(resp)
@@ -104,7 +104,7 @@ def scrape_wiki_codes():
 
 def scrape_wiki_codes_convert():
     data = {}
-    base_url = 'http://en.wikipedia.org/wiki/List_of_ISO_639'
+    base_url = 'https://en.wikipedia.org/wiki/List_of_ISO_639'
     #639-1
     resp = web.get(base_url + '-1_codes')
     h = html.document_fromstring(resp)

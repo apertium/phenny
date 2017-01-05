@@ -5,8 +5,7 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 import re
 import unittest
 from mock import MagicMock
-from modules.search import google_ajax, google_search, google_count, \
-        formatnumber, g, gc, gcs, bing_search, bing, duck_search, duck, \
+from modules.search import bing_search, bing, duck_search, duck, \
         search, suggest
 from tools import is_up
 

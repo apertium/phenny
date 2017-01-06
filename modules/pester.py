@@ -21,12 +21,13 @@ def start_pester(phenny, input):
     '''Start pestering someone. Usage: <bot_nick>: pester <someone> <to do something>'''
     start_pester.conn = sqlite3.connect(phenny.pester_db)
     c = start_pester.conn.cursor()
-    caseless_inputnick = input.nick.casefold();
+    inputnick = input.nick.casefold();
+    pesternick = input.group(2).casefold()
 
-    c.execute('''SELECT * FROM to_pester WHERE pesteree=? AND pesterer=?''', [input.group(2).casefold(), caseless_inputnick])
+    c.execute('''SELECT * FROM to_pester WHERE pesteree=? AND pesterer=?''', [pesternick, inputnick])
     if c.fetchall() == []:
         current_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        c.execute('''INSERT INTO to_pester VALUES(?,?,?,?,?,?);''', [input.group(2).casefold(), caseless_inputnick, input.group(3), current_time, "", current_time])
+        c.execute('''INSERT INTO to_pester VALUES(?,?,?,?,?,?);''', [pesternick, inputnick, input.group(3), current_time, "", current_time])
         start_pester.conn.commit()
         msg = input.nick + ": I will start pestering " + input.group(2) + " " + input.group(3)
         phenny.say(msg)
@@ -43,34 +44,34 @@ start_pester.rule = ('$nick', ['pester'], r'(\S+) (.*)')
 def pester(phenny, input):
     pester.conn = sqlite3.connect(phenny.pester_db)
     c = pester.conn.cursor()
-    caseless_inputnick = input.nick.casefold();
+    inputnick = input.nick.casefold();
 
     pesterees = []
     c.execute('''SELECT pesteree FROM to_pester''')
     for name in c.fetchall():
         pesterees.append(name[0].casefold())
 
-    if caseless_inputnick in pesterees:
+    if inputnick in pesterees:
         reasons = []
         c.execute('''SELECT reason FROM to_pester WHERE pesteree=?''',
-                [caseless_inputnick])
+                [inputnick])
         for reason in c.fetchall():
             reasons.append(reason[0])
             
         for reason in reasons:
             pesterers = []
-            c.execute('''SELECT pesterer FROM to_pester WHERE pesteree=? AND reason=?''', (caseless_inputnick, reason))
+            c.execute('''SELECT pesterer FROM to_pester WHERE pesteree=? AND reason=?''', (inputnick, reason))
             for name in c.fetchall():
                 pesterers.append(name[0])
             
             for pesterer in pesterers:
-                c.execute('''SELECT dismissed FROM to_pester WHERE pesteree=? AND pesterer=? AND reason=?''', (caseless_inputnick, pesterer, reason))
+                c.execute('''SELECT dismissed FROM to_pester WHERE pesteree=? AND pesterer=? AND reason=?''', (inputnick, pesterer, reason))
                 last_dismissed = c.fetchall()[0][0]
                 current_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-                c.execute('''SELECT created FROM to_pester WHERE pesteree=? AND pesterer=? AND reason=?''', (caseless_inputnick, pesterer, reason))
+                c.execute('''SELECT created FROM to_pester WHERE pesteree=? AND pesterer=? AND reason=?''', (inputnick, pesterer, reason))
                 created_str = c.fetchall()[0][0]
                 if last_dismissed == "":
-                    c.execute('''SELECT last_pestered FROM to_pester WHERE pesteree=? AND pesterer=? AND reason=?''', (caseless_inputnick, pesterer, reason))
+                    c.execute('''SELECT last_pestered FROM to_pester WHERE pesteree=? AND pesterer=? AND reason=?''', (inputnick, pesterer, reason))
                     last_pester_str = c.fetchall()[0][0]
                     try:
                         last_pestered = datetime.strptime(last_pester_str, "%Y-%m-%d %H:%M:%S")
@@ -82,7 +83,7 @@ def pester(phenny, input):
                         msg = input.nick + ': (' + created_str + ') ' + pesterer + ' pesters you ' + reason
                         phenny.say(msg)
                         c.execute('''UPDATE to_pester SET last_pestered=? WHERE pesteree=? AND pesterer=? AND reason=?''',
-                                (current_time, caseless_inputnick, pesterer, reason))
+                                (current_time, inputnick, pesterer, reason))
                         pester.conn.commit()
                 else:
                     dismissed = datetime.strptime(last_dismissed, "%Y-%m-%d %H:%M:%S")
@@ -92,8 +93,8 @@ def pester(phenny, input):
                         msg = input.nick + ': (' + created_str + ') ' + pesterer + ' pesters you ' + reason
                         phenny.say(msg)
                         c.execute('''UPDATE to_pester SET last_pestered=? WHERE pesteree=? AND pesterer=? AND reason=?''',
-                                (current_time, caseless_inputnick, pesterer, reason))
-                        c.execute('''UPDATE to_pester SET dismissed=? WHERE pesteree=? AND pesterer=? AND reason=?''', ("", caseless_inputnick, pesterer, reason))
+                                (current_time, inputnick, pesterer, reason))
+                        c.execute('''UPDATE to_pester SET dismissed=? WHERE pesteree=? AND pesterer=? AND reason=?''', ("", inputnick, pesterer, reason))
                         pester.conn.commit()
     else:
         pass
@@ -103,21 +104,22 @@ def pesters(phenny, input):
     '''Usage: ".pesters snooze <person pestering you>" to 'snooze' a pester; ".pesters dismiss <person you are pestering>" to stop pestering someone.'''
     pesters.conn = sqlite3.connect(phenny.pester_db)
     c = pesters.conn.cursor()
-    caseless_inputnick = input.nick.casefold();
+    inputnick = input.nick.casefold();
+    pesterernick = input.group(2).casefold();
 
     if input.group(1) == 'snooze':
         current_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        if c.execute('''SELECT * FROM to_pester WHERE pesteree=? AND pesterer=?''', [caseless_inputnick, input.group(2).casefold()]).fetchall() == []:
+        if c.execute('''SELECT * FROM to_pester WHERE pesteree=? AND pesterer=?''', [inputnick, pesterernick]).fetchall() == []:
             phenny.say(input.nick + ': You are not being pestered by ' + input.group(2))
         else:
-            c.execute('''UPDATE to_pester SET dismissed=? WHERE pesteree=? AND pesterer=?''', [current_time, caseless_inputnick, input.group(2).casefold()])
+            c.execute('''UPDATE to_pester SET dismissed=? WHERE pesteree=? AND pesterer=?''', [current_time, inputnick, pesterernick])
             phenny.say(input.nick + ': Pester snoozed. Pester will recur in ' + str(phenny.config.pester_after_dismiss) + ' minutes.')
         
     elif input.group(1) == 'dismiss':
-        if c.execute('''SELECT * FROM to_pester WHERE pesteree=? AND pesterer=?''', [input.group(2).casefold(), caseless_inputnick]).fetchall() == []:
+        if c.execute('''SELECT * FROM to_pester WHERE pesteree=? AND pesterer=?''', [pesterernick, inputnick]).fetchall() == []:
             phenny.say(input.nick + ': You are not pestering ' + input.group(2))
         else:
-            c.execute('''DELETE FROM to_pester WHERE pesteree=? AND pesterer=?''', [input.group(2).casefold(), caseless_inputnick])
+            c.execute('''DELETE FROM to_pester WHERE pesteree=? AND pesterer=?''', [pesterernick, inputnick])
             phenny.say(input.nick + ': Stopped pestering ' + input.group(2))
             
     pesters.conn.commit()
@@ -128,9 +130,8 @@ def admin_stop(phenny, input):
     '''Usage: ".pesters stop <pesterer> to <pesteree>" to stop a pester from <pesterer> to <pesteree>. This functions is for *admins only*.'''
     admin_stop.conn = sqlite3.connect(phenny.pester_db)
     c = admin_stop.conn.cursor()
-    caseless_inputnick = input.nick.casefold();
 
-    if caseless_inputnick in caseless_list(phenny.config.admins):
+    if input.nick.casefold() in caseless_list(phenny.config.admins):
         if c.execute('''SELECT * FROM to_pester WHERE pesteree=? AND pesterer=?''', (input.group(2).casefold(), input.group(1).casefold())).fetchall == []:
             phenny.say(input.nick + ': ' + input.group(1) + ' is not pestering ' + input.group(2))
         else:

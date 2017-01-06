@@ -13,17 +13,6 @@ from collections import Counter
 from modules import caseless_list
 
 maximum = 4
-lispchannels = frozenset([ '#lisp', '#scheme', '#opendarwin', '#macdev',
-'#fink', '#jedit', '#dylan', '#emacs', '#xemacs', '#colloquy', '#adium',
-'#growl', '#chicken', '#quicksilver', '#svn', '#slate', '#squeak', '#wiki',
-'#nebula', '#myko', '#lisppaste', '#pearpc', '#fpc', '#hprog',
-'#concatenative', '#slate-users', '#swhack', '#ud', '#t', '#compilers',
-'#erights', '#esp', '#scsh', '#sisc', '#haskell', '#rhype', '#sicp', '#darcs',
-'#hardcider', '#lisp-it', '#webkit', '#launchd', '#mudwalker', '#darwinports',
-'#muse', '#chatkit', '#kowaleba', '#vectorprogramming', '#opensolaris',
-'#oscar-cluster', '#ledger', '#cairo', '#idevgames', '#hug-bunny', '##parsers',
-'#perl6', '#sdlperl', '#ksvg', '#rcirc', '#code4lib', '#linux-quebec',
-'#programmering', '#maxima', '#robin', '##concurrency', '#paredit' ])
 
 # nick aliases (saved in ~/<User phenny dir>/<nick>-<host>.alias.db)
 # format (each row is an alias group, aliases are separated by '\t'): 

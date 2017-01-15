@@ -5,15 +5,18 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 import re
 import unittest
 from mock import MagicMock
-from modules.search import bing_search, bing, duck_search, duck, \
-        search, suggest
+from modules.search import google_search, gsearch, my_api_key, my_cse_id, \
+        bing_search, bing, duck_search, duck, search, suggest
 from tools import is_up
+from web import unquote
 
 
 # tests involving Google searches are expected to fail because Google's Web
 # Search API was officially deprecated in Nov. 2010 and discontinued in Sep.
 # 2014; the eventual fix should use https://cse.google.com/cse/ and this hack:
 # http://stackoverflow.com/a/11206266/1846915
+#
+# update as of 2017-01-14: this has been fixed
 class TestSearch(unittest.TestCase):
     def setUp(self):
         self.skip_msg = '{:s} is down, skipping test.'
@@ -26,48 +29,18 @@ class TestSearch(unittest.TestCase):
         self.phenny = MagicMock()
         self.input = MagicMock()
 
-    @unittest.skip('see test_search.py')
-    def test_google_ajax(self):
-        if not is_up(self.engines['Google']):
-            self.skipTest(self.skip_msg.format('Google'))
-        data = google_ajax('phenny')
-        self.assertIn('responseData', data)
-        self.assertEqual(data['responseStatus'], 200)
-
-    @unittest.skip('see test_search.py')
     def test_google_search(self):
         if not is_up(self.engines['Google']):
             self.skipTest(self.skip_msg.format('Google'))
-        out = google_search('phenny')
-        m = re.match('^https?://.*$', out, flags=re.UNICODE)
-        self.assertTrue(m)
+        self.input.group.return_value = 'vtluug virginia phenny'
+        results = google_search(self.input, my_api_key, my_cse_id)
+        self.assertTrue(results)
 
-    @unittest.skip('see test_search.py')
-    def test_g(self):
-        if not is_up(self.engines['Google']):
-            self.skipTest(self.skip_msg.format('Google'))
-        self.input.group.return_value = 'swhack'
-        g(self.phenny, self.input)
-        self.phenny.reply.assert_not_called_with(
-                "Problem getting data from Google.")
-
-    @unittest.skip('see test_search.py')
-    def test_gc(self):
-        if not is_up(self.engines['Google']):
-            self.skipTest(self.skip_msg.format('Google'))
-        query = 'extrapolate'
-        self.input.group.return_value = query
-        gc(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
-        m = re.match('^{0}: [0-9,\.]+$'.format(query), out, flags=re.UNICODE)
-        self.assertTrue(m)
-
-    @unittest.skip('see test_search.py')
-    def test_gcs(self):
+    def test_gsearch(self):
         if not is_up(self.engines['Google']):
             self.skipTest(self.skip_msg.format('Google'))
         self.input.group.return_value = 'vtluug virginia phenny'
-        gcs(self.phenny, self.input)
+        gsearch(self.phenny, self.input)
         self.assertTrue(self.phenny.say.called)
 
     def test_bing_search(self):
@@ -87,8 +60,8 @@ class TestSearch(unittest.TestCase):
     def test_duck_search(self):
         if not is_up(self.engines['DuckDuckGo']):
             self.skipTest(self.skip_msg.format('DuckDuckGo'))
-        out = duck_search('phenny')
-        m = re.match('^https?://.*$', out, flags=re.UNICODE)
+        out = unquote(duck_search('phenny'))
+        m = re.match(r'^https?://.*$', out, flags=re.UNICODE)
         self.assertTrue(m)
 
     def test_duck(self):

@@ -183,7 +183,7 @@ class Bot(asynchat.async_chat):
                 return
 
         # Split long messages
-        currentlength = config.maxlength
+        currentlength = phenny.config.maxlength
         max_messages_count = 3
         if len(text) > currentlength:
             for i in range(max_messages_count):

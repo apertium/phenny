@@ -24,7 +24,7 @@ def break_up_fn(string, max_length):
     return parts
 
 def add_messages(target, phenny, msg, break_up=break_up_fn):
-    max_length = (config.maxlength - 2) - len(target) - 5
+    max_length = (phenny.config.maxlength - 2) - len(target) - 5
     msgs = break_up(str(msg), max_length)
 
     if len(msgs) <= 2:

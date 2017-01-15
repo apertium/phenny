@@ -13,7 +13,7 @@ from tools import is_up
 # permanently down
 class TestVtluugwiki(unittest.TestCase):
     def setUp(self):
-        if not is_up('https://vtluug.org/wiki/'):
+        if not is_up('https://vtluug.org/wiki'):
             self.skipTest('VTLUUG wiki is down, skipping test.')
         self.phenny = MagicMock()
         self.input = MagicMock()

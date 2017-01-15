@@ -68,28 +68,29 @@ def translate(phenny, translate_me, input_lang, output_lang='en'):
 
 def apertium_translate(phenny, input):
     '''Translates a phrase using APy.'''
-    line = strict_check(r'((?:' + langRE + r'-' + langRE + r' ?)+)\s+(.*)',
+    pairRE = langRE + r'-' + langRE
+    line = strict_check(r'((?:' + pairRE + r'(?:\|' + pairRE + r')*' + r' ?)+)\s+(.*)',
                         input.group(2), apertium_translate)
     if (len(line.group(2)) > 350) and (not input.admin):
         raise GrumbleError('Phrase must be under 350 characters.')
 
-    pairs = [tuple(langs.split('-')) for langs in line.group(1).split(' ')]
-    lastPair = len(pairs)
-    translated = line.group(2)
-    for (input_lang, output_lang) in pairs:
-        if input_lang == output_lang:
-            raise GrumbleError('Stop trying to confuse me! Pick different languages ;)')
-        try:
-            translated = translate(phenny, translated, input_lang, output_lang)
-            if lastPair <= 1:
-                phenny.reply(web.decode(translated))
-            else: lastPair = lastPair - 1
-        except GrumbleError as err:
-            phenny.say('{:s}-{:s}: {:s}'.format(input_lang, output_lang, str(err)))
-
+    blocks = line.group(1).split(' ')
+    for block in blocks:
+        pairs = block.split('|')
+        translated = line.group(2)
+        for (input_lang, output_lang) in [pair.split('-') for pair in pairs]:
+            if input_lang == output_lang:
+                raise GrumbleError('Stop trying to confuse me! Pick different languages ;)')
+            try:
+                translated = web.decode(translate(phenny, translated, input_lang, output_lang))
+            except GrumbleError as err:
+                phenny.say('{:s}-{:s}: {:s}'.format(input_lang, output_lang, str(err)))
+                return
+        phenny.reply(web.decode(translated))
+    
 apertium_translate.name = 't'
 apertium_translate.commands = ['t']
-apertium_translate.example = '.t en-es en-fr I like pie'
+apertium_translate.example = '.t en-es|es-fr en-ca I like pie'
 apertium_translate.priority = 'high'
 
 

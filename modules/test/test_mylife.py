@@ -13,7 +13,7 @@ class TestMylife(unittest.TestCase):
         self.phenny = MagicMock()
 
     def test_fml(self):
-        if not is_up('http://fmylife.com'):
+        if not is_up('http://fmylife.com/random'):
             self.skipTest('FML website is down, skipping test.')
         mylife.fml(self.phenny, None)
         self.assertTrue(self.phenny.say.called)

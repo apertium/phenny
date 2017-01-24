@@ -135,3 +135,4 @@ lmgtfy.commands = ['lmgtfy']
 
 if __name__ == '__main__': 
     print(__doc__.strip())
+    #and if it was wrong?

@@ -29,6 +29,7 @@ def create_default_config(fn):
     nick = 'phenny'
     host = 'irc.example.net'
     port = 6667
+    maxlength = 430
     ssl = False
     ipv6 = False
     channels = ['#example', '#test']

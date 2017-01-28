@@ -183,14 +183,14 @@ class Bot(asynchat.async_chat):
                 return
 
         # Split long messages
-        maxlength = 430
+        currentlength = phenny.config.maxlength
         max_messages_count = 3
-        if len(text) > maxlength:
+        if len(text) > currentlength:
             for i in range(max_messages_count):
                 # We want to add "..." to last message so we leave place for it
                 if i == max_messages_count-1:
-                    maxlength=maxlength-3
-                message = text[0:maxlength].decode('utf-8','ignore')
+                    currentlength=currentlength-3
+                message = text[0:currentlength].decode('utf-8','ignore')
                 line_break = len(message)
                 space_found = 0
                 for j in range(len(message)-1,-1,-1):
@@ -205,7 +205,7 @@ class Bot(asynchat.async_chat):
                     text = b''
                 self.msg(recipient, message)
                 text=text.decode('utf-8','ignore')[line_break+space_found:].encode('utf-8')
-                if len(text) <= maxlength:
+                if len(text) <= currentlength:
                     self.msg(recipient,text.decode('utf-8','ignore'))
                     break
             self.sending.release()

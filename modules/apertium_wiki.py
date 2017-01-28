@@ -75,7 +75,7 @@ def apertium_wiki(phenny, input, origterm, to_nick=None):
     sentences = text.text_content().split(". ")
     sentence = '"' + sentences[0] + '"'
 
-    maxlength = 430 - len((' - ' + wikiuri.format(format_term_display(term))).encode('utf-8'))
+    maxlength = phenny.config.maxlength - len((' - ' + wikiuri.format(format_term_display(term))).encode('utf-8'))
     if len(sentence.encode('utf-8')) > maxlength:
         sentence = sentence.encode('utf-8')[:maxlength].decode('utf-8', 'ignore')
         words = sentence[:-5].split(' ')

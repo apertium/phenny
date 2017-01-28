@@ -42,7 +42,7 @@ def format_subsection(section):
    section = section.replace(".3A", ":")
    return section
 
-def parse_wiki_page(url, term, section = None):
+def parse_wiki_page(phenny, url, term, section = None):
     try:
         web_url = web.quote(url).replace("%3A", ":", 1)
         html = str(web.get(web_url))

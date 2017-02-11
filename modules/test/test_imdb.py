@@ -11,9 +11,6 @@ from web import catch_timeout
 
 class TestImdb(unittest.TestCase):
     def setUp(self):
-        if imdb.API_KEY is None:
-            self.skipTest('No API key provided for OMDbAPI, skipping test.')
-
         self.phenny = MagicMock()
         self.input = MagicMock()
 

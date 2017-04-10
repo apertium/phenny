@@ -97,12 +97,18 @@ class Bot(asynchat.async_chat):
         except Exception as e:
             raise
 
-    def run(self, host, port=6667, ssl=False,
-            ipv6=False, ca_certs=None): 
-        self.ca_certs = ca_certs
-        self.initiate_connect(host, port, ssl, ipv6)
+    def run(self, host, port=6667, ssl=False, ipv6=False, ca_certs=None,
+            ssl_context=None):
+        if ssl_context is None:
+            ssl_context = self.get_ssl_context(ca_certs)
+        self.initiate_connect(host, port, ssl, ipv6, ssl_context)
 
-    def initiate_connect(self, host, port, use_ssl, ipv6): 
+    def get_ssl_context(self, ca_certs):
+        return ssl.create_default_context(
+            purpose=ssl.Purpose.SERVER_AUTH,
+            cafile=ca_certs)
+
+    def initiate_connect(self, host, port, use_ssl, ipv6, ssl_context):
         logger.info('Connecting to %s:%s...' % (host, port))
 
         if ipv6 and socket.has_ipv6:
@@ -110,31 +116,19 @@ class Bot(asynchat.async_chat):
         else:
              af = socket.AF_INET
 
-        self.create_socket(af, socket.SOCK_STREAM, use_ssl, host)
+        self.create_socket(af, socket.SOCK_STREAM, use_ssl, host, ssl_context)
         self.connect((host, port))
 
         try: asyncore.loop()
         except KeyboardInterrupt: 
             sys.exit()
 
-    def create_socket(self, family, type, use_ssl=False, hostname=None):
+    def create_socket(self, family, type, use_ssl=False, hostname=None,
+                      ssl_context=None):
         self.family_and_type = family, type
         sock = socket.socket(family, type)
         if use_ssl:
-            # this stuff is all new in python 3.4, so fallback if needed
-            try:
-                context = ssl.create_default_context(
-                    purpose=ssl.Purpose.SERVER_AUTH,
-                    cafile=self.ca_certs)
-                sock = context.wrap_socket(sock, server_hostname=hostname)
-            except:
-                if self.ca_certs is None:
-                    # default to standard path on most non-EL distros
-                    ca_certs = "/etc/ssl/certs/ca-certificates.crt"
-                else:
-                    ca_certs = self.ca_certs
-                sock = ssl.wrap_socket(sock, ssl_version=ssl.PROTOCOL_TLSv1,
-                        cert_reqs=ssl.CERT_REQUIRED, ca_certs=ca_certs)
+            sock = ssl_context.wrap_socket(sock, server_hostname=hostname)
         # FIXME: this doesn't work with SSL enabled
         #sock.setblocking(False)
         self.set_socket(sock)

@@ -43,22 +43,28 @@ def run_phenny(config):
         delay = config.delay
     else:
         delay = 20
-        
+
+    def connect():
+        import bot
+        p = bot.Phenny(config)
+        p.use_sasl = config.sasl
+
+        ssl_context = p.get_ssl_context(config.ca_certs)
+
+        if config.ssl_cert and config.ssl_key:
+            ssl_context.load_cert_chain(config.ssl_cert, config.ssl_key)
+
+        p.run(config.host, config.port, config.ssl, config.ipv6, None,
+              ssl_context)
+
     try:
         Watcher()
     except Exception as error:
         logger.warning(str(error) + ' (in __init__.py)')
 
-    try:
-        import bot
-        p = bot.Phenny(config)
-        p.use_sasl = config.sasl
-    except KeyboardInterrupt:
-        sys.exit()
-
     while True: 
         try:
-            p.run(config.host, config.port, config.ssl, config.ipv6, config.ca_certs)
+            connect()
         except KeyboardInterrupt:
             sys.exit()
 

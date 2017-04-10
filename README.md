@@ -12,7 +12,7 @@ will need to be updated to run on Python3 if they do not already. All of the
 core modules have been ported, removed, or replaced.
 
 ## Requirements
-* Python 3.2+
+* Python 3.4+
 * [python-requests](http://docs.python-requests.org/en/latest/)
 
 ## Installation

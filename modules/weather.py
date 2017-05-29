@@ -17,13 +17,13 @@ r_from = re.compile(r'(?i)([+-]\d+):00 from')
 
 
 def location(q):
-    try:
-        r = int(q)
-        uri = 'https://nominatim.openstreetmap.org/search/?postalcode={query}&format=json'\
-            .format(query=web.quote(q))
-    except ValueError:
-        uri = 'https://nominatim.openstreetmap.org/search/?q={query}&format=json'\
-            .format(query=web.quote(q))
+    uri = 'https://nominatim.openstreetmap.org/search?{type}={query}&format=json'
+
+    if q.isdigit():
+        uri = uri.format(type='postalcode', query=web.quote(q))
+    else:
+        uri = uri.format(type='q', query=web.quote(q))
+
     results = web.get(uri)
     data = json.loads(results)
 

@@ -63,8 +63,7 @@ def parse_wiki_page(url, term, section = None):
         url += "#" + format_term_display(section)
     else:
         #Get first paragraph
-
-        text = page.get_element_by_id('mw-content-text').find('p')
+        text = page.get_element_by_id('mw-content-text').find('.//p')
 
     sentences = [x.strip() for x in text.text_content().split(".")]
     sentence = '"' + sentences[0] + '"'

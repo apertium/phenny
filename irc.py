@@ -170,6 +170,7 @@ class Bot(asynchat.async_chat):
         pass
 
     def msg(self, recipient, text): 
+        print("msg:", recipient, ' | ', text)
         self.sending.acquire()
 
         # Cf. http://swhack.com/logs/2006-03-01#T19-43-25

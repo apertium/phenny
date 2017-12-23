@@ -43,5 +43,4 @@ class TestTell(unittest.TestCase):
         tell.messageAlert(self.phenny, self.input)
 
         text = ': You have messages. Say something, and I\'ll read them out.'
-        self.phenny.msg.assert_called_once_with(
-            self.input.sender, self.input.nick + text)
+        self.phenny.say.assert_called_once_with(self.input.nick + text)

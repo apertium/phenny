@@ -16,7 +16,7 @@ class TestTell(unittest.TestCase):
         self.phenny.nick = 'phenny'
 
         alias_file = os.path.expanduser('~/.phenny/aliases.db')
-        os.makedirs(os.path.dirname(alias_file))
+        os.makedirs(os.path.dirname(alias_file), exist_ok=True)
 
         self.phenny.alias_filename = alias_file
 
@@ -34,6 +34,7 @@ class TestTell(unittest.TestCase):
         self.input.nick = 'Testsworth'
 
         aliases = ['tester', 'testing', 'testmaster']
+        self.phenny.reminders = {}
 
         for alias in aliases:
             self.create_alias(alias)

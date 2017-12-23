@@ -1,90 +1,39 @@
-#!/usr/bin/env python
 # coding=utf-8
 """
-calc.py - Phenny Calculator Module
-Copyright 2008, Sean B. Palmer, inamidst.com
-Licensed under the Eiffel Forum License 2.
-
-http://inamidst.com/phenny/
+test_calc.py - tests for the calc module
+author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
-
-import re
-import web
-
-subs = [
-    ('£', 'GBP '),
-    ('€', 'EUR '),
-    ('\$', 'USD '),
-    (r'\n', '; '),
-    ('&deg;', '°'),
-    (r'\/', '/'),
-]
+import unittest
+from mock import MagicMock
+from modules.calc import c
+from tools import is_up
 
 
-def c(phenny, input):
-    """DuckDuckGo calculator."""
+class TestCalc(unittest.TestCase):
+    def setUp(self):
+        self.skipTest('This module will be rewritten.')
+        
+        if not is_up('https://duckduckgo.com'):
+            self.skipTest('DuckDuckGo is down, skipping test.')
+        self.phenny = MagicMock()
+        self.input = MagicMock()
 
-    # This module is going to be rewritten
-    self.skipTest(self.skip_msg.format('Bing'))
+    def test_c(self):
+        self.input.group.return_value = '5*5'
+        c(self.phenny, self.input)
+        self.phenny.say.assert_called_once_with('25')
 
-    if not input.group(2):
-        return phenny.reply("Nothing to calculate.")
-    q = input.group(2)
+    def test_c_sqrt(self):
+        self.input.group.return_value = '4^(1/2)'
+        c(self.phenny, self.input)
+        self.phenny.say.assert_called_once_with('2')
 
-    try:
-        r = web.get(
-            'https://api.duckduckgo.com/?q={}&format=json&no_html=1'
-            '&t=mutantmonkey/phenny'.format(web.quote(q)))
-    except web.HTTPError:
-        raise GrumbleError("Couldn't parse the result from DuckDuckGo.")
+    def test_c_scientific(self):
+        self.input.group.return_value = '2^64'
+        c(self.phenny, self.input)
+        self.phenny.say.assert_called_once_with('1.84467440737096 * 10^19')
 
-    data = web.json(r)
-    if data['AnswerType'] == 'calc':
-        answer = data['Answer'].split('=')[-1].strip()
-    else:
-        answer = None
-
-    if answer:
-        phenny.say(answer)
-    else:
-        phenny.reply('Sorry, no result.')
-c.commands = ['c']
-c.example = '.c 5 + 3'
-
-def py(phenny, input): 
-   """evaluates a python2 expression via a remote sandbox"""
-   query = input.group(2).encode('utf-8')
-   uri = 'http://tumbolia.appspot.com/py/'
-   answer = web.get(uri + web.quote(query))
-   if answer: 
-      phenny.say(answer)
-   else: phenny.reply('Sorry, no result.')
-py.commands = ['py']
-py.example = '.py if not False: print "hello world!"'
-
-def wa(phenny, input): 
-    """Query Wolfram Alpha."""
-    
-    if not input.group(2):
-        return phenny.reply("No search term.")
-    query = input.group(2)
-
-    re_output = re.compile(r'{"stringified": "(.*?)",')
-
-    uri = 'http://www.wolframalpha.com/input/?i={}'
-    out = web.get(uri.format(web.quote(query)))
-    answers = re_output.findall(out)
-    if len(answers) <= 0:
-        phenny.reply("Sorry, no result.")
-        return
-
-    answer = answers[1]
-    for sub in subs:
-        answer = answer.replace(sub[0], sub[1])
-
-    phenny.say(answer)
-wa.commands = ['wa']
-wa.example = '.wa answer to life'
-
-if __name__ == '__main__':
-    print(__doc__.strip())
+    def test_c_none(self):
+        self.input.group.return_value = 'aif'
+        c(self.phenny, self.input)
+        self.phenny.reply.assert_called_once_with('Sorry, no result.')

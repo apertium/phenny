@@ -14,7 +14,7 @@ class TestImdb(unittest.TestCase):
         if not is_up('http://omdbapi.com'):
             self.skipTest('OMDb server is down, skipping test.')
 
-        if API_KEY == None:
+        if API_KEY is None:
             self.skipTest('No API key provided for OMDbAPI, skipping test.')
 
         self.phenny = MagicMock()

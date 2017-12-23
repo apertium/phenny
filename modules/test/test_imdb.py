@@ -5,7 +5,7 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 import re
 import unittest
 from mock import MagicMock
-from modules.imdb import imdb_search, imdb, uri_template
+from modules.imdb import imdb_search, imdb, API_KEY
 from tools import is_up
 
 
@@ -14,7 +14,7 @@ class TestImdb(unittest.TestCase):
         if not is_up('http://omdbapi.com'):
             self.skipTest('OMDb server is down, skipping test.')
 
-        if '?apikey=' not in uri_template:
+        if API_KEY == None:
             self.skipTest('No API key provided for OMDbAPI, skipping test.')
 
         self.phenny = MagicMock()

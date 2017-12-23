@@ -8,7 +8,7 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 import random
 from modules.ethnologue import setup as ethno_setup
 from modules.ethnologue import write_ethnologue_codes
-from lxml import html
+from lxml import html, etree
 import web
 import os
 import threading
@@ -77,20 +77,34 @@ def scrape_wiki_codes():
     h = html.document_fromstring(resp)
     table = h.find_class('wikitable')[0]
     for row in table.findall('tr')[1:]:
-        name = row.findall('td')[2].find('a').text
-        code = row.findall('td')[4].text
+        name = etree.tostring(row.findall('td')[2]).decode('utf-8')
+        name = etree.fromstring(name[name.find('<a'):name.find('</a>')+4]).text
+
+        code = etree.tostring(row.findall('td')[4]).decode('utf-8')
+        code = etree.fromstring(code[code.find('<a'):code.find('</a>')+4]).text
+
         data[code] = name
     #639-2
     resp = web.get(base_url + '-2_codes')
     h = html.document_fromstring(resp)
     table = h.find_class('wikitable')[0]
     for row in table.findall('tr')[1:]:
-        name = row.findall('td')[3].find('a')
-        if name:
-            name = name.text
+        name = etree.tostring(row.findall('td')[4]).decode('utf-8')
+
+        if '<a' in name:
+            name = etree.fromstring(name[name.find('<a'):name.find('</a>')+4]).text
         else:
             continue
-        code_list = row.findall('td')[0].text.split(' ')
+
+        code_list = []
+        code1 = row.findall('td')[0].text
+        code = etree.tostring(row.findall('td')[0]).decode('utf-8')
+        code = etree.fromstring(code[code.find('<a'):code.find('</a>')+4]).text
+
+        if code1 != None:
+            code_list = code1.split(' ')
+            code_list.append(code)
+
         if len(code_list) == 1:
             code = code_list[0]
         else:
@@ -99,7 +113,6 @@ def scrape_wiki_codes():
                     code = i.replace('*', '')
                     break
         data[code] = name
-
     return data
 
 def scrape_wiki_codes_convert():
@@ -111,14 +124,14 @@ def scrape_wiki_codes_convert():
     table = h.find_class('wikitable')[0]
     for row in table.findall('tr')[1:]:
         iso3code = row.findall('td')[7].text
-        code = row.findall('td')[4].text
+        code = etree.tostring(row.findall('td')[4]).decode('utf-8')
+        code = etree.fromstring(code[code.find('<a'):code.find('</a>')+4]).text
         if iso3code:
             r = re.match("(.*) \+ .*", iso3code)
             if r:
                 iso3code = r.group(1)
             data[iso3code] = code
             data[code] = iso3code
-
     return data
 
 def iso_filename(phenny):

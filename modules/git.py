@@ -108,8 +108,8 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header("Content-type", "text/html")
             self.end_headers()
 
-            for chan in self.phenny.config.channels:
-                self.phenny.msg(chan, 'Webhook received malformed payload')
+            for channel in self.phenny.config.channels:
+                self.phenny.msg(channel, 'Webhook received malformed payload')
 
             return
 
@@ -129,12 +129,14 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header("Content-type", "text/html")
             self.end_headers()
 
-            for chan in self.phenny.config.channels:
-                self.phenny.msg(chan, 'Webhook received problematic payload')
+            for channel in self.phenny.config.channels:
+                self.phenny.msg(channel, 'Webhook received problematic payload')
 
     def do_POST_unsafe(self, data):
-        # msgs will contain both commit reports and error reports
-        msgs = []
+        # will contain both commit reports and error reports
+        msgs_by_channel = {}
+        msgs_default_channels = []
+
         repo = ''
 
         # handle GitHub triggers
@@ -154,24 +156,24 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 action = data['action']
 
                 if action == 'deleted':
-                    msgs.append('{:}: {:} * comment deleted on commit {:}: {:}'
-                                .format(repo, user, commit, url))
+                    template = '{:}: {:} * comment deleted on commit {:}: {:}'
+                    msgs_default_channels.append(template.format(repo, user, commit, url))
                 else:
                     template = '{:}: {:} * comment {:} on commit {:}: {:} {:}'
                     comment = truncate(
                         data['comment']['body'],
                         template.format(repo, user, action, commit, '', url)
                     )
-                    msgs.append(template.format(repo, user, action, commit, comment, url))
+                    msgs_default_channels.append(template.format(repo, user, action, commit, comment, url))
             elif event == 'create' or event == 'delete':
+                template = '{:}: {:} * {:} {:} {:}d {:}'
                 ref = data['ref']
                 type_ = data['ref_type']
-                msgs.append('{:}: {:} * {:} {:} {:}d {:}'
-                            .format(repo, user, type_, ref, event))
+                msgs_default_channels.append(template.format(repo, user, type_, ref, event))
             elif event == 'fork':
+                template = '{:}: {:} forked this repo {:}'
                 url = data['forkee']['html_url']
-                msgs.append('{:}: {:} forked this repo {:}'
-                            .format(repo, user, url))
+                msgs_default_channels.append(template.format(repo, user, url))
             elif event == 'issue_comment':
                 if 'pull_request' in data['issue']:
                     url = data['issue']['pull_request']['html_url']
@@ -184,16 +186,18 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 action = data['action']
 
                 if action == 'deleted':
-                    msgs.append('{:}: {:} * comment deleted on {:} #{:}: {:}'
-                                .format(repo, user, text, number, url))
+                    template = '{:}: {:} * comment deleted on {:} #{:}: {:}'
+                    msgs_default_channels.append(template.format(repo, user, text, number, url))
                 else:
                     template = '{:}: {:} * comment {:} on {:} #{:}: {:} {:}'
                     comment = truncate(
                         data['comment']['body'],
                         template.format(repo, user, action, text, number, '', url)
                     )
-                    msgs.append(template.format(repo, user, action, text, number, comment, url))
+                    msgs_default_channels.append(template.format(repo, user, action, text, number, comment, url))
             elif event == 'issues':
+                template = '{:}: {:} * issue #{:} "{:}" {:} {:} {:}'
+
                 number = data['issue']['number']
                 title = data['issue']['title']
                 action = data['action']
@@ -205,22 +209,22 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 elif 'label' in data:
                     opt += 'with ' + data['label']['name']
 
-                msgs.append('{:}: {:} * issue #{:} "{:}" {:} {:} {:}'
-                            .format(repo, user, number, title, action, opt, url))
+                msgs_default_channels.append(template.format(repo, user, number, title, action, opt, url))
             elif event == 'member':
+                template = '{:}: {:} * user {:} {:} as collaborator {:}'
                 new_user = data['member']['login']
                 action = data['action']
-                msgs.append('{:}: {:} * user {:} {:} as collaborator {:}'
-                            .format(repo, user, new_user, action))
+                msgs_default_channels.append(template.format(repo, user, new_user, action))
             elif event == 'membership':
+                template = '{:}: user {:} {:} {:} {:} {:} {:}'
                 new_user = data['member']['login']
                 action = data['action']
                 prep = ['to', 'from'][int(action == 'removed')]
                 scope = data['scope']
                 name = data['team']['name']
-                msgs.append('{:}: user {:} {:} {:} {:} {:} {:}'
-                            .format(repo, new_user, action, prep, scope, name))
+                msgs_default_channels.append(template.format(repo, new_user, action, prep, scope, name))
             elif event == 'pull_request':
+                template = '{:}: {:} * pull request #{:} "{:}" {:} {:} {:}'
                 number = data['number']
                 title = data['pull_request']['title']
                 action = data['action']
@@ -230,87 +234,111 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 if data['pull_request']['assignee']:
                     opt = 'to ' + data['pull_request']['assignee']
 
-                msgs.append('{:}: {:} * pull request #{:} "{:}" {:} {:} {:}'
-                            .format(repo, user, number, title, action, opt, url))
+                msgs_default_channels.append(template.format(repo, user, number, title, action, opt, url))
             elif event == 'pull_request_review_comment':
+                template = '{:}: {:} * review comment deleted on pull request #{:}: {:}'
                 number = data['pull_request']['number']
                 url = data['comment']['html_url']
                 action = data['action']
 
                 if action == 'deleted':
-                    msgs.append('{:}: {:} * review comment deleted on pull request #{:}: {:}'
-                                .format(repo, user, number, url))
+                    msgs_default_channels.append(template.format(repo, user, number, url))
                 else:
                     template = '{:}: {:} * review comment {:} on pull request #{:}: {:} {:}'
                     comment = truncate(
                         data['comment']['body'],
                         template.format(repo, user, action, number, '', url)
                     )
-                    msgs.append(template.format(repo, user, action, number, comment, url))
+                    msgs_default_channels.append(template.format(repo, user, action, number, comment, url))
             elif event == 'push':
+                template = '{:}: {:} * {:}: {:} {:}'
+                ref = data['ref']
+                fork = data['repository']['fork']
+
+                try:
+                    repo_fullname = data['repository']['full_name']
+                    ref = data['ref'].split('/')[-1]
+                    branch_channels = self.phenny.config.branch_channels[repo_fullname][ref]
+                except:
+                    branch_channels = []
+
                 for commit in data['commits']:
-                    template = '{:}: {:} * {:}: {:} {:}'
                     non_trunc = template.format(
                         data['repository']['name'], data['pusher']['name'],
                         ', '.join(commit['modified'] + commit['added']),
                         '{:}',
                         commit['url'][:commit['url'].rfind('/') + 7]
                     )
-                    msgs.append(non_trunc.format(truncate(commit['message'], non_trunc.format(''))))
+
+                    message = non_trunc.format(truncate(non_trunc.format(''), commit['message']))
+
+                    if ref == 'refs/heads/master' and not fork:
+                        msgs_default_channels.append(message)
+                    else:
+                        for channel in branch_channels:
+                            if channel in msgs_by_channel:
+                                msgs_by_channel[channel].append(message)
+                            else:
+                                msgs_by_channel[channel] = [message]
+
             elif event == 'release':
+                template = '{:}: {:} * release {:} {:} {:}'
                 tag = data['release']['tag_name']
                 action = data['action']
                 url = data['release']['html_url']
-                msgs.append('{:}: {:} * release {:} {:} {:}'
-                            .format(repo, user, tag, action, url))
+                msgs_default_channels.append(template.format(repo, user, tag, action, url))
             elif event == 'repository':
+                template = 'new repository {:} {:} by {:} {:}'
                 name = data['repository']['name']
                 action = data['action']
                 url = data['repository']['url']
-                msgs.append('new repository {:} {:} by {:} {:}'
-                            .format(name, action, user, url, url))
+                msgs_default_channels.append(template.format(name, action, user, url, url))
             elif event == 'team_add':
+                template = 'repository {:} added to team {:} {:}'
                 name = data['repository']['full_name']
                 team = data['team']['name']
-                msgs.append('repository {:} added to team {:} {:}'
-                            .format(name, team))
+                msgs_default_channels.append(template.format(name, team))
             elif event == 'ping':
+                template = 'ping from {:}, org: {:}'
+
                 if 'organization' in data:
                     org = data['organization']
                 else:
                     org = "no org specified!"
 
                 sender = data['sender']['login']
-                msgs.append('ping from {:}, org: {:}'
-                            .format(sender, org))
+                msgs_default_channels.append(template.format(sender, org))
             else:
-                msgs.append('sorry, event {:} not supported yet.'.format(event))
-                msgs.append(str(data.keys()))
+                msgs_default_channels.append('sorry, event {:} not supported yet.'.format(event))
+                msgs_default_channels.append(str(data.keys()))
 
         elif 'Jenkins' in self.headers['User-Agent']:
-            msgs.append('Jenkins: {}'.format(data['message']))
+            msgs_default_channels.append('Jenkins: {}'.format(data['message']))
         # not github or Jenkins
         elif "commits" in data:
             for commit in data['commits']:
                 try:
                     if "author" in commit:
                         # for bitbucket
-                        msgs.append(self.return_data("bitbucket", data,
-                                                     commit))
+                        message = self.return_data("bitbucket", data, commit)
+                        msgs_default_channels.append(message)
                     else:
                         # we don't know which site
-                        msgs.append("unsupported data: " + str(commit))
+                        message = "unsupported data: " + str(commit)
+                        msgs_default_channels.append(message)
                 except Exception:
                     print("unsupported data: " + str(commit))
         elif "project_name" in data:
             # for googlecode
             # still experimental, so notify firespeaker and write debug log
             self.phenny.bot.msg("firespeaker", "DEBUG" + repr(data))
+
             with open("/home/begiak/DEBUG.txt", "a") as debugf:
                 debugf.write(repr(data) + "\n\n")
 
             for commit in data['revisions']:
-                msgs.append(self.return_data("googlecode", data, commit))
+                message = self.return_data("googlecode", data, commit)
+                msgs_default_channels.append(message)
 
         if (not msgs) and (data['commits']):
             # we couldn't get anything
@@ -320,27 +348,21 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
 
         # post all messages to all channels
         # except where specified in the config
-        messages = {}
 
-        has_git_channels = hasattr(self.phenny.config, 'git_channels')
-        use_git_channels = has_git_channels and repo in self.phenny.config.git_channels
+        try:
+            default_channels = self.phenny.config.git_channels[repo]
+        except:
+            default_channels = self.phenny.config.channels
 
-        for msg in msgs:
-            if use_git_channels:
-                for chan in self.phenny.config.git_channels[repo]:
-                    if not chan in messages:
-                        messages[chan] = []
+        for message in msgs_default_channels:
+            for channel in default_channels:
+                if channel in msgs_by_channel:
+                    msgs_by_channel[channel].append(message)
+                else:
+                    msgs_by_channel[channel] = [message]
 
-                    messages[chan].append(msg)
-            else:
-                for chan in self.phenny.config.channels:
-                    if not chan in messages:
-                        messages[chan] = []
-
-                    messages[chan].append(msg)
-
-        for chan in messages.keys():
-            more.add_messages(chan, self.phenny, messages[chan])
+        for channel in messages.keys():
+            more.add_messages(channel, self.phenny, messages[channel])
 
         # send OK code
         self.send_response(200)

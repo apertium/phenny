@@ -265,7 +265,7 @@ message.thread = False
 
 def messageAlert(phenny, input):
     aliases = aliasGroupFor(input.nick)
-    remkeys = list(map(str.lower, phenny.reminders.keys()))
+    remkeys = set(map(str.lower, phenny.reminders.keys()))
     if any((alias.lower() in remkeys) for alias in aliases):
         phenny.say(input.nick + ': You have messages. Say something, and I\'ll read them out.')
 messageAlert.event = 'JOIN'

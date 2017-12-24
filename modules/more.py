@@ -26,7 +26,7 @@ def break_up_fn(string, max_length):
 def add_messages(target, phenny, msg, break_up=break_up_fn):
     max_length = 428 - len(target) - 5
     msgs = break_up(str(msg), max_length)
-    caseless_nick = target.casefold();
+    caseless_nick = target.casefold()
 
     if len(msgs) <= 2:
         for msg in msgs:
@@ -38,15 +38,25 @@ def add_messages(target, phenny, msg, break_up=break_up_fn):
         phenny.messages[caseless_nick] = msgs
 
 def more(phenny, input):
-    caseless_nick = input.nick.casefold();
+    caseless_nick = input.nick.casefold()
 
-    if caseless_nick in phenny.messages.keys():
-        msg = phenny.messages[caseless_nick][0]
-        phenny.messages[caseless_nick].remove(phenny.messages[caseless_nick][0])
-        remaining = ' (' + str(len(phenny.messages[caseless_nick])) + ')' if phenny.messages[caseless_nick] else ''
-        phenny.reply(msg + remaining)
-        if not phenny.messages[caseless_nick]:
-            del phenny.messages[caseless_nick]
+    if not show_more(phenny, caseless_nick):
+      if input.admin or input.owner:
+        show_more(phenny, input.sender.casefold())
 
 more.name = 'more'
 more.rule = r'[.]more'
+
+def show_more(phenny, caseless_nick):
+    if not caseless_nick in phenny.messages.keys():
+        return False
+
+    msg = phenny.messages[caseless_nick][0]
+    phenny.messages[caseless_nick].remove(phenny.messages[caseless_nick][0])
+    remaining = ' (' + str(len(phenny.messages[caseless_nick])) + ')' if phenny.messages[caseless_nick] else ''
+    phenny.reply(msg + remaining)
+
+    if not phenny.messages[caseless_nick]:
+        del phenny.messages[caseless_nick]
+
+    return True

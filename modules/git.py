@@ -14,6 +14,7 @@ import time
 from tools import generate_report
 import urllib.parse
 import web
+from modules import more
 
 # githooks port
 PORT = 1234
@@ -272,14 +273,21 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
 
         # post all messages to all channels
         # except where specified in the config
+        messages = {}
         for msg in msgs:
             if msg:
                 if hasattr(self.phenny.config, 'git_channels') and repo in self.phenny.config.git_channels:
                     for chan in self.phenny.config.git_channels[repo]:
-                        self.phenny.bot.msg(chan, msg)
+                        if not chan in messages:
+                            messages[chan] = []
+                        messages[chan].append(msg)
                 else:
                     for chan in self.phenny.config.channels:
-                        self.phenny.bot.msg(chan, msg)
+                        if not chan in messages:
+                            messages[chan] = []
+                        messages[chan].append(msg)
+        for chan in messages.keys():
+            more.add_messages(chan, self.phenny, '\n'.join(messages[chan]), break_up=lambda x, y: x.split('\n'))
 
         # send OK code
         self.send_response(200)

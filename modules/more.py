@@ -30,11 +30,11 @@ def add_messages(target, phenny, msg, break_up=break_up_fn):
 
     if len(msgs) <= 2:
         for msg in msgs:
-            phenny.reply(msg)
+            phenny.msg(target, msg)
     else:
-        phenny.reply(msgs[0])
+        phenny.msg(target, msgs[0])
         msgs = msgs[1:]
-        phenny.reply('you have ' + str(len(msgs)) + ' more message(s). Please type ".more" to view them.')
+        phenny.msg(target, 'you have ' + str(len(msgs)) + ' more message(s). Please type ".more" to view them.')
         phenny.messages[caseless_nick] = msgs
 
 def more(phenny, input):

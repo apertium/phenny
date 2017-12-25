@@ -41,9 +41,8 @@ def add_messages(target, phenny, msg, break_up=break_up_fn):
         phenny.messages[caseless_nick] = msgs
 
 def more(phenny, input):
-    '''Print the (N) next messages. Possible commands are:
-        .more
-        .more N'''
+    ''' '.more N' prints the next N messages.
+        If N is not specified, prints the next message.'''
 
     caseless_nick = input.nick.casefold()
 

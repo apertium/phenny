@@ -77,7 +77,7 @@ def show_more(phenny, caseless_nick, count):
         msg = phenny.messages[caseless_nick].pop(0)
 
         if remaining > 0:
-            phenny.reply(msg + " (" + remaining + " remaining)")
+            phenny.reply(msg + " (" + str(remaining) + " remaining)")
         else:
             phenny.reply(msg)
 

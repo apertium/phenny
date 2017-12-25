@@ -41,6 +41,10 @@ def add_messages(target, phenny, msg, break_up=break_up_fn):
         phenny.messages[caseless_nick] = msgs
 
 def more(phenny, input):
+    '''Print the (N) next messages. Possible commands are:
+        .more
+        .more N'''
+
     caseless_nick = input.nick.casefold()
 
     count = 1 if input.group(2) is None else int(input.group(2))

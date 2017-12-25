@@ -57,15 +57,26 @@ more.name = 'more'
 more.rule = r'[.]more( ([1-9][0-9]*))?'
 
 def show_more(phenny, caseless_nick, count):
-    for id in range(count):
-        msg = phenny.messages[caseless_nick][id]
-        phenny.reply(msg)
+    if count > 1:
+        for id in range(count):
+            msg = phenny.messages[caseless_nick][id]
+            phenny.reply(msg)
+            phenny.messages[caseless_nick].remove(msg)
+
+        remaining = len(phenny.messages[caseless_nick])
+
+        if remaining > 0:
+            phenny.reply(str(remaining) + " messages remaining")
+    else:
+        msg = phenny.messages[caseless_nick][0]
         phenny.messages[caseless_nick].remove(msg)
 
-    remaining = len(phenny.messages[caseless_nick])
+        remaining = len(phenny.messages[caseless_nick])
 
-    if remaining > 0:
-        phenny.reply(str(remaining) + " messages remaining")
+        if remaining > 0:
+            phenny.reply(msg + " (" + remaining + " remaining)")
+        else:
+            phenny.reply(msg)
 
     if not phenny.messages[caseless_nick]:
         del phenny.messages[caseless_nick]

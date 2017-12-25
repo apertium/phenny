@@ -28,6 +28,9 @@ def add_messages(target, phenny, msg, break_up=break_up_fn):
     msgs = break_up(str(msg), max_length)
     caseless_nick = target.casefold()
 
+    if not target in phenny.config.channels:
+        msgs = list(map(lambda msg: target + ': ' + msg, msgs))
+
     if len(msgs) <= 2:
         for msg in msgs:
             phenny.msg(target, msg)

@@ -20,6 +20,9 @@ from modules.wikipedia import wikipedia
 from modules.wiktionary import w
 
 
+TITLE_MAX_REPEAT_TIME = 300
+
+
 def setup(self):
     self.recent_titles = {}
 
@@ -102,7 +105,7 @@ def snarfuri(phenny, input):
     if uri in phenny.recent_titles:
         oldtime = phenny.recent_titles[uri]
 
-        if nowtime - oldtime < 300:
+        if nowtime - oldtime < TITLE_MAX_REPEAT_TIME:
             return
 
     phenny.recent_titles[uri] = nowtime

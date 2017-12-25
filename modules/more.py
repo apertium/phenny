@@ -43,17 +43,18 @@ def add_messages(target, phenny, msg, break_up=break_up_fn):
 def more(phenny, input):
     caseless_nick = input.nick.casefold()
 
-    if not show_more(phenny, caseless_nick):
-      if input.admin or input.owner:
-        show_more(phenny, input.sender.casefold())
+    if caseless_nick in phenny.messages.keys():
+        show_more(phenny, caseless_nick)
+    elif input.admin or input.owner:
+        caseless_sender = input.sender.casefold()
+
+        if caseless_sender in phenny.messages.keys():
+            show_more(phenny, caseless_sender)
 
 more.name = 'more'
 more.rule = r'[.]more'
 
 def show_more(phenny, caseless_nick):
-    if not caseless_nick in phenny.messages.keys():
-        return False
-
     msg = phenny.messages[caseless_nick][0]
     phenny.messages[caseless_nick].remove(phenny.messages[caseless_nick][0])
     remaining = ' (' + str(len(phenny.messages[caseless_nick])) + ')' if phenny.messages[caseless_nick] else ''
@@ -61,5 +62,3 @@ def show_more(phenny, caseless_nick):
 
     if not phenny.messages[caseless_nick]:
         del phenny.messages[caseless_nick]
-
-    return True

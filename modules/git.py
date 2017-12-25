@@ -11,6 +11,7 @@ import os
 import re
 import socketserver
 import time
+import atexit
 from tools import generate_report
 import urllib.parse
 import web
@@ -24,6 +25,13 @@ MAX_MSG_LEN = 430
 # module-global variables
 Handler = None
 httpd = None
+
+
+def close_socket():
+    if not httpd is None:
+        httpd.server_close()
+
+atexit.register(close_socket)
 
 
 def truncate(non_trunc, trunc):
@@ -314,6 +322,7 @@ def setup_server(phenny, input=None):
     if hasattr(phenny.config, 'MAX_MSG_LEN'):
         MAX_MSG_LEN = phenny.config.MAX_MSG_LEN
     httpd = socketserver.TCPServer(("", PORT), Handler)
+    httpd.allow_reuse_address = True
     Thread(target=httpd.serve_forever).start()
     phenny.say("Server is up and running on port %s" % PORT)
 setup_server.rule = '(.*)'
@@ -324,6 +333,7 @@ def teardown(phenny):
     global Handler, httpd
     if httpd is not None:
         httpd.shutdown()
+        httpd.server_close()
         httpd = None
         Handler = None
         phenny.say("Server has stopped on port %s" % PORT)

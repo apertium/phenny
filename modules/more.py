@@ -81,5 +81,5 @@ def show_more(phenny, caseless_nick, count):
         else:
             phenny.reply(msg)
 
-    if not phenny.messages[caseless_nick]:
+    if remaining == 0:
         del phenny.messages[caseless_nick]

@@ -17,6 +17,9 @@ class TestMore(unittest.TestCase):
 
         self.input.sender = '#test'
         self.input.nick = 'Testsworth'
+        self.input.group = lambda x: [None, None][x]
+        self.input.admin = False
+        self.input.owner = False
 
         self.messages = [
             'Lorem ipsum dolor sit amet',
@@ -30,112 +33,118 @@ class TestMore(unittest.TestCase):
     def create_messages(self, target, num):
         more.add_messages(target, self.phenny, '\n'.join(self.messages[:num+1]), break_up=lambda x, y: x.split('\n'))
 
-    def test_more_self(self):
+    def test_more_user_user(self):
         self.create_messages(self.input.nick, 2)
         more.more(self.phenny, self.input)
-        self.input.group = lambda x: [None, None, None][x]
         more.more(self.phenny, self.input)
         self.phenny.reply.assert_called_with(self.input.nick + ": " + self.messages[2])
 
-    def test_more_self_one(self):
+    def test_more_user_user_one(self):
         self.create_messages(self.input.nick, 2)
         more.more(self.phenny, self.input)
-        self.input.group = lambda x: [None, None, '1'][x]
+        self.input.group = lambda x: [None, '1'][x]
         more.more(self.phenny, self.input)
         self.phenny.reply.assert_called_with(self.input.nick + ": " + self.messages[2])
 
-    def test_more_self_three(self):
+    def test_more_user_user_three(self):
         self.create_messages(self.input.nick, 3)
-        self.input.group = lambda x: [None, None, '3'][x]
+        self.input.group = lambda x: [None, '3'][x]
         more.more(self.phenny, self.input)
 
         calls = [call(self.input.nick + ": " + message) for message in self.messages[1:4]]
         self.phenny.reply.assert_has_calls(calls)
 
-    def test_more_self_three_two(self):
+    def test_more_user_user_three_two(self):
         self.create_messages(self.input.nick, 5)
-        self.input.group = lambda x: [None, None, '3'][x]
+        self.input.group = lambda x: [None, '3'][x]
         more.more(self.phenny, self.input)
 
         calls = [call(self.input.nick + ": " + message) for message in self.messages[1:4]]
-        calls.append(call("2 messages remaining"))
+        calls.append(call("2 message(s) remaining"))
         self.phenny.reply.assert_has_calls(calls)
 
-    def test_more_admin_self(self):
+    def test_more_user_user_none(self):
+        more.more(self.phenny, self.input)
+        self.phenny.reply.assert_called_once_with("No more queued messages")
+
+    def test_more_user_channel(self):
+        self.create_messages(self.input.sender, 2)
+        more.more(self.phenny, self.input)
+        self.phenny.reply.assert_called_once_with("No more queued messages")
+
+    def test_more_admin_user(self):
         self.input.admin = True
         self.create_messages(self.input.nick, 2)
         more.more(self.phenny, self.input)
-        self.input.group = lambda x: [None, None, None][x]
         more.more(self.phenny, self.input)
         self.phenny.reply.assert_called_with(self.input.nick + ": " + self.messages[2])
 
-    def test_more_admin_self_one(self):
+    def test_more_admin_user_one(self):
         self.input.admin = True
         self.create_messages(self.input.nick, 2)
         more.more(self.phenny, self.input)
-        self.input.group = lambda x: [None, None, '1'][x]
+        self.input.group = lambda x: [None, '1'][x]
         more.more(self.phenny, self.input)
         self.phenny.reply.assert_called_with(self.input.nick + ": " + self.messages[2])
 
-    def test_more_admin_self_three(self):
+    def test_more_admin_user_three(self):
         self.input.admin = True
         self.create_messages(self.input.nick, 3)
-        self.input.group = lambda x: [None, None, '3'][x]
+        self.input.group = lambda x: [None, '3'][x]
         more.more(self.phenny, self.input)
 
         calls = [call(self.input.nick + ": " + message) for message in self.messages[1:4]]
         self.phenny.reply.assert_has_calls(calls)
 
-    def test_more_admin_self_three_two(self):
+    def test_more_admin_user_three_two(self):
         self.input.admin = True
         self.create_messages(self.input.nick, 5)
-        self.input.group = lambda x: [None, None, '3'][x]
+        self.input.group = lambda x: [None, '3'][x]
         more.more(self.phenny, self.input)
 
         calls = [call(self.input.nick + ": " + message) for message in self.messages[1:4]]
-        calls.append(call("2 messages remaining"))
+        calls.append(call("2 message(s) remaining"))
         self.phenny.reply.assert_has_calls(calls)
 
-    def test_more_admin_only(self):
+    def test_more_admin_channel(self):
         self.input.admin = True
         self.create_messages(self.input.sender, 2)
         more.more(self.phenny, self.input)
-        self.input.group = lambda x: [None, None, None][x]
         more.more(self.phenny, self.input)
         self.phenny.reply.assert_called_with(self.messages[2])
 
-    def test_more_admin_only_one(self):
+    def test_more_admin_channel_one(self):
         self.input.admin = True
         self.create_messages(self.input.sender, 2)
         more.more(self.phenny, self.input)
-        self.input.group = lambda x: [None, None, '1'][x]
+        self.input.group = lambda x: [None, '1'][x]
         more.more(self.phenny, self.input)
         self.phenny.reply.assert_called_with(self.messages[2])
 
-    def test_more_admin_only_three(self):
+    def test_more_admin_channel_three(self):
         self.input.admin = True
         self.create_messages(self.input.sender, 3)
-        self.input.group = lambda x: [None, None, '3'][x]
+        self.input.group = lambda x: [None, '3'][x]
         more.more(self.phenny, self.input)
 
         calls = [call(message) for message in self.messages[1:4]]
         self.phenny.reply.assert_has_calls(calls)
 
-    def test_more_admin_only_three_two(self):
+    def test_more_admin_channel_three_two(self):
         self.input.admin = True
         self.create_messages(self.input.sender, 5)
-        self.input.group = lambda x: [None, None, '3'][x]
+        self.input.group = lambda x: [None, '3'][x]
         more.more(self.phenny, self.input)
 
         calls = [call(message) for message in self.messages[1:4]]
-        calls.append(call("2 messages remaining"))
+        calls.append(call("2 message(s) remaining"))
         self.phenny.reply.assert_has_calls(calls)
 
     def test_more_admin_both_three(self):
         self.input.admin = True
         self.create_messages(self.input.nick, 3)
         self.create_messages(self.input.sender, 3)
-        self.input.group = lambda x: [None, None, '3'][x]
+        self.input.group = lambda x: [None, '3'][x]
         more.more(self.phenny, self.input)
         more.more(self.phenny, self.input)
 
@@ -152,17 +161,21 @@ class TestMore(unittest.TestCase):
         self.create_messages(self.input.nick, 5)
         self.create_messages(self.input.sender, 5)
 
-        self.input.group = lambda x: [None, None, '3'][x]
+        self.input.group = lambda x: [None, '3'][x]
         more.more(self.phenny, self.input)
         calls = [call(self.input.nick + ": " + message) for message in self.messages[1:4]]
-        calls.append(call("2 messages remaining"))
+        calls.append(call("2 message(s) remaining"))
         self.phenny.reply.assert_has_calls(calls)
 
-        self.input.group = lambda x: [None, None, '2'][x]
+        self.input.group = lambda x: [None, '2'][x]
         more.more(self.phenny, self.input)
 
-        self.input.group = lambda x: [None, None, '3'][x]
+        self.input.group = lambda x: [None, '3'][x]
         more.more(self.phenny, self.input)
         calls = [call(message) for message in self.messages[1:4]]
-        calls.append(call("2 messages remaining"))
+        calls.append(call("2 message(s) remaining"))
         self.phenny.reply.assert_has_calls(calls)
+
+    def test_more_admin_both_none(self):
+        more.more(self.phenny, self.input)
+        self.phenny.reply.assert_called_once_with("No more queued messages")

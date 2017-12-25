@@ -45,15 +45,17 @@ def more(phenny, input):
     ''' '.more N' prints the next N messages.
         If N is not specified, prints the next message.'''
 
-    count = 1 if input.group(2) is None else int(input.group(2))
+    count = 1 if input.group(1) is None else int(input.group(1))
 
-    if has_more(input.nick):
+    if has_more(phenny, input.nick):
         show_more(phenny, input.nick, count)
-    elif (input.admin or input.owner) and has_more(input.sender):
+    elif (input.admin or input.owner) and has_more(phenny, input.sender):
         show_more(phenny, input.sender, count)
+    else:
+        phenny.reply("No more queued messages")
 
 more.name = 'more'
-more.rule = r'[.]more( ([1-9][0-9]*))?'
+more.rule = r'[.]more(?: ([1-9][0-9]*))?'
 
 def has_more(phenny, nick):
     return nick.casefold() in phenny.messages.keys()
@@ -72,7 +74,7 @@ def show_more(phenny, nick, count):
             phenny.reply(phenny.messages[caseless_nick].pop(0))
 
         if remaining > 0:
-            phenny.reply(str(remaining) + " messages remaining")
+            phenny.reply(str(remaining) + " message(s) remaining")
     else:
         msg = phenny.messages[caseless_nick].pop(0)
 

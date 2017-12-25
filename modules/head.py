@@ -20,6 +20,10 @@ from modules.wikipedia import wikipedia
 from modules.wiktionary import w
 
 
+def setup(self):
+    self.recent_titles = {}
+
+
 def head(phenny, input):
     """Provide HTTP HEAD information."""
     uri = input.group(2)
@@ -92,6 +96,17 @@ noteuri.priority = 'low'
 
 def snarfuri(phenny, input):
     uri = input.group(2)
+
+    nowtime = time.time()
+
+    if uri in phenny.recent_titles:
+        oldtime = phenny.recent_titles[uri]
+
+        if nowtime - oldtime < 300:
+            return
+
+    phenny.recent_titles[uri] = nowtime
+
     title = gettitle(phenny, input, uri)
 
     if title:

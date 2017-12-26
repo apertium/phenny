@@ -5,7 +5,7 @@ author: shardulc
 '''
 import unittest
 import mock
-import modules.apy as apy
+from modules import apy
 from tools import GrumbleError
 from json import dumps
 from web import quote
@@ -173,7 +173,7 @@ class TestAPy(unittest.TestCase):
         apy.apertium_analyse(self.phenny, self.input)
         mock_open.assert_called_once_with('{:s}/analyse?lang={:s}&q={:s}'.format(
             self.phenny.config.APy_analyseURL, 'eng', quote(' '.join(words))))
-        msgs = '\n'.join('{:s}  →  {:s}'.format(orig, ana) for ana, orig in anas)
+        msgs = ['{:s}  →  {:s}'.format(orig, ana) for ana, orig in anas]
         self.assertEqual(mock_addmsgs.call_args[0][2], msgs)
         self.reset_mocks(mock_open, mock_addmsgs)
 
@@ -184,7 +184,7 @@ class TestAPy(unittest.TestCase):
         apy.apertium_generate(self.phenny, self.input)
         mock_open.assert_called_once_with('{:s}/generate?lang={:s}&q={:s}'.format(
             self.phenny.config.APy_analyseURL, 'eng', quote('^generate<tags>$')))
-        msgs = '\n'.join('{:s}  →  {:s}'.format(orig, gen) for gen, orig in gens)
+        msgs = ['{:s}  →  {:s}'.format(orig, gen) for gen, orig in gens]
         self.assertEqual(mock_addmsgs.call_args[0][2], msgs)
         self.reset_mocks(mock_open, mock_addmsgs)
 
@@ -201,7 +201,7 @@ class TestAPy(unittest.TestCase):
         mock_open.assert_called_once_with('{:s}/identifyLang?q={:s}'.format(
             self.phenny.config.APy_url, quote(self.texts['eng'])))
         msgs = set('{:s} = {:s}'.format(lg, str(val)) for lg, val in langs.items())
-        self.assertEqual(set(mock_addmsgs.call_args[0][2].split('\n')), msgs)
+        self.assertEqual(set(mock_addmsgs.call_args[0][2]), msgs)
         self.reset_mocks(mock_open, mock_addmsgs)
 
     def test_stats(self, mock_open):

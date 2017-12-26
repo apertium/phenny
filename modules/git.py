@@ -309,8 +309,8 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         messages = {}
 
         has_git_channels = hasattr(self.phenny.config, 'git_channels')
-        is_git channel = repo in self.phenny.config.git_channels
-        use_git_channels = has_git_channels and channel
+        is_git_channel = repo in self.phenny.config.git_channels
+        use_git_channels = has_git_channels and is_git_channel
 
         for msg in msgs:
             if use_git_channels:

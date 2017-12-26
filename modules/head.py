@@ -20,6 +20,7 @@ from modules.wikipedia import wikipedia
 from modules.wiktionary import w
 
 
+# seconds until a URL title will be repeated if said multiple times
 TITLE_MAX_REPEAT_TIME = 300
 
 

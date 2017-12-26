@@ -122,26 +122,33 @@ syntax = 'Syntax: .{0} poll; .{0} last; .{0} last [{1}]'
 def list_report(phenny, input):
     """.mailinglist poll - poll for new mailing list messages
     .mailinglist last <list>? - get the latest message in a list or all lists"""
+
     if not configured(phenny):
         phenny.reply("I'm not configured for mailing lists, ask {} to set them up.".format(phenny.config.owner))
         return
+
     if input.group(2):
         if input.group(2) == "poll":
             phenny.reply('Ok, polling.')
+
             if not check_mail(phenny):
                 phenny.reply('Sorry, no unread mailing list messages.')
+
+            return
         elif input.group(2) == "last":
-            for i in phenny.config.mailing_lists:
-                phenny.reply(last_message(phenny, i))
-        #FIXME: if there's no group 3 this crashes
-        elif input.group(3) in phenny.config.mailing_lists:
-            phenny.reply(last_message(phenny, input.group(3)))
-        else:
-            phenny.reply(syntax.format(input.group(1), ', '.join(phenny.config.mailing_lists.keys())))
-    else:
-        phenny.reply(syntax.format(input.group(1), ', '.join(phenny.config.mailing_lists.keys())))
+            if input.group(3):
+                if input.group(3) in phenny.config.mailing_lists:
+                    phenny.reply(last_message(phenny, input.group(3)))
+                    return
+            else:
+                for i in phenny.config.mailing_lists:
+                    phenny.reply(last_message(phenny, i))
+
+                return
+
+    phenny.reply(syntax.format(input.group(1), ', '.join(phenny.config.mailing_lists.keys())))
+
 list_report.name = "mailing list reporter"
-#list_report.rule = r'.(mailinglist|ml)(?:\s(poll|last(?:\s([\w-]+))?))?'
-list_report.commands = ['ml', 'mailinglist']
+list_report.rule = r'.(mailinglist|ml)(?:\s(poll|last(?:\s([\w-]+))?))?'
 list_report.priority = 'medium'
 list_report.thread = True

@@ -339,7 +339,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                     messages[chan].append(msg)
 
         for chan in messages.keys():
-            more.add_messages(chan, self.phenny, '\n'.join(messages[chan]), break_up=lambda x, y: x.split('\n'))
+            more.add_messages(chan, self.phenny, messages[chan])
 
         # send OK code
         self.send_response(200)

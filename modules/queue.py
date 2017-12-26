@@ -56,16 +56,19 @@ def get_queue(queue_data, queue_name, nick):
 
 def disambiguate_name(queue_data, queue_name):
     matches = []
+
     for i in queue_data:
         if queue_name == i:
             return i
+
         if queue_name.casefold() in i.casefold():
             matches.append(i)
+
     return matches[0] if len(matches) == 1 else matches
 
 def print_queue(queue_name, queue):
-    return '[{}]- {}'.format(
-        queue_name, ', '.join(queue['queue']) if queue['queue'] else '<empty>')
+    return '[{}]- {}'.format(queue_name,
+        ', '.join(queue['queue']) if queue['queue'] else '<empty>')
 
 def queue(phenny, raw):
     """.queue- queue management."""

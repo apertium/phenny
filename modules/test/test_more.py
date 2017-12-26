@@ -31,7 +31,7 @@ class TestMore(unittest.TestCase):
         ]
 
     def create_messages(self, target, num):
-        more.add_messages(target, self.phenny, '\n'.join(self.messages[:num+1]), break_up=lambda x, y: x.split('\n'))
+        more.add_messages(target, self.phenny, self.messages[:num+1])
 
     def test_more_user_user(self):
         self.create_messages(self.input.nick, 2)

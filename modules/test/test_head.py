@@ -110,6 +110,8 @@ class TestHead(unittest.TestCase):
         head.snarfuri(self.phenny, self.input)
         self.phenny.msg.assert_not_called()
 
-        self.phenny.recent_titles['https://www.somepage.com'] = time.time() - 300
+        real_time = time.time
+        time.time = lambda: real_time() + 300
+
         head.snarfuri(self.phenny, self.input)
         self.phenny.msg.assert_called_once_with(self.input.sender, '[ Some Page ] (posted: 5 minutes ago by tester)')

@@ -88,11 +88,17 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         parsed_params = urllib.parse.urlparse(self.path)
         query_parsed = urllib.parse.parse_qs(parsed_params.query)
-        self.send_response(403)
+        self.send_response(405)
 
     def do_POST(self):
         '''Handles POST requests for all hooks.'''
 
+        try:
+            self.do_POST_unsafe()
+        except:
+            self.send_response(400)
+
+    def do_POST_unsafe(self):
         # read and decode data
         print('payload received; headers: '+str(self.headers))
         length = int(self.headers['Content-Length'])

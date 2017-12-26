@@ -94,23 +94,33 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         '''Handles POST requests for all hooks.'''
 
         try:
-            self.do_POST_unsafe()
+            # read and decode data
+            print('payload received; headers: '+str(self.headers))
+            length = int(self.headers['Content-Length'])
+            indata = self.rfile.read(length)
+            post_data = urllib.parse.parse_qs(indata.decode('utf-8'))
+            if len(post_data) == 0:
+                post_data = indata.decode('utf-8')
+            if "payload" in post_data:
+                data = json.loads(post_data['payload'][0])
+            else:
+                data = json.loads(post_data)
         except:
+            print('Error 400 (no valid payload)')
             self.send_response(400)
+            return
 
-    def do_POST_unsafe(self):
-        # read and decode data
-        print('payload received; headers: '+str(self.headers))
-        length = int(self.headers['Content-Length'])
-        indata = self.rfile.read(length)
-        post_data = urllib.parse.parse_qs(indata.decode('utf-8'))
-        if len(post_data) == 0:
-            post_data = indata.decode('utf-8')
-        if "payload" in post_data:
-            data = json.loads(post_data['payload'][0])
-        else:
-            data = json.loads(post_data)
+        try:
+            self.do_POST_unsafe(data)
+        except:
+            if 'commits' in data:
+                print('Error 501 (commits were ' + ' '.join(data['commits']))
+            else:
+                print('Error 501 (no commits known)')
 
+            self.send_response(501)
+
+    def do_POST_unsafe(self, data):
         # msgs will contain both commit reports and error reports
         msgs = []
         repo = ''

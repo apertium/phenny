@@ -40,7 +40,7 @@ def food(phenny, input):
     restr = ", ".join(["{0} ({1})".format(r[0], r[1]) for r in
         restaurants])
     tistr = ", ".join(["{0} ({1})".format(t[0], t[1]) for t in times])
-    
+
     if len(restr) > 0 and len(tistr) > 0:
         return phenny.say("{0} at {1}".format(restr, tistr))
     else:

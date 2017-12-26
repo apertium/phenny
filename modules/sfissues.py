@@ -1,12 +1,12 @@
 import feedparser
- 
+
 def get_headlines(rss_url):
     tickets = []
     feed = feedparser.parse(rss_url)
     for ticket_item in feed['items']:
         tickets.append(ticket_item['title'])
     return tickets
- 
+
 def bugs(phenny, input):
     messages = []
     rep_messages = []

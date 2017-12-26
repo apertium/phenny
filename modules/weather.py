@@ -56,7 +56,7 @@ def local(icao, hour, minute):
 
 def code(phenny, search):
     from icao import data
-    
+
     if search.upper() in [loc[0] for loc in data]:
         return search.upper()
     else:

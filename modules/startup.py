@@ -22,7 +22,7 @@ def setup(phenny):
         def close():
             print("Nobody PONGed our PING, restarting")
             phenny.handle_close()
-      
+
         def pingloop():
             timer = threading.Timer(refresh_delay, close, ())
             phenny.data['startup.setup.timer'] = timer

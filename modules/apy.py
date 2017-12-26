@@ -87,7 +87,7 @@ def apertium_translate(phenny, input):
                 phenny.say('{:s}-{:s}: {:s}'.format(input_lang, output_lang, str(err)))
                 return
         phenny.reply(web.decode(translated))
-    
+
 apertium_translate.name = 't'
 apertium_translate.commands = ['t']
 apertium_translate.example = '.t en-es|es-fr en-ca I like pie'

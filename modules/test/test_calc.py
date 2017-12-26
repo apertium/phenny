@@ -10,9 +10,10 @@ from tools import is_up
 
 
 class TestCalc(unittest.TestCase):
+
     def setUp(self):
         self.skipTest('This module will be rewritten.')
-        
+
         if not is_up('https://duckduckgo.com'):
             self.skipTest('DuckDuckGo is down, skipping test.')
         self.phenny = MagicMock()

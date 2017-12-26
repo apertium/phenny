@@ -3,12 +3,13 @@ from mock import MagicMock, Mock
 from modules import away
 
 class TestQueue(unittest.TestCase):
+
     def setUp(self):
         self.phenny = MagicMock()
         self.input = MagicMock()
         self.input.count.return_value = 0 # Mock Attribute to provide the messages
         self.input.nick = 'Testseen'
-        
+
     def testWhereIs(self):
         self.input = "whereis Testwhereis"
         away.whereis(self.phenny, self.input)

@@ -33,7 +33,7 @@ def start_pester(phenny, input):
         phenny.say(msg)
     else:
         phenny.say(input.nick + ': You are already pestering ' + input.group(2))
-        
+
     start_pester.conn.commit()
     start_pester.conn.close()
 start_pester.name = 'pester'
@@ -57,13 +57,13 @@ def pester(phenny, input):
                 [inputnick])
         for reason in c.fetchall():
             reasons.append(reason[0])
-            
+
         for reason in reasons:
             pesterers = []
             c.execute('''SELECT pesterer FROM to_pester WHERE pesteree=? AND reason=?''', (inputnick, reason))
             for name in c.fetchall():
                 pesterers.append(name[0])
-            
+
             for pesterer in pesterers:
                 c.execute('''SELECT dismissed FROM to_pester WHERE pesteree=? AND pesterer=? AND reason=?''', (inputnick, pesterer, reason))
                 last_dismissed = c.fetchall()[0][0]
@@ -114,14 +114,14 @@ def pesters(phenny, input):
         else:
             c.execute('''UPDATE to_pester SET dismissed=? WHERE pesteree=? AND pesterer=?''', [current_time, inputnick, pesterernick])
             phenny.say(input.nick + ': Pester snoozed. Pester will recur in ' + str(phenny.config.pester_after_dismiss) + ' minutes.')
-        
+
     elif input.group(1) == 'dismiss':
         if c.execute('''SELECT * FROM to_pester WHERE pesteree=? AND pesterer=?''', [pesterernick, inputnick]).fetchall() == []:
             phenny.say(input.nick + ': You are not pestering ' + input.group(2))
         else:
             c.execute('''DELETE FROM to_pester WHERE pesteree=? AND pesterer=?''', [pesterernick, inputnick])
             phenny.say(input.nick + ': Stopped pestering ' + input.group(2))
-            
+
     pesters.conn.commit()
 pesters.name = 'pesters'
 pesters.rule = r'[.]pesters (snooze|dismiss) (\S+)'

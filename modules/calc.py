@@ -60,7 +60,7 @@ py.example = '.py if not False: print "hello world!"'
 
 def wa(phenny, input): 
     """Query Wolfram Alpha."""
-    
+
     if not input.group(2):
         return phenny.reply("No search term.")
     query = input.group(2)

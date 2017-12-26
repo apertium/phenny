@@ -43,7 +43,7 @@ def generate_report(repo, author, comment, modified_paths, added_paths, removed_
         comment = "No commit message provided!"
     else:
         comment = re.sub("[\n\r]+", " ␍ ", comment.strip())
-    
+
     basepath = os.path.commonprefix(paths)
     print(basepath)
     if len(basepath) > 0:
@@ -51,7 +51,7 @@ def generate_report(repo, author, comment, modified_paths, added_paths, removed_
             basepath = basepath.split("/")
             basepath.pop()
             basepath = '/'.join(basepath) + "/"
-        
+
     text_paths = []
     if len(paths) > 0:
         for path in paths:
@@ -89,7 +89,7 @@ def generate_report(repo, author, comment, modified_paths, added_paths, removed_
     #else: final_path = "empty"
     #if final_path is None: final_path = "empty"
 
-    
+
 def get_page(domain, url, encoding='utf-8', port=80): #get the HTML of a webpage.
     conn = http.client.HTTPConnection(domain, port, timeout=60)
     conn.request("GET", url, headers=headers)
@@ -116,7 +116,7 @@ def translate(phenny, translate_me, input_lang, output_lang='en'):
         response = get_page(self.phenny.config.translate_url, '/translate?q=%s&langpair=%s|%s' % (translate_me, input_lang, output_lang))
     else:
         response = get_page('apy.projectjj.com', '/translate?q=%s&langpair=%s|%s' % (translate_me, input_lang, output_lang), port=2737)	
-    
+
     responseArray = json.loads(response)
     if int(responseArray['responseStatus']) != 200:
         raise GrumbleError('APIerrorHttp' % (responseArray['responseStatus'], responseArray['responseDetails']))
@@ -125,6 +125,6 @@ def translate(phenny, translate_me, input_lang, output_lang='en'):
 
     translated_text = responseArray['responseData']['translatedText']
     return translated_text
-    
+
 if __name__ == '__main__': 
     print(__doc__.strip())

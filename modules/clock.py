@@ -111,7 +111,7 @@ def give_time(phenny, tz, input_nick, to_user=None):
         else:
             phenny.reply(msg)
         skip=True
-    
+
     if skip ==False:
         if (TZ == 'UTC') or (TZ == 'Z'):
             msg = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
@@ -178,7 +178,7 @@ def f_time(phenny, input):
         return
 
     give_time(phenny, tz, input.nick)
-    
+
 f_time.name = 'time'
 f_time.commands = ['time']
 f_time.example = '.time UTC or .time point nick GMT or nick: .time GMT or '+\
@@ -296,7 +296,7 @@ def scrape_wiki_zones():
                     if ctu[0]=='−':
                         ctu='-'+ctu[1:]
                     data[ctz.upper()]=float(ctu)
-                                    
+
     return data
 
 def filename(phenny):
@@ -439,7 +439,7 @@ def time_zone_convert(phenny, input_txt, to_user=None):
             if (from_tz_match == "") or (to_tz_match == ""):
                 phenny.reply("Please enter valid time zone(s) :P")
                 return
-                
+
         time_hours = int(int(regex_match.groups()[0])/100)
         time_mins = int(regex_match.groups()[0])%100
         if (time_hours >= 24) or (time_hours < 0) or (time_mins >= 60) or (time_mins < 0):
@@ -475,7 +475,7 @@ def time_zone_convert(phenny, input_txt, to_user=None):
 
 def tz(phenny, input):
     """Usage: .tz <time><from timezone> in <destination> - Convert time to destination zone. (supports pointing)"""
-    
+
     input_txt = input.group(2)
     if not input_txt:
         phenny.reply(tz.__doc__.strip())
@@ -489,12 +489,12 @@ def tz(phenny, input):
     if matched_point:
         to_nick = matched_point.groups()[0]
         input_txt2 = matched_point.groups()[1]
-        
+
         time_zone_convert(phenny, input_txt2, to_user=to_nick)
         return
 
     time_zone_convert(phenny, input_txt)
-    
+
 
 tz.commands = ['tz']
 tz.priority = 'high'

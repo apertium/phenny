@@ -23,7 +23,7 @@ def f_seen(phenny, input):
         return
 
     logger_conn = sqlite3.connect(phenny.logger_db, detect_types=sqlite3.PARSE_DECLTYPES)
-    
+
     cNick = ""
     cChannel = ""
     c = logger_conn.cursor()

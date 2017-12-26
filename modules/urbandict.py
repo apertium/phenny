@@ -58,13 +58,13 @@ def urbandict(phenny, input):
     if matched_point:
         to_nick = matched_point.groups()[0]
         word2 = matched_point.groups()[1]
-        
+
         get_definition(phenny, word2, to_user=to_nick)
         return
 
     get_definition(phenny, word)
 
-    
+
 urbandict.name = 'urb'
 urbandict.rule = (['urb'], r'(.*)')
 urbandict.example = '.urb troll or nick: .urb troll or .urb troll -> nick'+\

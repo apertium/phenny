@@ -39,15 +39,15 @@ def aliasPairMerge(phenny, nick1, nick2):
     group1 = aliasGroupFor(nick1)
     if len(group1) > 1: #group is in nick_aliases
         nick_aliases.remove(group1)
-    
+
     group2 = aliasGroupFor(nick2)
     if len(group2) > 1: #group is in nick_aliases
         nick_aliases.remove(group2)
-        
+
     group1.extend(group2)
-    
+
     nick_aliases.append(group1)
-    
+
     dumpAliases(phenny.alias_filename)
 
 def alias(phenny, raw):
@@ -109,7 +109,7 @@ def dumpAliases(fn):
         except IOError: break
     try: f.close()
     except IOError: pass
-    
+
 def loadReminders(fn): 
     result = {}
     f = open(fn)
@@ -143,7 +143,7 @@ def setup(self):
             f.write('')
             f.close()
     self.reminders = loadReminders(self.tell_filename) # @@ tell
-    
+
     fn2 = self.nick + '-' + self.config.host + '.alias.db'
     self.alias_filename = os.path.join(os.path.expanduser('~/.phenny'), fn2)
     if not os.path.exists(self.alias_filename): 
@@ -162,7 +162,7 @@ def f_remind(phenny, input):
     verb = verb
     tellee = tellee
     msg = msg
-    
+
     aliases = aliasGroupFor(teller)
 
     tellee_original = tellee.rstrip('.,:;')

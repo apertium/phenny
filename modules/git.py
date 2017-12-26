@@ -93,6 +93,9 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         '''Handles POST requests for all hooks.'''
 
+        msgs = []
+        messages = {}
+
         try:
             # read and decode data
             print('payload received; headers: '+str(self.headers))
@@ -107,21 +110,29 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 data = json.loads(post_data)
         except:
             print('Error 400 (no valid payload)')
+            msgs.append('Webhook received malformed payload')
             self.send_response(400)
+
+            self.create_messages(msgs, None, messages)
+            self.print_messages(messages)
             return
 
         try:
-            self.do_POST_unsafe(data)
+            self.do_POST_unsafe(data, messages)
         except:
             try:
-                commits = list(map(lambda commit: commit['url'], data['commits']))
+                commits = [commit['url'] for commit in data['commits']]
                 print('Error 501 (commits were ' + ', '.join(commits) + ')')
             else:
                 print('Error 501 (commits unknown or malformed)')
 
+            msgs.append('Webhook received problematic payload')
             self.send_response(501)
 
-    def do_POST_unsafe(self, data):
+        self.create_messages(msgs, None, messages)
+        self.print_messages(messages)
+
+    def do_POST_unsafe(self, data, messages):
         # msgs will contain both commit reports and error reports
         msgs = []
         repo = ''
@@ -296,23 +307,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             # the data
             msgs = ["Something went wrong: " + str(data.keys())]
 
-        # post all messages to all channels
-        # except where specified in the config
-        messages = {}
-        for msg in msgs:
-            if msg:
-                if hasattr(self.phenny.config, 'git_channels') and repo in self.phenny.config.git_channels:
-                    for chan in self.phenny.config.git_channels[repo]:
-                        if not chan in messages:
-                            messages[chan] = []
-                        messages[chan].append(msg)
-                else:
-                    for chan in self.phenny.config.channels:
-                        if not chan in messages:
-                            messages[chan] = []
-                        messages[chan].append(msg)
-        for chan in messages.keys():
-            more.add_messages(chan, self.phenny, '\n'.join(messages[chan]), break_up=lambda x, y: x.split('\n'))
+        self.create_messages(msgs, repo, messages)
 
         # send OK code
         self.send_response(200)
@@ -328,6 +323,36 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         for onefile in filelist:
             toReturn[onefile['type']].append(onefile['file'])
         return toReturn
+
+
+    def create_messages(self, msgs, repo, messages):
+        # post all messages to all channels
+        # except where specified in the config
+
+        has_git_channels = hasattr(self.phenny.config, 'git_channels')
+        is_git channel = repo in self.phenny.config.git_channels
+        use_git_channels = has_git_channels and channel
+
+        for msg in msgs:
+            if use_git_channels:
+                for chan in self.phenny.config.git_channels[repo]:
+                    if not chan in messages:
+                        messages[chan] = []
+
+                    messages[chan].append(msg)
+            else:
+                for chan in self.phenny.config.channels:
+                    if not chan in messages:
+                        messages[chan] = []
+
+                    messages[chan].append(msg)
+
+        return messages
+
+
+    def print_messages(self, messages):
+        for chan in messages.keys():
+            more.add_messages(chan, self.phenny, '\n'.join(messages[chan]), break_up=lambda x, y: x.split('\n'))
 
 
 def setup_server(phenny, input=None):

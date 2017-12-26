@@ -113,10 +113,11 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         try:
             self.do_POST_unsafe(data)
         except:
-            if 'commits' in data:
-                print('Error 501 (commits were ' + ' '.join(data['commits']))
+            try:
+                commits = list(map(lambda commit: commit['url'], data['commits']))
+                print('Error 501 (commits were ' + ', '.join(commits) + ')')
             else:
-                print('Error 501 (no commits known)')
+                print('Error 501 (commits unknown or malformed)')
 
             self.send_response(501)
 

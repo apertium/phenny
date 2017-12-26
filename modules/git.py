@@ -93,9 +93,6 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         '''Handles POST requests for all hooks.'''
 
-        msgs = []
-        messages = {}
-
         try:
             # read and decode data
             print('payload received; headers: '+str(self.headers))
@@ -110,11 +107,11 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 data = json.loads(post_data)
         except:
             print('Error 400 (no valid payload)')
-            msgs.append('Webhook received malformed payload')
             self.send_response(400)
 
-            self.create_messages(msgs, None, messages)
-            self.print_messages(messages)
+            for chan in self.phenny.config.channels:
+                self.phenny.msg(chan, 'Webhook received malformed payload')
+
             return
 
         try:
@@ -123,16 +120,16 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             try:
                 commits = [commit['url'] for commit in data['commits']]
                 print('Error 501 (commits were ' + ', '.join(commits) + ')')
-            else:
+            except:
                 print('Error 501 (commits unknown or malformed)')
 
-            msgs.append('Webhook received problematic payload')
+            print(str(data))
             self.send_response(501)
 
-        self.create_messages(msgs, None, messages)
-        self.print_messages(messages)
+            for chan in self.phenny.config.channels:
+                self.phenny.msg(chan, 'Webhook received problematic payload')
 
-    def do_POST_unsafe(self, data, messages):
+    def do_POST_unsafe(self, data):
         # msgs will contain both commit reports and error reports
         msgs = []
         repo = ''
@@ -307,27 +304,9 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             # the data
             msgs = ["Something went wrong: " + str(data.keys())]
 
-        self.create_messages(msgs, repo, messages)
-
-        # send OK code
-        self.send_response(200)
-        self.send_header("Content-type", "text/html")
-        self.end_headers()
-        print("DONE!")
-
-    def getBBFiles(self, filelist):
-        '''Sort filelist into added, modified, and removed files
-        (only for bitbucket).'''
-
-        toReturn = {"added": [], "modified": [], "removed": []}
-        for onefile in filelist:
-            toReturn[onefile['type']].append(onefile['file'])
-        return toReturn
-
-
-    def create_messages(self, msgs, repo, messages):
         # post all messages to all channels
         # except where specified in the config
+        messages = {}
 
         has_git_channels = hasattr(self.phenny.config, 'git_channels')
         is_git channel = repo in self.phenny.config.git_channels
@@ -347,12 +326,23 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
 
                     messages[chan].append(msg)
 
-        return messages
-
-
-    def print_messages(self, messages):
         for chan in messages.keys():
             more.add_messages(chan, self.phenny, '\n'.join(messages[chan]), break_up=lambda x, y: x.split('\n'))
+
+        # send OK code
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+        print("DONE!")
+
+    def getBBFiles(self, filelist):
+        '''Sort filelist into added, modified, and removed files
+        (only for bitbucket).'''
+
+        toReturn = {"added": [], "modified": [], "removed": []}
+        for onefile in filelist:
+            toReturn[onefile['type']].append(onefile['file'])
+        return toReturn
 
 
 def setup_server(phenny, input=None):

@@ -226,7 +226,7 @@ def scrape_wiki_zones():
     for row in table.findall('tr')[1:]:
         code = row.findall('td')[0].text
         offset = row.findall('td')[2].find('a').text[3:]
-        offset = offset.replace('−', '-') # replacing minus sign with hyphen
+        offset = offset.replace('−', '-') # replacing hyphen with minus sign
         if offset.find(':') > 0:
             offset = int(offset.split(':')[0]) + int(offset.split(':')[1]) / 60
         else:
@@ -273,29 +273,33 @@ def scrape_wiki_zones():
     #                data[ctz.upper()]=float(ctu)
     #            else:
     #                break
+
     url = 'http://en.wikipedia.org/wiki/List_of_tz_database_time_zones'
-    resp = web.get(url)
-    h = html.document_fromstring(resp)
-    table = h.find_class('wikitable')[0]
-    for trs in table.findall('tr'):
-        tmr=0
-        for tds in trs.findall('td'):
-            tmr=tmr+1
-            if tmr==3:
-                ctz=tds.find('a').text[tds.find('a').text.find('/')+1:].replace('_',' ')
-                if ctz.find('/')!=-1:
-                    ctz=ctz[ctz.find('/')+1:]
-            if tmr==5:
-                ctuFind=tds.find('a')
-                if ctuFind != None:
-                    ctu = ctuFind.text
-                    if ctu[ctu.find(':')+1]=='0':
-                        ctu=ctu[:ctu.find(':')]
-                    else:
-                        ctu=ctu[:ctu.find(':')]+'.5'
-                    if ctu[0]=='−':
-                        ctu='-'+ctu[1:]
-                    data[ctz.upper()]=float(ctu)
+    doc = html.document_fromstring(web.get(url))
+    table = doc.find_class('wikitable')[0]
+
+    for row in table.findall('tr'):
+        column = 0
+
+        for cell in row.findall('td'):
+            if column == 2:
+                text = cell.find('a').text
+                text = text.replace('_',' ').replace('−','-')
+
+                name = text.split('/')[-1]
+
+            elif column == 5:
+                text = cell.find('a').text
+                text = text.replace('_',' ').replace('−','-')
+
+                if text[text.find(':') + 1] == '0':
+                    text = text[:text.find(':')]
+                else:
+                    text = text[:text.find(':')] + '.5'
+
+                data[name.upper()] = float(text)
+
+            column += 1
 
     return data
 

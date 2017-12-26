@@ -165,10 +165,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                     msgs.append('{:}: {:} * comment deleted on commit {:}: {:}'
                                 .format(repo, user, commit, url))
                 else:
-                    comment = truncate(
-                        '{:}: {:} * comment {:} on commit {:}:  {:}'
-                        .format(repo, user, action, commit, url),
-                        data['comment']['body'])
+                    comment = data['comment']['body']
                     msgs.append('{:}: {:} * comment {:} on commit {:}: {:} {:}'
                                 .format(repo, user, action, commit, comment, url))
             elif event == 'create' or event == 'delete':
@@ -195,10 +192,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                     msgs.append('{:}: {:} * comment deleted on {:} #{:}: {:}'
                                 .format(repo, user, text, number, url))
                 else:
-                    comment = truncate(
-                        '{:}: {:} * comment {:} on {:} #{:}:  {:}'
-                        .format(repo, user, action, text, number, url),
-                        data['comment']['body'])
+                    comment = data['comment']['body'])
                     msgs.append('{:}: {:} * comment {:} on {:} #{:}: {:} {:}'
                                 .format(repo, user, action, text, number, comment, url))
             elif event == 'issues':
@@ -249,10 +243,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                     msgs.append('{:}: {:} * review comment deleted on pull request #{:}: {:}'
                                 .format(repo, user, number, url))
                 else:
-                    comment = truncate(
-                        '{:}: {:} * review comment {:} on pull request #{:}:  {:}'
-                        .format(repo, user, action, number, url),
-                        data['comment']['body'])
+                    comment = data['comment']['body'])
                     msgs.append('{:}: {:} * review comment {:} on pull request #{:}: {:} {:}'
                                 .format(repo, user, action, number, comment, url))
             elif event == 'push':
@@ -264,8 +255,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                     msgs.append('{:}: {:} * {:}: {:} {:}'.format(
                         data['repository']['name'], data['pusher']['name'],
                         ', '.join(commit['modified'] + commit['added']),
-                        truncate(non_trunc, commit['message']),
-                        commit['url'][:commit['url'].rfind('/') + 7]))
+                        commit['message'], commit['url'][:commit['url'].rfind('/') + 7]))
             elif event == 'release':
                 tag = data['release']['tag_name']
                 action = data['action']

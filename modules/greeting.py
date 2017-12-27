@@ -27,8 +27,8 @@ def greeting(phenny, input):
         greeting.conn = sqlite3.connect(phenny.logger_db)
     if not greeting.conndb:
         greeting.conndb = sqlite3.connect(phenny.greeting_db)
-    if input.sender.lower() in phenny.config.greetings.keys():
-        greetingmessage = phenny.config.greetings[input.sender]
+    if input.sender.casefold() in phenny.config.greetings.keys():
+        greetingmessage = phenny.config.greetings[input.sender.casefold()]
     else:
         return
 

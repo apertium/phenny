@@ -12,6 +12,7 @@ from email.utils import parsedate_tz
 import datetime
 import re
 from tools import truncate
+from modules import more
 
 def configured(phenny):
     return all(hasattr(phenny.config, i) for i in ['imap_server', 'imap_user', 'imap_pass', 'mailing_lists'])
@@ -70,24 +71,38 @@ def format_email(e, list_name):
 def check_mail(phenny):
     found = False
     mail = login(phenny)
+
     if not mail:
         return
+
     mail.select('inbox')
     rc, data = mail.uid('search', None, 'UNSEEN')
     unseen_mails = data[0].split()
 
+    messages = {}
+
     for uid in unseen_mails:
         rc, data = mail.uid('fetch', uid, '(RFC822)')
         e = email.message_from_string(data[0][1].decode('utf8'))
+
         for name, (address, channels) in phenny.config.mailing_lists.items():
             if address in recipients(e):
                 found = True
                 message = format_email(e, name)
+
                 if type(channels) is str:
                     channels = [channels]
+
                 for channel in channels:
-                    phenny.msg(channel, message)
+                    if not channel in messages:
+                        messages[channel].append(message)
+                    else:
+                        messages[channel] = [message]
+
         rc, data = mail.uid('store', uid, '+FLAGS', '(\\Seen)')
+
+    for channel in messages.keys():
+        more.add_messages(channel, phenny, messages[channel])
 
     mail.logout()
     phenny.mailing_list_timer = threading.Timer(60*5, check_mail, (phenny,))

@@ -4,6 +4,7 @@ Tests for phenny's greeting.py
 
 import unittest
 import math
+import os
 from mock import MagicMock, patch, call
 from modules import greeting, posted, logger
 
@@ -14,6 +15,8 @@ class TestGreeting(unittest.TestCase):
         self.input = MagicMock()
         self.phenny.nick = 'phenny'
         self.phenny.config.host = 'irc.freenode.net'
+
+        os.makedirs(os.path.expanduser('~/.phenny'), exist_ok=True)
 
         logger.setup(self.phenny)
         greeting.setup(self.phenny)
@@ -31,11 +34,6 @@ class TestGreeting(unittest.TestCase):
             self.phenny.say.reset_mock()
             greeting.greeting(self.phenny, self.input)
             caseless_nick = self.input.nick.casefold()
-
-            if i == 0:
-                self.assertIn(caseless_nick, self.phenny.greeting_count)
-
-            self.assertEquals(self.phenny.greeting_count[caseless_nick], i + 1)
 
             if math.log(i + 1, 2) % 1 == 0:
                 greetingmessage = self.phenny.config.greetings[self.input.sender]

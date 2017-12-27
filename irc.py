@@ -68,13 +68,17 @@ class Bot(asynchat.async_chat):
 
     def write(self, args, text=None): 
         """This is a safe version of __write"""
+
         def safe(input): 
             if type(input) == str:
-                input = input.replace('\n', '')
-                input = input.replace('\r', '')
+                input = input.replace('\r\n', '\n')
+                input = re.sub(' ?(\r|\n)+', ' ', input)
                 return input.encode('utf-8')
             else:
+                input = input.replace(b'\r\n', b'\n')
+                input = re.sub(b' ?(\r|\n)+', b' ', input)
                 return input
+
         try: 
             args = [safe(arg) for arg in args]
             if text is not None: 
@@ -206,7 +210,7 @@ class Bot(asynchat.async_chat):
                 self.msg(recipient, message)
                 text=text.decode('utf-8','ignore')[line_break+space_found:].encode('utf-8')
                 if len(text) <= maxlength:
-                    self.msg(recipient,text.decode('utf-8','ignore'))
+                    self.msg(recipient, text.decode('utf-8','ignore'))
                     break
             self.sending.release()
             return
@@ -229,12 +233,7 @@ class Bot(asynchat.async_chat):
                 self.sending.release()
                 return
 
-        def safe(input): 
-            if type(input) == str:
-                input = input.encode('utf-8')
-            input = input.replace(b'\n', b'')
-            return input.replace(b'\r', b'')
-        self.__write((b'PRIVMSG', safe(recipient)), safe(text))
+        self.write((b'PRIVMSG', recipient), text)
         self.stack.append((time.time(), text))
         self.stack = self.stack[-10:]
 

@@ -192,7 +192,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                     msgs.append('{:}: {:} * comment deleted on {:} #{:}: {:}'
                                 .format(repo, user, text, number, url))
                 else:
-                    comment = data['comment']['body'])
+                    comment = data['comment']['body']
                     msgs.append('{:}: {:} * comment {:} on {:} #{:}: {:} {:}'
                                 .format(repo, user, action, text, number, comment, url))
             elif event == 'issues':
@@ -243,7 +243,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                     msgs.append('{:}: {:} * review comment deleted on pull request #{:}: {:}'
                                 .format(repo, user, number, url))
                 else:
-                    comment = data['comment']['body'])
+                    comment = data['comment']['body']
                     msgs.append('{:}: {:} * review comment {:} on pull request #{:}: {:} {:}'
                                 .format(repo, user, action, number, comment, url))
             elif event == 'push':

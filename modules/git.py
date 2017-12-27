@@ -159,12 +159,12 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                     msgs.append('{:}: {:} * comment deleted on commit {:}: {:}'
                                 .format(repo, user, commit, url))
                 else:
+                    template = '{:}: {:} * comment {:} on commit {:}: {:} {:}'
                     comment = truncate(
-                        '{:}: {:} * comment {:} on commit {:}:  {:}'
-                        .format(repo, user, action, commit, url),
-                        data['comment']['body'])
-                    msgs.append('{:}: {:} * comment {:} on commit {:}: {:} {:}'
-                                .format(repo, user, action, commit, comment, url))
+                        template.format(repo, user, action, commit, '', url),
+                        data['comment']['body']
+                    )
+                    msgs.append(template.format(repo, user, action, commit, comment, url))
             elif event == 'create' or event == 'delete':
                 ref = data['ref']
                 type_ = data['ref_type']
@@ -189,12 +189,12 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                     msgs.append('{:}: {:} * comment deleted on {:} #{:}: {:}'
                                 .format(repo, user, text, number, url))
                 else:
+                    template = '{:}: {:} * comment {:} on {:} #{:}: {:} {:}'
                     comment = truncate(
-                        '{:}: {:} * comment {:} on {:} #{:}:  {:}'
-                        .format(repo, user, action, text, number, url),
-                        data['comment']['body'])
-                    msgs.append('{:}: {:} * comment {:} on {:} #{:}: {:} {:}'
-                                .format(repo, user, action, text, number, comment, url))
+                        template.format(repo, user, action, text, number, '', url),
+                        data['comment']['body']
+                    )
+                    msgs.append(template.format(repo, user, action, text, number, comment, url))
             elif event == 'issues':
                 number = data['issue']['number']
                 title = data['issue']['title']
@@ -243,23 +243,22 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                     msgs.append('{:}: {:} * review comment deleted on pull request #{:}: {:}'
                                 .format(repo, user, number, url))
                 else:
+                    template = '{:}: {:} * review comment {:} on pull request #{:}: {:} {:}'
                     comment = truncate(
-                        '{:}: {:} * review comment {:} on pull request #{:}:  {:}'
-                        .format(repo, user, action, number, url),
-                        data['comment']['body'])
-                    msgs.append('{:}: {:} * review comment {:} on pull request #{:}: {:} {:}'
-                                .format(repo, user, action, number, comment, url))
+                        template.format(repo, user, action, number, '', url),
+                        data['comment']['body']
+                    )
+                    msgs.append(template.format(repo, user, action, number, comment, url))
             elif event == 'push':
                 for commit in data['commits']:
-                    non_trunc = '{:}: {:} * {:}:  {:}'.format(
+                    template = '{:}: {:} * {:}: {:} {:}'
+                    non_trunc = template.format(
                         data['repository']['name'], data['pusher']['name'],
                         ', '.join(commit['modified'] + commit['added']),
-                        commit['url'][:commit['url'].rfind('/') + 7])
-                    msgs.append('{:}: {:} * {:}: {:} {:}'.format(
-                        data['repository']['name'], data['pusher']['name'],
-                        ', '.join(commit['modified'] + commit['added']),
-                        truncate(non_trunc, commit['message']),
-                        commit['url'][:commit['url'].rfind('/') + 7]))
+                        '{:}',
+                        commit['url'][:commit['url'].rfind('/') + 7]
+                    )
+                    msgs.append(non_trunc.format(truncate(non_trunc.format(''), commit['message']))
             elif event == 'release':
                 tag = data['release']['tag_name']
                 action = data['action']

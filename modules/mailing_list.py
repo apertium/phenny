@@ -127,6 +127,8 @@ def list_report(phenny, input):
         phenny.reply("I'm not configured for mailing lists, ask {} to set them up.".format(phenny.config.owner))
         return
 
+    valid_syntax = False
+
     if input.group(2):
         if input.group(2) == "poll":
             phenny.reply('Ok, polling.')
@@ -134,19 +136,20 @@ def list_report(phenny, input):
             if not check_mail(phenny):
                 phenny.reply('Sorry, no unread mailing list messages.')
 
-            return
+            valid_syntax = True
         elif input.group(2) == "last":
             if input.group(3):
                 if input.group(3) in phenny.config.mailing_lists:
                     phenny.reply(last_message(phenny, input.group(3)))
-                    return
+                    valid_syntax = True
             else:
                 for i in phenny.config.mailing_lists:
                     phenny.reply(last_message(phenny, i))
 
-                return
+                valid_syntax = True
 
-    phenny.reply(syntax.format(input.group(1), ', '.join(phenny.config.mailing_lists.keys())))
+    if not valid_syntax:
+        phenny.reply(syntax.format(input.group(1), ', '.join(phenny.config.mailing_lists.keys())))
 
 list_report.name = "mailing list reporter"
 list_report.rule = r'.(mailinglist|ml)(?:\s(poll|last(?:\s([\w-]+))?))?'

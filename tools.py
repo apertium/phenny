@@ -32,11 +32,12 @@ def setup(self):
         MAX_MSG_LEN = phenny.config.MAX_MSG_LEN
 
 def break_up(text, max_length=MAX_MSG_LEN, max_count=None):
-    if isinstance(text, str): 
+    if isinstance(text, str):
         try:
             text = text.encode('utf-8')
-        except UnicodeEncodeError:
-            return ['UnicodeEncodeError']
+        except UnicodeEncodeError as error:
+            print(error)
+            return [error.__class__ + ': ' + str(error)]
 
     if len(text) <= max_length:
         return [text.decode('utf-8', 'ignore')]

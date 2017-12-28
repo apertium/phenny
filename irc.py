@@ -178,13 +178,15 @@ class Bot(asynchat.async_chat):
         self.sending.acquire()
 
         # Cf. http://swhack.com/logs/2006-03-01#T19-43-25
-        if isinstance(text, str): 
+        if isinstance(text, str):
             try: text = text.encode('utf-8')
-            except UnicodeEncodeError as e: 
-                text = e.__class__ + ': ' + str(e)
-        if isinstance(recipient, str): 
+            except UnicodeEncodeError as error:
+                print(error)
+                text = error.__class__ + ': ' + str(error)
+        if isinstance(recipient, str):
             try: recipient = recipient.encode('utf-8')
-            except UnicodeEncodeError as e: 
+            except UnicodeEncodeError as error:
+                print(error)
                 return
 
         # Split long messages

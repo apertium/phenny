@@ -19,9 +19,7 @@ from modules import more
 
 # githooks port
 PORT = 1234
-# maximum message length (see msg() in irc.py)
-# overriden if MAX_MSG_LEN exists in the config
-MAX_MSG_LEN = 430
+
 # module-global variables
 Handler = None
 httpd = None
@@ -363,11 +361,9 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
 def setup_server(phenny, input=None):
     '''Set up and start hooks server.'''
 
-    global Handler, httpd, MAX_MSG_LEN
+    global Handler, httpd
     Handler = MyHandler
     Handler.phenny = phenny
-    if hasattr(phenny.config, 'MAX_MSG_LEN'):
-        MAX_MSG_LEN = phenny.config.MAX_MSG_LEN
     httpd = socketserver.TCPServer(("", PORT), Handler)
     httpd.allow_reuse_address = True
     Thread(target=httpd.serve_forever).start()

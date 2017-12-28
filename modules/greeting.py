@@ -23,6 +23,10 @@ def setup(self):
     c.close()
 
 def greeting(phenny, input):
+    if "[m]" in input.nick:
+        hint = "Consider removing [m] from your IRC nick! See http://wiki.apertium.org/wiki/IRC/Matrix#Remove_.5Bm.5D_from_your_IRC_nick for details."
+        phenny.msg(input.nick, input.nick + ": " + hint)
+
     if not greeting.conn:
         greeting.conn = sqlite3.connect(phenny.logger_db)
     if not greeting.conndb:
@@ -61,15 +65,11 @@ def greeting(phenny, input):
 
             phenny.greeting_count[caseless_nick] += 1
 
-            if math.log(phenny.greeting_count[caseless_nick], 2) % 1 == 0:
+            if math.log2(phenny.greeting_count[caseless_nick]) % 1 == 0:
                 phenny.say(greetingmessage)
 
     c.close()
     greeting.conn.commit()
-
-    if "[m]" in input.nick:
-        ChangeMatrix = "consider removing [m] from your IRC nick!  http://wiki.apertium.org/wiki/IRC/Matrix#Remove_.5Bm.5D_from_your_IRC_nick for more"
-        phenny.msg(input.nick, input.nick + ": " + ChangeMatrix)
 
 greeting.conn = None
 greeting.conndb = None

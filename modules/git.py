@@ -509,6 +509,6 @@ def retrieve_commit(phenny, input):
     msg = generate_report(repo, *info)
     # the URL is truncated so that it has at least 6 sha characters
     url = url[:url.rfind('/') + 7]
-    phenny.say('{:s} {:s}'.format(truncate(msg, extra_space=len(' ' + url), msg), url))
+    phenny.say('{:s} {:s}'.format(truncate(msg, extra_space=len(' ' + url)), url))
 # command metadata and invocation
 retrieve_commit.rule = ('$nick', 'info(?: +(.*))')

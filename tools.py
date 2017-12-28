@@ -33,46 +33,45 @@ def setup(self):
 
 def break_up(text, max_length=MAX_MSG_LEN, max_count=None):
     if isinstance(text, str): 
-        try: text = text.encode('utf-8')
-        except UnicodeEncodeError as e: 
-            return
+        try:
+            text = text.encode('utf-8')
+        except UnicodeEncodeError:
+            return ['UnicodeEncodeError']
 
     if len(text) <= max_length:
         return [text.decode('utf-8', 'ignore')]
 
-    if max_count:
-        indices = range(max_count)
-    else:
-        indices = itertools.count()
+    parts = []
 
-    for index in indices:
+    while len(text) > max_length:
         # We want to add "..." to last message so we leave place for it
-        if max_count and index == max_count - 1:
+        if max_count and len(parts) == max_count - 1:
             max_length -= 3
 
-        message = text[:max_length]
-        msg_break = len(message)
-        break_found = 0
+        space_index = text.rfind(b' ', 0, max_length)
+        newline_index = text.rfind(b'\n', 0, max_length)
+        offset = 0
 
-        for j in range(len(message) - 1, -1, -1):
-            if message[j] == ' ' or message[j] == '\n':
-                msg_break = j
-                break_found = 1
-                break
+        if space_index == -1 and newline_index == -1:
+            msg_break = max_length
+        elif space_index > newline_index:
+            msg_break = space_index
+            offset = 1
+        else:
+            msg_break = newline_index
 
-        message = text[:line_break]
+        message = text[:msg_break]
+        text = text[msg_break + offset:]
 
         # We want to add "..." to last message
-        if max_count and index == max_count - 1:
-            message += "..."
-            text = ''
+        if max_count and len(parts) == max_count - 1:
+            message += b"..."
+            text = b''
 
         parts.append(message.decode('utf-8', 'ignore'))
-        text = text[line_break + space_found:]
 
-        if len(text) <= max_length:
-            parts.append(text.decode('utf-8', 'ignore'))
-            break
+    if text:
+        parts.append(text.decode('utf-8', 'ignore'))
 
     return parts
 
@@ -84,8 +83,8 @@ def truncate(text, max_length=MAX_MSG_LEN, extra_space=0):
 
     max_length -= 3
 
-    space_index = trunc.rfind(' ', 0, max_length)
-    newline_index = trunc.rfind('\n', 0, max_length)
+    space_index = text.rfind(' ', 0, max_length)
+    newline_index = text.rfind('\n', 0, max_length)
 
     if space_index == -1 and newline_index == -1:
         return text[:max_length] + '...'

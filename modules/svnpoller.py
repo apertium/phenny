@@ -7,8 +7,7 @@ from subprocess import Popen, PIPE
 import xml.etree.ElementTree as ET
 from io import StringIO
 import time
-from tools import generate_report
-#from functions import generate_report
+from tools import generate_report, truncate, MAX_MSG_LEN
 
 global_revisions = None
 global_filename = None
@@ -145,11 +144,6 @@ class SVNPoller:
 	    else:
 		    return 'https://sourceforge.net/p/' + self.repo + '/code/%s' % str(rev)
 
-def truncate(msg, length):
-	while len(msg) > length:
-		msg = msg[:msg.rfind(' ')]
-	return msg
-
 def recentcommits(phenny, input):
 	"""List the most recent SVN commits."""
 	print("POLLING!!!!")
@@ -163,10 +157,7 @@ def recentcommits(phenny, input):
 		rev = poller.get_last_revision()
 		msg = poller.generateReport(rev, True)
 		url = poller.sourceforgeURL(rev)
-		if len(msg) > 430:
-			phenny.say(truncate(msg, 430 - len(url) - 4) + "... " + url)
-		else:
-			phenny.say(msg + ' ' + url)
+		phenny.say(truncate(msg, extra_space=len(' ' + url)) + ' ' + url)
 recentcommits.name = 'recent'
 recentcommits.rule = ('$nick', 'recent')
 recentcommits.example = 'begiak: recent'
@@ -195,10 +186,7 @@ def retrieve_commit_svn(phenny, input):
 	poller = SVNPoller(repo, phenny.config.svn_repositories[repo])
 	msg = poller.generateReport(rev, True)
 	url = poller.sourceforgeURL(rev)
-	if len(msg + ' ' + url) <= 430:
-	    phenny.say(msg + ' ' + url)
-	else:
-	    phenny.say(truncate(msg, 430 - len(url) - 4) + '... ' + url)
+	phenny.say(truncate(msg, extra_space=len(' ' + url)) + ' ' + url)
 retrieve_commit_svn.rule = ('$nick', 'info(?: +(.*))')
 
 def pollsvn(phenny, input):

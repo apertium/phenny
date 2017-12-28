@@ -42,7 +42,11 @@ def add_messages(target, phenny, msgs, break_up=break_up_fn):
     else:
         phenny.msg(target, msgs.pop(0))
         phenny.msg(target, 'you have ' + str(len(msgs)) + ' more message(s). Please type ".more" to view them.')
-        phenny.messages[target.casefold()] = msgs
+
+        if target.casefold() in phenny.messages:
+            phenny.messages[target.casefold()].extend(msgs)
+        else:
+            phenny.messages[target.casefold()] = msgs
 
 def more(phenny, input):
     ''' '.more N' prints the next N messages.
@@ -51,9 +55,9 @@ def more(phenny, input):
     count = 1 if input.group(1) is None else int(input.group(1))
 
     if has_more(phenny, input.nick):
-        show_more(phenny, input.nick, count)
+        show_more(phenny, input.sender, input.nick, count)
     elif (input.admin or input.owner) and has_more(phenny, input.sender):
-        show_more(phenny, input.sender, count)
+        show_more(phenny, input.sender, input.sender, count)
     else:
         phenny.reply("No more queued messages")
 
@@ -63,7 +67,7 @@ more.rule = r'[.]more(?: ([1-9][0-9]*))?'
 def has_more(phenny, target):
     return target.casefold() in phenny.messages.keys()
 
-def show_more(phenny, target, count):
+def show_more(phenny, sender, target, count):
     target = target.casefold()
     remaining = len(phenny.messages[target])
 
@@ -74,17 +78,17 @@ def show_more(phenny, target, count):
 
     if count > 1:
         for _ in range(count):
-            phenny.reply(phenny.messages[target].pop(0))
+            phenny.msg(sender, phenny.messages[target].pop(0))
 
         if remaining > 0:
-            phenny.reply(str(remaining) + " message(s) remaining")
+            phenny.msg(sender, str(remaining) + " message(s) remaining")
     else:
         msg = phenny.messages[target].pop(0)
 
         if remaining > 0:
-            phenny.reply(msg + " (" + str(remaining) + " remaining)")
+            phenny.msg(sender, msg + " (" + str(remaining) + " remaining)")
         else:
-            phenny.reply(msg)
+            phenny.msg(sender, msg)
 
     if remaining == 0:
         del phenny.messages[target]

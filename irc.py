@@ -10,6 +10,7 @@ http://inamidst.com/phenny/
 import sys, re, time, traceback
 import socket, asyncore, asynchat
 import ssl
+from tools import break_up, MAX_MSG_LEN
 
 
 class Origin(object): 
@@ -187,31 +188,10 @@ class Bot(asynchat.async_chat):
                 return
 
         # Split long messages
-        maxlength = 430
-        max_messages_count = 3
-        if len(text) > maxlength:
-            for i in range(max_messages_count):
-                # We want to add "..." to last message so we leave place for it
-                if i == max_messages_count-1:
-                    maxlength=maxlength-3
-                message = text[0:maxlength].decode('utf-8','ignore')
-                line_break = len(message)
-                space_found = 0
-                for j in range(len(message)-1,-1,-1):
-                    if message[j] == " ":
-                        line_break = j
-                        space_found = 1
-                        break
-                message = text.decode('utf-8','ignore')[0:line_break]
-                # We want to add "..." to last message
-                if i == max_messages_count-1:
-                    message = message + "..."
-                    text = b''
+        if len(text) > MAX_MSG_LEN:
+            for message in break_up(text, max_count=3):
                 self.msg(recipient, message)
-                text=text.decode('utf-8','ignore')[line_break+space_found:].encode('utf-8')
-                if len(text) <= maxlength:
-                    self.msg(recipient, text.decode('utf-8','ignore'))
-                    break
+
             self.sending.release()
             return
 

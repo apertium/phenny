@@ -12,7 +12,7 @@ import re
 import socketserver
 import time
 import atexit
-from tools import generate_report
+from tools import generate_report, truncate
 import urllib.parse
 import web
 from modules import more
@@ -32,12 +32,6 @@ def close_socket():
         httpd.server_close()
 
 atexit.register(close_socket)
-
-
-def truncate(non_trunc, trunc):
-    while len(non_trunc + trunc) > MAX_MSG_LEN:
-        trunc = trunc[:trunc.rfind(' ')] + '...'
-    return trunc
 
 
 # githooks handler
@@ -479,7 +473,7 @@ def get_recent_commit(phenny, input):
         msg = generate_report(repo, *info)
         # the URL is truncated so that it has at least 6 sha characters
         url = url[:url.rfind('/') + 7]
-        phenny.say('{:s} {:s}'.format(truncate(' ' + url, msg), url))
+        phenny.say('{:s} {:s}'.format(truncate(msg, extra_space=len(' ' + url)), url))
 # command metadata and invocation
 get_recent_commit.rule = ('$nick', 'recent')
 get_recent_commit.priority = 'medium'
@@ -515,6 +509,6 @@ def retrieve_commit(phenny, input):
     msg = generate_report(repo, *info)
     # the URL is truncated so that it has at least 6 sha characters
     url = url[:url.rfind('/') + 7]
-    phenny.say('{:s} {:s}'.format(truncate(' ' + url, msg), url))
+    phenny.say('{:s} {:s}'.format(truncate(msg, extra_space=len(' ' + url), msg), url))
 # command metadata and invocation
 retrieve_commit.rule = ('$nick', 'info(?: +(.*))')

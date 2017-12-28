@@ -13,11 +13,86 @@ import re
 import urllib.request, urllib.parse, urllib.error, json
 import requests
 import web
+import itertools
 from time import time
 
 headers = {
    'User-Agent': 'Mozilla/5.0' + '(X11; U; Linux i686)' + 'Gecko/20071127 Firefox/2.0.0.11'
 }
+
+# maximum message length (see msg() in irc.py)
+# overriden if MAX_MSG_LEN exists in the config
+# TODO: make this a global for all modules
+MAX_MSG_LEN = 430
+
+def setup(self):
+    global MAX_MSG_LEN
+
+    if hasattr(phenny.config, 'MAX_MSG_LEN'):
+        MAX_MSG_LEN = phenny.config.MAX_MSG_LEN
+
+def break_up(text, max_length=MAX_MSG_LEN, max_count=None):
+    if isinstance(text, str): 
+        try: text = text.encode('utf-8')
+        except UnicodeEncodeError as e: 
+            return
+
+    if len(text) <= max_length:
+        return [text.decode('utf-8', 'ignore')]
+
+    if max_count:
+        indices = range(max_count)
+    else:
+        indices = itertools.count()
+
+    for index in indices:
+        # We want to add "..." to last message so we leave place for it
+        if max_count and index == max_count - 1:
+            max_length -= 3
+
+        message = text[:max_length]
+        msg_break = len(message)
+        break_found = 0
+
+        for j in range(len(message) - 1, -1, -1):
+            if message[j] == ' ' or message[j] == '\n':
+                msg_break = j
+                break_found = 1
+                break
+
+        message = text[:line_break]
+
+        # We want to add "..." to last message
+        if max_count and index == max_count - 1:
+            message += "..."
+            text = ''
+
+        parts.append(message.decode('utf-8', 'ignore'))
+        text = text[line_break + space_found:]
+
+        if len(text) <= max_length:
+            parts.append(text.decode('utf-8', 'ignore'))
+            break
+
+    return parts
+
+def truncate(text, max_length=MAX_MSG_LEN, extra_space=0):
+    max_length -= extra_space
+
+    if text <= max_length:
+        return text
+
+    max_length -= 3
+
+    space_index = trunc.rfind(' ', 0, max_length)
+    newline_index = trunc.rfind('\n', 0, max_length)
+
+    if space_index == -1 and newline_index == -1:
+        return text[:max_length] + '...'
+    elif space_index > newline_index:
+        return text[:space_index] + '...'
+    else:
+        return text[:newline_index] + '...'
 
 class GrumbleError(Exception):
     pass

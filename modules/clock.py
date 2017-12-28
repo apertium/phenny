@@ -278,19 +278,21 @@ def scrape_wiki_zones():
     doc = html.document_fromstring(web.get(url))
     table = doc.find_class('wikitable')[0]
 
+    column_names = [cell.text.replace('*', '') for cell in table.findall('th')]
+
     for row in table.findall('tr'):
         column = 0
 
         for cell in row.findall('td'):
-            if column == 2:
+            if column == column_names.find('TZ'):
                 text = cell.find('a').text
-                text = text.replace('_',' ').replace('−','-')
+                text = text.replace('_', ' ').replace('−', '-')
 
                 name = text.split('/')[-1]
 
-            elif column == 5:
+            elif column == column_names.find('UTC offset'):
                 text = cell.find('a').text
-                text = text.replace('_',' ').replace('−','-')
+                text = text.replace('_', ' ').replace('−', '-')
 
                 if text[text.find(':') + 1] == '0':
                     text = text[:text.find(':')]

@@ -4,10 +4,23 @@ more.py - Message Buffer Interface
 Author - mandarj
 """
 
-from tools import break_up
+import sqlite3
+from tools import break_up, DatabaseCursor, db_path, MAX_MSG_LEN
 
 def setup(self):
-    self.messages = {}
+    self.more_db = db_path(self, 'more')
+
+    connection = sqlite3.connect(self.more_db)
+    cursor = connection.cursor()
+
+    cursor.execute('''create table if not exists more (
+        target        varchar(255),
+        message       varchar(''' + MAX_MSG_LEN + ''')
+        identifier    integer primary key autoincrement
+    );''')
+
+    cursor.close()
+    connection.close()
 
 def add_messages(target, phenny, msgs):
     if not type(msgs) is list:
@@ -25,10 +38,11 @@ def add_messages(target, phenny, msgs):
         phenny.msg(target, msgs.pop(0))
         phenny.msg(target, 'you have ' + str(len(msgs)) + ' more message(s). Please type ".more" to view them.')
 
-        if target.casefold() in phenny.messages:
-            phenny.messages[target.casefold()].extend(msgs)
-        else:
-            phenny.messages[target.casefold()] = msgs
+        target = target.casefold()
+
+        with DatabaseCursor(self.more_db) as cursor:
+            values = [(target, message) for message in messages]
+            cursor.executemany("INSERT INTO more (target, message) VALUES (?, ?)", values)
 
 def more(phenny, input):
     ''' '.more N' prints the next N messages.
@@ -47,30 +61,36 @@ more.name = 'more'
 more.rule = r'[.]more(?: ([1-9][0-9]*))?'
 
 def has_more(phenny, target):
-    return target.casefold() in phenny.messages.keys()
+    target = target.casefold()
+
+    with DatabaseCursor(self.more_db) as cursor:
+        cursor.execute("SELECT COUNT(*) FROM more WHERE target=?", (target,))
+        return cursor.fetchone()[0] > 0
 
 def show_more(phenny, sender, target, count):
     target = target.casefold()
-    remaining = len(phenny.messages[target])
 
-    if count > remaining:
-        count = remaining
+    with DatabaseCursor(self.more_db) as cursor:
+        cursor.execute("SELECT message, identifier FROM more WHERE target=? SORT BY identifier ASC LIMIT ?", (target, count))
+        rows = cursor.fetchall()
 
-    remaining -= count
+        cursor.executemany("DELETE FROM more WHERE identifier=?", [(row[1],) for row in rows])
 
-    if count > 1:
-        for _ in range(count):
-            phenny.msg(sender, phenny.messages[target].pop(0))
+        cursor.execute("SELECT COUNT(*) FROM more WHERE target=?", (target,))
+        remaining = cursor.fetchone()[0]
+
+    messages = [row[0] for row in rows]
+
+    if len(messages) > 1:
+        for message in messages:
+            phenny.msg(sender, message)
 
         if remaining > 0:
             phenny.msg(sender, str(remaining) + " message(s) remaining")
     else:
-        msg = phenny.messages[target].pop(0)
+        message = messages[0]
 
         if remaining > 0:
-            phenny.msg(sender, msg + " (" + str(remaining) + " remaining)")
+            phenny.msg(sender, message + " (" + str(remaining) + " remaining)")
         else:
-            phenny.msg(sender, msg)
-
-    if remaining == 0:
-        del phenny.messages[target]
+            phenny.msg(sender, message)

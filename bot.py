@@ -57,6 +57,8 @@ class Phenny(irc.Bot):
                         if n.endswith('.py') and not n.startswith('_'): 
                             filenames.append(os.path.join(fn, n))
 
+        tools.setup(self)
+
         modules = []
         excluded_modules = getattr(self.config, 'exclude', [])
         for filename in filenames: 

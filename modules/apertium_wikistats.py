@@ -71,7 +71,7 @@ def awikstats(phenny, input):
 
             phenny.say('%s: Calculating coverage... It may take a while, I will inform you after it\'s completed.' % input.nick)
 
-            commands = shlex.split('python3 %s Immortal "%s" coverage -p %s -r "%s"' % (BOT[1], botPassword, lang, input.nick))
+            commands = shlex.split('python3 %s StemCounterBot "%s" coverage -p %s -r "%s"' % (BOT[1], botPassword, lang, input.nick))
             IS_COVERAGE_RUNNING = lang
             process = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=filename(''))
             stdout, stderr = process.communicate()

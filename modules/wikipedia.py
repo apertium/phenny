@@ -13,6 +13,7 @@ import lxml.html
 import lxml.html.clean
 import web
 from modules.posted import check_posted
+from tools import truncate
 
 wikiapi = 'https://%s.wikipedia.org/w/api.php?action=query&list=search&srsearch={0}&limit=1&prop=snippet&format=json'
 wikiuri = 'https://%s.wikipedia.org/wiki/{0}'
@@ -68,14 +69,7 @@ def parse_wiki_page(url, term, section = None):
     sentences = [x.strip() for x in text.text_content().split(".")]
     sentence = '"' + sentences[0] + '"'
 
-    maxlength = 430 - len((' - ' + url).encode('utf-8'))
-    if len(sentence.encode('utf-8')) > maxlength:
-        sentence = sentence.encode('utf-8')[:maxlength].decode('utf-8', 'ignore')
-        words = sentence[:-5].split(' ')
-        words.pop()
-        sentence = ' '.join(words) + ' [...]'
-
-    return sentence + ' - ' + url
+    return truncate(sentence, ' - ' + url) + ' - ' + url
 
 def wikipedia(phenny, input, origterm, lang, to_user = None):
     origterm = origterm.strip()

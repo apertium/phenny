@@ -10,6 +10,7 @@ from lxml import etree
 import lxml.html
 import lxml.html.clean
 from modules.posted import check_posted
+from tools import truncate
 
 wikiuri = 'http://wiki.apertium.org/wiki/{:s}'
 wikisearchuri = 'http://wiki.apertium.org/api.php?action=query&list=search&srlimit=1&format=json&srsearch={:s}&srwhat={:s}'
@@ -75,18 +76,14 @@ def apertium_wiki(phenny, input, origterm, to_nick=None):
     sentences = text.text_content().split(". ")
     sentence = '"' + sentences[0] + '"'
 
-    maxlength = 430 - len((' - ' + wikiuri.format(format_term_display(term))).encode('utf-8'))
-    if len(sentence.encode('utf-8')) > maxlength:
-        sentence = sentence.encode('utf-8')[:maxlength].decode('utf-8', 'ignore')
-        words = sentence[:-5].split(' ')
-        words.pop()
-        sentence = ' '.join(words) + ' [...]'
-
     if hasattr(input, 'sender'):
         check_posted(phenny, input, wikiuri.format(format_term_display(term)))
+
     if to_nick:
+        sentence = truncate(sentence, to_nick + ', ' + ' - ' + wikiuri.format(format_term_display(term)).encode('utf-8'))
         phenny.say(to_nick + ', ' + sentence + ' - ' + wikiuri.format(format_term_display(term)))
     else:
+        sentence = truncate(sentence, ' - ' + wikiuri.format(format_term_display(term)).encode('utf-8'))
         phenny.say(sentence + ' - ' + wikiuri.format(format_term_display(term)))
 
 

@@ -31,13 +31,18 @@ def setup(self):
     if hasattr(self.config, 'MAX_MSG_LEN'):
         MAX_MSG_LEN = self.config.MAX_MSG_LEN
 
-def break_up(text, max_length=MAX_MSG_LEN, max_count=None):
+def encodeIfNot(text):
     if isinstance(text, str):
         try:
-            text = text.encode('utf-8')
+            return text.encode('utf-8')
         except UnicodeEncodeError as error:
             print(error)
-            return [error.__class__ + ': ' + str(error)]
+            return (error.__class__ + ': ' + str(error)).encode('utf-8')
+
+    return text
+
+def break_up(text, max_length=MAX_MSG_LEN, max_count=None):
+    text = encodeIfNot(text)
 
     if len(text) <= max_length:
         return [text.decode('utf-8', 'ignore')]
@@ -66,7 +71,7 @@ def break_up(text, max_length=MAX_MSG_LEN, max_count=None):
 
         # We want to add "..." to last message
         if max_count and len(parts) == max_count - 1:
-            message += b"..."
+            message += b'...'
             text = b''
 
         parts.append(message.decode('utf-8', 'ignore'))
@@ -76,23 +81,27 @@ def break_up(text, max_length=MAX_MSG_LEN, max_count=None):
 
     return parts
 
-def truncate(text, max_length=MAX_MSG_LEN, extra_space=0):
-    max_length -= extra_space
+def truncate(text, share=None, max_length=MAX_MSG_LEN):
+    text = encodeIfNot(text)
 
-    if text <= max_length:
-        return text
+    if share:
+        share = encodeIfNot(share)
+        max_length -= len(share)
+
+    if len(text) <= max_length:
+        return text.decode('utf-8', 'ignore')
 
     max_length -= 3
 
-    space_index = text.rfind(' ', 0, max_length)
-    newline_index = text.rfind('\n', 0, max_length)
+    space_index = text.rfind(b' ', 0, max_length)
+    newline_index = text.rfind(b'\n', 0, max_length)
 
     if space_index == -1 and newline_index == -1:
-        return text[:max_length] + '...'
+        return text[:max_length].decode('utf-8', 'ignore') + '...'
     elif space_index > newline_index:
-        return text[:space_index] + '...'
+        return text[:space_index].decode('utf-8', 'ignore') + '...'
     else:
-        return text[:newline_index] + '...'
+        return text[:newline_index].decode('utf-8', 'ignore') + '...'
 
 class GrumbleError(Exception):
     pass

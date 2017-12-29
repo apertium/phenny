@@ -159,8 +159,8 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 else:
                     template = '{:}: {:} * comment {:} on commit {:}: {:} {:}'
                     comment = truncate(
-                        template.format(repo, user, action, commit, '', url),
-                        data['comment']['body']
+                        data['comment']['body'],
+                        template.format(repo, user, action, commit, '', url)
                     )
                     msgs.append(template.format(repo, user, action, commit, comment, url))
             elif event == 'create' or event == 'delete':
@@ -189,8 +189,8 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 else:
                     template = '{:}: {:} * comment {:} on {:} #{:}: {:} {:}'
                     comment = truncate(
-                        template.format(repo, user, action, text, number, '', url),
-                        data['comment']['body']
+                        data['comment']['body'],
+                        template.format(repo, user, action, text, number, '', url)
                     )
                     msgs.append(template.format(repo, user, action, text, number, comment, url))
             elif event == 'issues':
@@ -243,8 +243,8 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 else:
                     template = '{:}: {:} * review comment {:} on pull request #{:}: {:} {:}'
                     comment = truncate(
-                        template.format(repo, user, action, number, '', url),
-                        data['comment']['body']
+                        data['comment']['body'],
+                        template.format(repo, user, action, number, '', url)
                     )
                     msgs.append(template.format(repo, user, action, number, comment, url))
             elif event == 'push':
@@ -256,7 +256,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                         '{:}',
                         commit['url'][:commit['url'].rfind('/') + 7]
                     )
-                    msgs.append(non_trunc.format(truncate(non_trunc.format(''), commit['message']))
+                    msgs.append(non_trunc.format(truncate(commit['message'], non_trunc.format(''))))
             elif event == 'release':
                 tag = data['release']['tag_name']
                 action = data['action']
@@ -478,7 +478,7 @@ def get_recent_commit(phenny, input):
         msg = generate_report(repo, *info)
         # the URL is truncated so that it has at least 6 sha characters
         url = url[:url.rfind('/') + 7]
-        phenny.say('{:s} {:s}'.format(truncate(msg, extra_space=len(' ' + url)), url))
+        phenny.say('{:s} {:s}'.format(truncate(msg, ' ' + url), url))
 # command metadata and invocation
 get_recent_commit.rule = ('$nick', 'recent')
 get_recent_commit.priority = 'medium'
@@ -514,6 +514,6 @@ def retrieve_commit(phenny, input):
     msg = generate_report(repo, *info)
     # the URL is truncated so that it has at least 6 sha characters
     url = url[:url.rfind('/') + 7]
-    phenny.say('{:s} {:s}'.format(truncate(msg, extra_space=len(' ' + url)), url))
+    phenny.say('{:s} {:s}'.format(truncate(msg, ' ' + url), url))
 # command metadata and invocation
 retrieve_commit.rule = ('$nick', 'info(?: +(.*))')

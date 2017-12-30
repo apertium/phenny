@@ -256,7 +256,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                         '{:}',
                         commit['url'][:commit['url'].rfind('/') + 7]
                     )
-                    msgs.append(non_trunc.format(truncate(non_trunc.format(''), commit['message']))
+                    msgs.append(non_trunc.format(truncate(non_trunc.format(''), commit['message'])))
             elif event == 'release':
                 tag = data['release']['tag_name']
                 action = data['action']

@@ -328,17 +328,6 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                         msgs_default_channels.append(message)
                 except Exception:
                     print("unsupported data: " + str(commit))
-        elif "project_name" in data:
-            # for googlecode
-            # still experimental, so notify firespeaker and write debug log
-            self.phenny.bot.msg("firespeaker", "DEBUG" + repr(data))
-
-            with open("/home/begiak/DEBUG.txt", "a") as debugf:
-                debugf.write(repr(data) + "\n\n")
-
-            for commit in data['revisions']:
-                message = self.return_data("googlecode", data, commit)
-                msgs_default_channels.append(message)
 
         if (not msgs) and (data['commits']):
             # we couldn't get anything

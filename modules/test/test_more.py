@@ -10,16 +10,20 @@ class TestMore(unittest.TestCase):
 
     def setUp(self):
         self.phenny = MagicMock()
-        self.input = MagicMock()
         self.phenny.nick = 'phenny'
         self.phenny.config.channels = ['#example', '#test']
-        self.phenny.messages = {}
+        self.phenny.config.host = 'irc.freenode.net'
 
+        self.input = MagicMock()
         self.input.sender = '#test'
         self.input.nick = 'Testsworth'
         self.input.group = lambda x: [None, None][x]
         self.input.admin = False
         self.input.owner = False
+
+        more.setup(self.phenny)
+        more.delete_all(self.phenny, target=self.input.nick)
+        more.delete_all(self.phenny, target=self.input.sender)
 
         self.messages = [
             'Lorem ipsum dolor sit amet',

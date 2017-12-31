@@ -10,10 +10,12 @@ http://inamidst.com/phenny/
 import http.client
 import os
 import re
-import urllib.request, urllib.parse, urllib.error, json
+import urllib.request, urllib.parse, urllib.error
+import json
 import requests
 import web
 import itertools
+import sqlite3
 import logging
 from time import time
 
@@ -43,8 +45,12 @@ class DatabaseCursor():
         self.path = path
 
     def __enter__(self):
-        self.connection = sqlite3.connect(self.path, detect_types=sqlite3.PARSE_DECLTYPES)
-        self.cursor = connection.cursor()
+        self.connection = sqlite3.connect(
+            self.path,
+            detect_types=sqlite3.PARSE_DECLTYPES,
+            isolation_level=None
+        )
+        self.cursor = self.connection.cursor()
         return self.cursor
 
     def __exit__(self, *args):

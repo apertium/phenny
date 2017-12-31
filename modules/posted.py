@@ -19,7 +19,7 @@ def setup(self):
         channel    VARCHAR(255),
         nick       VARCHAR(255),
         url        VARCHAR(512),
-        time       TIMESTAMP DATE DEFAULT DATETIME('now', 'localtime')
+        time       TIMESTAMP DATE DEFAULT (DATETIME('now', 'localtime'))
     );''')
 
     cursor.close()
@@ -33,7 +33,7 @@ def check_posted(phenny, input, url):
         url = 'http://' + url
     dest_url = requests.get(url).url
 
-    with DatabaseCursor(self.posted_db) as cursor:
+    with DatabaseCursor(phenny.posted_db) as cursor:
         cursor.execute("SELECT nick, time FROM posted WHERE channel=? AND url=?", (input.sender, dest_url))
         res = cursor.fetchone()
 
@@ -42,7 +42,7 @@ def check_posted(phenny, input, url):
             time = naturaltime(res[1])
             return "{0} by {1}".format(time, nickname)
         else:
-            c.execute("INSERT INTO posted (channel, nick, url) VALUES (?, ?, ?)",
+            cursor.execute("INSERT INTO posted (channel, nick, url) VALUES (?, ?, ?)",
                       (input.sender, input.nick, dest_url))
             return None
 

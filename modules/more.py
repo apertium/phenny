@@ -13,11 +13,11 @@ def setup(self):
     connection = sqlite3.connect(self.more_db)
     cursor = connection.cursor()
 
-    cursor.execute('''create table if not exists more (
-        target        varchar(255),
-        message       varchar(''' + MAX_MSG_LEN + ''')
-        identifier    integer primary key autoincrement
-    );''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS more (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT
+        target     VARCHAR(255),
+        message    VARCHAR({max_msg_len})
+    );'''.format(max_msg_len=MAX_MSG_LEN))
 
     cursor.close()
     connection.close()
@@ -71,15 +71,15 @@ def show_more(phenny, sender, target, count):
     target = target.casefold()
 
     with DatabaseCursor(self.more_db) as cursor:
-        cursor.execute("SELECT message, identifier FROM more WHERE target=? SORT BY identifier ASC LIMIT ?", (target, count))
+        cursor.execute("SELECT id, message FROM more WHERE target=? SORT BY id ASC LIMIT ?", (target, count))
         rows = cursor.fetchall()
 
-        cursor.executemany("DELETE FROM more WHERE identifier=?", [(row[1],) for row in rows])
+        cursor.executemany("DELETE FROM more WHERE id=?", [(row[0],) for row in rows])
 
         cursor.execute("SELECT COUNT(*) FROM more WHERE target=?", (target,))
         remaining = cursor.fetchone()[0]
 
-    messages = [row[0] for row in rows]
+    messages = [row[1] for row in rows]
 
     if len(messages) > 1:
         for message in messages:

@@ -15,11 +15,11 @@ def setup(self):
     connection = sqlite3.connect(self.posted_db)
     cursor = connection.cursor()
 
-    cursor.execute('''create table if not exists posted (
-        channel    varchar(255),
-        nick       varchar(255),
-        url        varchar(512),
-        time       timestamp date default (datetime('now', 'localtime'))
+    cursor.execute('''CREATE TABLE IF NOT EXISTS posted (
+        channel    VARCHAR(255),
+        nick       VARCHAR(255),
+        url        VARCHAR(512),
+        time       TIMESTAMP DATE DEFAULT DATETIME('now', 'localtime')
     );''')
 
     cursor.close()

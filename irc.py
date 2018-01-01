@@ -10,7 +10,7 @@ http://inamidst.com/phenny/
 import sys, re, time, traceback
 import socket, asyncore, asynchat
 import ssl
-from tools import break_up, MAX_MSG_LEN
+from tools import break_up, max_message_length
 
 
 class Origin(object): 
@@ -190,7 +190,7 @@ class Bot(asynchat.async_chat):
                 return
 
         # Split long messages
-        if len(text) > MAX_MSG_LEN:
+        if len(text) > max_message_length:
             for message in break_up(text, max_count=3):
                 self.msg(recipient, message)
 

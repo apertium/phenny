@@ -21,14 +21,14 @@ headers = {
 }
 
 # maximum message length (see msg() in irc.py)
-# overriden if MAX_MSG_LEN exists in the config
-MAX_MSG_LEN = 430
+# overriden if max_message_length exists in the config
+max_message_length = 430
 
 def setup(self):
-    global MAX_MSG_LEN
+    global max_message_length
 
-    if hasattr(self.config, 'MAX_MSG_LEN'):
-        MAX_MSG_LEN = self.config.MAX_MSG_LEN
+    if hasattr(self.config, 'max_message_length'):
+        max_message_length = self.config.max_message_length
 
 def encodeIfNot(text):
     if isinstance(text, str):
@@ -40,7 +40,7 @@ def encodeIfNot(text):
 
     return text
 
-def break_up(text, max_length=MAX_MSG_LEN, max_count=None):
+def break_up(text, max_length=max_message_length, max_count=None):
     text = encodeIfNot(text)
 
     if len(text) <= max_length:
@@ -80,7 +80,7 @@ def break_up(text, max_length=MAX_MSG_LEN, max_count=None):
 
     return parts
 
-def truncate(text, share=None, max_length=MAX_MSG_LEN):
+def truncate(text, share=None, max_length=max_message_length):
     text = encodeIfNot(text)
 
     if share:

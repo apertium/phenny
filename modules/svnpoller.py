@@ -7,7 +7,7 @@ from subprocess import Popen, PIPE
 import xml.etree.ElementTree as ET
 from io import StringIO
 import time
-from tools import generate_report, truncate, MAX_MSG_LEN
+from tools import generate_report, truncate
 
 global_revisions = None
 global_filename = None

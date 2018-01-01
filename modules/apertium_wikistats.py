@@ -26,13 +26,17 @@ def setup(phenny):
 
 def awikstats(phenny, input):
     """Issue commands to the Apertium Stem Counter Bot."""
-    
+
+    if not hasattr(phenny.config, 'stemCounterBotLogin'):
+        phenny.say('Bot login not set; set it in default.py')
+        return
+    botLogin = phenny.config.stemCounterBotLogin
     
     if not hasattr(phenny.config, 'stemCounterBotPassword'):
         phenny.say('Bot password not set; set it in default.py')
         return
     botPassword = phenny.config.stemCounterBotPassword
-    
+
     try:
         rawInput = input.group()
         option = rawInput.split(' ')[1].strip()
@@ -47,7 +51,7 @@ def awikstats(phenny, input):
             phenny.say('Invalid .awikstats update command; try something like %s' % repr(awikstats.example_update))
             return
 
-        commands = shlex.split('python3 %s StemCounterBot "%s" dict -p %s -r "%s"' % (BOT[1], botPassword, ' '.join(langs), input.nick))
+        commands = shlex.split('python3 %s %s "%s" dict -p %s -r "%s"' % (BOT[1], botLogin, botPassword, ' '.join(langs), input.nick))
         process = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=filename(''))
         stdout, stderr = process.communicate()
 
@@ -71,7 +75,7 @@ def awikstats(phenny, input):
 
             phenny.say('%s: Calculating coverage... It may take a while, I will inform you after it\'s completed.' % input.nick)
 
-            commands = shlex.split('python3 %s Immortal "%s" coverage -p %s -r "%s"' % (BOT[1], botPassword, lang, input.nick))
+            commands = shlex.split('python3 %s %s "%s" coverage -p %s -r "%s"' % (BOT[1], botLogin, botPassword, lang, input.nick))
             IS_COVERAGE_RUNNING = lang
             process = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=filename(''))
             stdout, stderr = process.communicate()

@@ -16,6 +16,9 @@ from tools import generate_report, truncate
 import urllib.parse
 import web
 from modules import more
+import logging
+
+logger = logging.getLogger('phenny')
 
 # githooks port
 PORT = 1234
@@ -89,7 +92,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
 
         try:
             # read and decode data
-            print('payload received; headers: '+str(self.headers))
+            logger.debug('payload received; headers: '+str(self.headers))
             length = int(self.headers['Content-Length'])
             indata = self.rfile.read(length)
             post_data = urllib.parse.parse_qs(indata.decode('utf-8'))
@@ -101,8 +104,8 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             else:
                 data = json.loads(post_data)
         except Exception as error:
-            print('Error 400 (no valid payload)')
-            print(error)
+            logger.error('Error 400 (no valid payload)')
+            logger.error(str(error))
 
             self.send_response(400)
             self.send_header("Content-type", "text/html")
@@ -118,12 +121,12 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as error:
             try:
                 commits = [commit['url'] for commit in data['commits']]
-                print('Error 501 (commits were ' + ', '.join(commits) + ')')
+                logger.error('Error 501 (commits were ' + ', '.join(commits) + ')')
             except:
-                print('Error 501 (commits unknown or malformed)')
+                logger.error('Error 501 (commits unknown or malformed)')
 
-            print(str(data))
-            print(error)
+            logger.error(str(data))
+            logger.error(str(error))
 
             self.send_response(501)
             self.send_header("Content-type", "text/html")
@@ -327,7 +330,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                         message = "unsupported data: " + str(commit)
                         msgs_default_channels.append(message)
                 except Exception:
-                    print("unsupported data: " + str(commit))
+                    logger.warning("unsupported data: " + str(commit))
 
         if (not msgs_by_channel) and (not msgs_default_channels) and data['commits']:
             # we couldn't get anything
@@ -357,7 +360,6 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-type", "text/html")
         self.end_headers()
-        print("DONE!")
 
     def getBBFiles(self, filelist):
         '''Sort filelist into added, modified, and removed files

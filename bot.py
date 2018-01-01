@@ -10,6 +10,9 @@ http://inamidst.com/phenny/
 import sys, os, re, threading, importlib
 import irc
 import tools
+import logging
+
+logger = logging.getLogger('phenny')
 
 home = os.getcwd()
 
@@ -70,7 +73,7 @@ class Phenny(irc.Bot):
                 module_loader = importlib.machinery.SourceFileLoader(name, filename)
                 module = module_loader.load_module()
             except Exception as e: 
-                print("Error loading %s: %s (in bot.py)" % (name, e), file=sys.stderr)
+                logger.error("Error loading %s: %s (in bot.py)" % (name, e))
             else: 
                 if hasattr(module, 'setup'): 
                     module.setup(self)
@@ -78,8 +81,9 @@ class Phenny(irc.Bot):
                 modules.append(name)
 
         if modules: 
-            print('Registered modules:', ', '.join(modules), file=sys.stderr)
-        else: print("Warning: Couldn't find any modules", file=sys.stderr)
+            logger.info('Registered modules: ' + ', '.join(modules))
+        else:
+            logger.warning("Couldn't find any modules")
 
         self.bind_commands()
 

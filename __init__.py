@@ -7,7 +7,14 @@ Licensed under the Eiffel Forum License 2.
 http://inamidst.com/phenny/
 """
 
-import sys, os, time, threading, signal
+import logging
+import os
+import signal
+import sys
+import threading
+import time
+
+logger = logging.getLogger('phenny')
 
 class Watcher(object): 
     # Cf. http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/496735
@@ -44,7 +51,7 @@ def run_phenny(config):
 
     try: Watcher()
     except Exception as e:
-        print('Warning:', e, '(in __init__.py)', file=sys.stderr)
+        logger.warning(str(e) + ' (in __init__.py)')
 
     while True: 
         try: connect(config)
@@ -54,8 +61,7 @@ def run_phenny(config):
         if not isinstance(delay, int):
             break
 
-        warning = 'Warning: Disconnected. Reconnecting in %s seconds...' % delay
-        print(warning, file=sys.stderr)
+        logger.warning('Disconnected. Reconnecting in %s seconds...' % delay)
         time.sleep(delay)
 
 def run(config): 

@@ -18,10 +18,12 @@ import web
 import os
 import threading
 import csv
-import zipfile, urllib.request, shutil
+import logging
 from lxml import html
 from decimal import Decimal as dec
 from tools import deprecated
+
+logger = logging.getLogger('phenny')
 
 r_local = re.compile(r'\([a-z]+_[A-Z]+\)')
 
@@ -72,9 +74,9 @@ def give_time(phenny, tz, input_nick, to_user=None):
         try:
             phenny.tz_data = read_dict(f)
         except ValueError:
-            print('timezone database read failed, update it')
+            logger.warning('timezone database read failed, update it')
     else:
-        print('timezone database read failed update it')
+        logger.warning('timezone database read failed update it')
 
     # Personal time zones, because they're rad
     if hasattr(phenny.config, 'timezones'):
@@ -358,7 +360,7 @@ def setup(phenny):
         try:
             phenny.tz_data = read_dict(f)
         except ValueError:
-            print('timezone database read failed, refreshing it')
+            logger.debug('timezone database read failed, refreshing it')
             phenny.tz_data = scrape_wiki_zones()
             write_dict(f, phenny.tz_data)
     else:

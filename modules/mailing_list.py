@@ -13,14 +13,18 @@ import datetime
 import re
 from tools import truncate
 from modules import more
+import logging
+
+logger = logging.getLogger('phenny')
 
 def configured(phenny):
     return all(hasattr(phenny.config, i) for i in ['imap_server', 'imap_user', 'imap_pass', 'mailing_lists'])
 
 def setup(phenny):
     if not configured(phenny):
-        print("Mailing list configuration not fully defined, aborting.")
+        logger.info("Mailing list configuration not fully defined, aborting.")
         return
+
     phenny.mailing_list_timer = threading.Timer(60*5, check_mail, (phenny,))
     phenny.mailing_list_timer.start()
 

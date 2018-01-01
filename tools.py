@@ -14,7 +14,11 @@ import urllib.request, urllib.parse, urllib.error, json
 import requests
 import web
 import itertools
+import logging
 from time import time
+
+logger = logging.getLogger('phenny')
+
 
 headers = {
    'User-Agent': 'Mozilla/5.0' + '(X11; U; Linux i686)' + 'Gecko/20071127 Firefox/2.0.0.11'
@@ -35,7 +39,7 @@ def encodeIfNot(text):
         try:
             return text.encode('utf-8')
         except UnicodeEncodeError as error:
-            print(error)
+            logger.error(str(error))
             return (error.__class__ + ': ' + str(error)).encode('utf-8')
 
     return text
@@ -122,13 +126,14 @@ def deprecated(old):
 
 def generate_report(repo, author, comment, modified_paths, added_paths, removed_paths, rev, date=""):
     paths = modified_paths + added_paths + removed_paths
+
     if comment is None:
         comment = "No commit message provided!"
     else:
         comment = re.sub("[\n\r]+", " ␍ ", comment.strip())
 
     basepath = os.path.commonprefix(paths)
-    print(basepath)
+
     if len(basepath) > 0:
         if basepath[-1] != "/":
             basepath = basepath.split("/")

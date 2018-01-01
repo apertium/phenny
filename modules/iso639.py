@@ -4,7 +4,6 @@ iso639.py - ISO codes module
 author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
 
-#from tools import GrumbleError
 import random
 from modules.ethnologue import setup as ethno_setup
 from modules.ethnologue import write_ethnologue_codes
@@ -13,6 +12,9 @@ import web
 import os
 import threading
 import re
+import logging
+
+logger = logging.getLogger('phenny')
 
 template = "{} = {}"
 
@@ -188,7 +190,7 @@ def setup(phenny):
         try:
             phenny.iso_data = read_dict(f)
         except ValueError:
-            print('iso database read failed, refreshing it')
+            logger.warning('iso database read failed, refreshing it')
             phenny.iso_data = scrape_wiki_codes()
             phenny.iso_data.update(phenny.ethno_data)
             write_dict(f, phenny.iso_data)
@@ -203,7 +205,7 @@ def setup(phenny):
         try:
             phenny.iso_conversion_data = read_dict(f2)
         except ValueError:
-            print('iso conversion db read failed, refreshing it')
+            logger.warning('iso conversion db read failed, refreshing it')
             phenny.iso_conversion_data = scrape_wiki_codes_convert()
             write_dict(f2, phenny.iso_conversion_data)
     else:

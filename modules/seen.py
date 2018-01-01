@@ -6,9 +6,15 @@ Licensed under the Eiffel Forum License 2.
 http://inamidst.com/phenny/
 """
 
-import time, os, shelve, datetime
+import datetime
+import logging
+import os
+import shelve
 import sqlite3
+import time
 from tools import deprecated
+
+logger = logging.getLogger('phenny')
 
 def f_seen(phenny, input):
     """.seen <nick> - Reports when <nick> was last seen."""
@@ -43,6 +49,7 @@ def f_seen(phenny, input):
         t = time.strftime('%Y-%m-%d %H:%M:%S UTC', cLastTime.timetuple())
         msg = "I last saw %s at %s (%s) on %s" % (str(input.group(2)), t, dt, cChannel)
         phenny.reply(msg)
+
 f_seen.name = 'seen'
 f_seen.example = '.seen firespeaker'
 f_seen.rule = (['seen'], r'(\S+)')
@@ -58,8 +65,11 @@ def f_note(self, origin, match, args):
             self.seen[origin.nick.lower()] = (origin.sender, time.time())
             self.seen.sync()
 
-    try: note(self, origin, match, args)
-    except Exception as e: print(e)
+    try:
+        note(self, origin, match, args)
+    except Exception as error:
+        logger.error(str(error))
+
 f_note.rule = r'(.*)'
 f_note.priority = 'low'
 

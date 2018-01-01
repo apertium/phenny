@@ -12,7 +12,12 @@ and enters a random cooldown period for 3-10 minutes. When in this
 cooldown period all calls to botsnack are ignored.
 """
 
-import random, math, time
+import logging
+import math
+import random
+import time
+
+logger = logging.getLogger('phenny')
 
 # the rate that affects how much eating a snack nourishes the bot
 # smaller number = less nourishment = more snacks can be eaten (before fullness)
@@ -45,12 +50,12 @@ def botsnack(phenny, input):
     #    ignore this invocation. Else reset to the default state
     if botsnack.coolingdown:
         if now - botsnack.coolingstarted > botsnack.coolingperiod:
-            print("cooling down over, reseting")
+            logger.debug("cooling down over, reseting")
             botsnack.coolingdown = False
             botsnack.hunger = 50.0
             botsnack.last_tick = now
         else:
-            print("cooling down! %s < %s" %(now - botsnack.coolingstarted, botsnack.coolingperiod))
+            logger.debug("cooling down! %s < %s" %(now - botsnack.coolingstarted, botsnack.coolingperiod))
             return # ignore!
 
     # 1. Time has has passed, so the bot has gotten
@@ -61,7 +66,7 @@ def botsnack(phenny, input):
 
     botsnack.hunger = increase_hunger(old_hunger, delta)
 
-    print("hunger was %s, increased to %s" %(old_hunger, botsnack.hunger))
+    logger.debug("hunger was %s, increased to %s" %(old_hunger, botsnack.hunger))
 
     botsnack.last_tick = now
 
@@ -69,7 +74,7 @@ def botsnack(phenny, input):
 
     old_hunger = botsnack.hunger
     botsnack.hunger = decrease_hunger(old_hunger, random.uniform(1,5))
-    print("hunger was %s, decreased to %s" %(old_hunger, botsnack.hunger))
+    logger.debug("hunger was %s, decreased to %s" %(old_hunger, botsnack.hunger))
 
     if botsnack.hunger > 95: # special case to prevent abuse
         phenny.say("Too much food!")

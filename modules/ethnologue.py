@@ -9,6 +9,9 @@ from lxml import html
 from string import ascii_lowercase
 import os
 import web
+import logging
+
+logger = logging.getLogger('phenny')
 
 def shorten_num(n):
     if n < 1000:
@@ -42,7 +45,7 @@ def write_ethnologue_codes(phenny, raw=None):
             for k, v in data.items():
                 f.write('{}${}\n'.format(k, v))
         phenny.ethno_data = data
-        print('Ethnologue iso-639 code fetch successful')
+        logger.debug('Ethnologue iso-639 code fetch successful')
         if raw:
             phenny.say('Ethnologue iso-639 code fetch successful')
     else:
@@ -60,7 +63,7 @@ def read_ethnologue_codes(phenny, raw=None):
             code, name = line.split('$')
             data[code] = name
     phenny.ethno_data = data
-    print('Ethnologue iso-639 database read successful')
+    logger.debug('Ethnologue iso-639 database read successful')
 
 def parse_num_speakers(s):
     hits = []

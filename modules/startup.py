@@ -7,10 +7,14 @@ Licensed under the Eiffel Forum License 2.
 http://inamidst.com/phenny/
 """
 
-import threading, time
+import logging
+import threading
+import time
+
+logger = logging.getLogger('phenny')
 
 def setup(phenny): 
-    print("Setting up phenny")
+    logger.info("Setting up phenny")
     # by clsn
     phenny.data = {}
     refresh_delay = 300.0
@@ -20,7 +24,7 @@ def setup(phenny):
         except: pass
 
         def close():
-            print("Nobody PONGed our PING, restarting")
+            logger.info("Nobody PONGed our PING, restarting")
             phenny.handle_close()
 
         def pingloop():
@@ -52,7 +56,7 @@ def startup(phenny, input):
 
     if hasattr(phenny.config, 'serverpass'): 
         phenny.write(('PASS', phenny.config.serverpass))
-        print(phenny.config.serverpass)
+        logger.info(phenny.config.serverpass)
 
     if hasattr(phenny.config, 'password'): 
         phenny.msg('NickServ', 'IDENTIFY %s' % phenny.config.password)
@@ -61,7 +65,7 @@ def startup(phenny, input):
     # Cf. http://swhack.com/logs/2005-12-05#T19-32-36
     for channel in phenny.channels: 
         phenny.write(('JOIN', channel))
-        print(channel)
+        logger.info(channel)
         time.sleep(0.5)
 startup.rule = r'(.*)'
 startup.event = '251'

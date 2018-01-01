@@ -10,7 +10,10 @@ http://inamidst.com/phenny/
 import sys, re, time, traceback
 import socket, asyncore, asynchat
 import ssl
+import logging
 from tools import break_up, max_message_length
+
+logger = logging.getLogger('phenny')
 
 
 class Origin(object): 
@@ -41,7 +44,6 @@ class Bot(asynchat.async_chat):
         self.name = name
         self.password = password
 
-        self.verbose = True
         self.channels = channels or []
         self.stack = []
 
@@ -95,15 +97,16 @@ class Bot(asynchat.async_chat):
         self.initiate_connect(host, port, ssl, ipv6)
 
     def initiate_connect(self, host, port, use_ssl, ipv6): 
-        if self.verbose: 
-            message = 'Connecting to %s:%s...' % (host, port)
-            print(message, end=' ', file=sys.stderr)
+        logger.info('Connecting to %s:%s...' % (host, port))
+
         if ipv6 and socket.has_ipv6:
              af = socket.AF_INET6
         else:
              af = socket.AF_INET
+
         self.create_socket(af, socket.SOCK_STREAM, use_ssl, host)
         self.connect((host, port))
+
         try: asyncore.loop()
         except KeyboardInterrupt: 
             sys.exit()
@@ -131,16 +134,17 @@ class Bot(asynchat.async_chat):
         self.set_socket(sock)
 
     def handle_connect(self): 
-        if self.verbose: 
-            print('connected!', file=sys.stderr)
+        logger.info('connected!')
+
         if self.password: 
             self.write(('PASS', self.password))
+
         self.write(('NICK', self.nick))
         self.write(('USER', self.user, '+iw', self.nick), self.name)
 
     def handle_close(self): 
         self.close()
-        print('Closed!', file=sys.stderr)
+        logger.info('Closed!')
 
     def collect_incoming_data(self, data): 
         self.buffer += data
@@ -181,12 +185,12 @@ class Bot(asynchat.async_chat):
         if isinstance(text, str):
             try: text = text.encode('utf-8')
             except UnicodeEncodeError as error:
-                print(error)
+                logger.error(str(error))
                 text = error.__class__ + ': ' + str(error)
         if isinstance(recipient, str):
             try: recipient = recipient.encode('utf-8')
             except UnicodeEncodeError as error:
-                print(error)
+                logger.error(str(error))
                 return
 
         # Split long messages
@@ -232,7 +236,7 @@ class Bot(asynchat.async_chat):
         try: 
             import traceback
             trace = traceback.format_exc()
-            print(trace)
+            logger.error(str(trace))
             lines = list(reversed(trace.splitlines()))
 
             report = [lines[0].strip()]

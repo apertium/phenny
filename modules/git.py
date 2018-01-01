@@ -329,11 +329,11 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 except Exception:
                     print("unsupported data: " + str(commit))
 
-        if (not msgs) and (data['commits']):
+        if (not msgs_by_channel) and (not msgs_default_channels) and data['commits']:
             # we couldn't get anything
             # sometimes github sends empty pushes (eg. for releases), so check
             # the data
-            msgs = ["Something went wrong: " + str(data.keys())]
+            msgs_default_channels.append("Something went wrong: " + str(data.keys()))
 
         # post all messages to all channels
         # except where specified in the config
@@ -350,8 +350,8 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 else:
                     msgs_by_channel[channel] = [message]
 
-        for channel in messages.keys():
-            more.add_messages(channel, self.phenny, messages[channel])
+        for channel in msgs_by_channel.keys():
+            more.add_messages(channel, self.phenny, msgs_by_channel[channel])
 
         # send OK code
         self.send_response(200)

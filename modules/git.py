@@ -255,12 +255,11 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                     msgs_default_channels.append(template.format(repo, user, action, number, comment, url))
             elif event == 'push':
                 template = '{:}: {:} * {:}: {:} {:}'
-                ref = data['ref']
+                ref = data['ref'].split('/')[-1]
+                repo_fullname = data['repository']['full_name']
                 fork = data['repository']['fork']
 
                 try:
-                    repo_fullname = data['repository']['full_name']
-                    ref = data['ref'].split('/')[-1]
                     branch_channels = self.phenny.config.branch_channels[repo_fullname][ref]
                 except:
                     branch_channels = []
@@ -273,9 +272,9 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                         commit['url'][:commit['url'].rfind('/') + 7]
                     )
 
-                    message = non_trunc.format(truncate(non_trunc.format(''), commit['message']))
+                    message = non_trunc.format(truncate(commit['message'], non_trunc.format('')))
 
-                    if ref == 'refs/heads/master' and not fork:
+                    if ref == 'master' and not fork:
                         msgs_default_channels.append(message)
                     else:
                         for channel in branch_channels:

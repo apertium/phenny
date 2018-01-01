@@ -22,7 +22,6 @@ headers = {
 
 # maximum message length (see msg() in irc.py)
 # overriden if MAX_MSG_LEN exists in the config
-# TODO: make this a global for all modules
 MAX_MSG_LEN = 430
 
 def setup(self):

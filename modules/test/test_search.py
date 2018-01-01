@@ -5,8 +5,7 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 import re
 import unittest
 from mock import MagicMock
-from modules.search import google_search, gsearch, my_api_key, my_cse_id, \
-        bing_search, bing, duck_search, duck, search, suggest
+from modules.search import bing_search, bing, search, topics, suggest
 from tools import is_up
 from web import unquote
 
@@ -43,26 +42,19 @@ class TestSearch(unittest.TestCase):
         bing(self.phenny, self.input)
         self.assertTrue(self.phenny.reply.called)
 
-    def test_duck_search(self):
-        if not is_up(self.engines['DuckDuckGo']):
-            self.skipTest(self.skip_msg.format('DuckDuckGo'))
-        out = unquote(duck_search('phenny'))
-        m = re.match(r'^https?://.*$', out, flags=re.UNICODE)
-        self.assertTrue(m)
-
-    def test_duck(self):
-        if not is_up(self.engines['DuckDuckGo']):
-            self.skipTest(self.skip_msg.format('DuckDuckGo'))
-        self.input.group.return_value = 'swhack'
-        duck(self.phenny, self.input)
-        self.assertTrue(self.phenny.reply.called)
-
     def test_search(self):
-        if not (self.engines['DuckDuckGo'] or self.engines['Bing'] or self.engines['Google']):
-            self.skipTest('All search engines are down, skipping test.')
-        self.input.group.return_value = 'vtluug'
-        duck(self.phenny, self.input)
-        self.assertTrue(self.phenny.reply.called)
+        if not is_up(self.engines['DuckDuckGo']):
+            self.skipTest(self.skip_msg.format('DuckDuckGo'))
+        self.input.group.return_value = 'Apertium'
+        search(self.phenny, self.input)
+        self.assertTrue(self.phenny.say.called)
+
+    def test_topics(self):
+        if not is_up(self.engines['DuckDuckGo']):
+            self.skipTest(self.skip_msg.format('DuckDuckGo'))
+        self.input.group.return_value = 'San Francisco'
+        topics(self.phenny, self.input)
+        self.assertTrue(self.phenny.say.called)
 
     def test_suggest(self):
         if not is_up(self.engines['Suggestion script']):

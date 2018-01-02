@@ -43,6 +43,15 @@ def format_subsection(section):
    section = section.replace(".3A", ":")
    return section
 
+def useful_paragraph(p):
+    try:
+        p.get_element_by_id('coordinates')
+        return False
+    except:
+        pass
+
+    return True
+
 def parse_wiki_page(url, term, section = None):
     try:
         web_url = web.quote(url).replace("%3A", ":", 1)
@@ -64,9 +73,30 @@ def parse_wiki_page(url, term, section = None):
         url += "#" + format_term_display(section)
     else:
         #Get first paragraph
-        text = page.get_element_by_id('mw-content-text').find('.//p')
+        content = page.get_element_by_id('mw-content-text')
 
-    sentences = [x.strip() for x in text.text_content().split(".")]
+        try:
+            content = content.find("div[@class='mw-parser-output']")
+        except:
+            pass
+
+        paragraphes = content.findall('p')
+        paragraphes = list(filter(useful_paragraph, paragraphes))
+        text = paragraphes[0]
+
+    text = text.text_content()
+
+    # multiple letters in front of period
+    common_abbreviations = [
+        'Dr', 'Hon', 'Mr', 'Mrs', 'Ms', 'Mx', 'Ph', 'Prof', 'Rev', 'Revd', 'St',
+        'eg', 'et al', 'et. al', 'etc', 'ie', 'med', 'vs',
+    ]
+    no_abbreviation_pattern = ''.join(['(?<! ' + x + ')' for x in common_abbreviations])
+    # any number of letters alternated with periods
+    no_abbreviation_pattern += ''.join(['(?<! ' + '.\.' * x + '.)' for x in range(10)])
+    sentence_end_pattern = no_abbreviation_pattern + '\.[ "]'
+
+    sentences = [x.strip() for x in re.split(sentence_end_pattern, text)]
     sentence = '"' + sentences[0] + '"'
 
     return truncate(sentence, ' - ' + url) + ' - ' + url

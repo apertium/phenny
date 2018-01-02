@@ -56,6 +56,10 @@ def duck_search(q):
             answer = r.json()['RelatedTopics'][0]['Text'] + ' ' + r.json()['RelatedTopics'][0]['FirstURL']
             if answer == '':
                 return 'Sorry, no result.'
+        else:
+            if answer.count('.') > 1:
+                answer = re.match(r'(?:[^.:;]+[.:;]){2}', answer).group()
+            answer += ' - ' + r.json()['AbstractURL']
     except:
         return 'Sorry, no result.'
     return answer
@@ -102,7 +106,8 @@ def suggest(phenny, input):
     uri = 'http://websitedev.de/temp-bin/suggest.pl?q='
     answer = web.get(uri + web.quote(query).replace('+', '%2B'))
     if answer: 
-        phenny.say(answer)
+        #phenny.say(answer)
+        more.add_messages(input.nick, phenny, answer)
     else: phenny.reply('Sorry, no result.')
 suggest.commands = ['suggest']
 

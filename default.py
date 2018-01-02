@@ -1,0 +1,67 @@
+nick = 'phenny'
+host = 'irc.example.net'
+port = 6667
+ssl = False
+ipv6 = False
+channels = ['#example', '#test']
+owner = 'yournickname'
+greetings = {'#example': 'example greeting %name %channel', '#test': 'welcome to %channel %name'}
+
+# password is the NickServ password, serverpass is the server password
+# password = 'example'
+# serverpass = 'serverpass'
+
+# linx-enabled features (.linx, .lnx)
+# leave the api key blank to not use them and be sure to add the 'linx' module to the ignore list.
+linx_api_key = ""
+
+APy_url = "http://apy.projectjj.com"
+APy_analyseURL = "http://turkic.apertium.org:8080"
+
+
+# These are people who will be able to use admin.py's functions...
+admins = [owner, 'someoneyoutrust']
+# But admin.py is disabled by default, as follows:
+exclude = ['admin', 'linx', 'foodforus']
+
+ignore = ['']
+
+# If you want to enumerate a list of modules rather than disabling
+# some, use "enable = ['example']", which takes precedent over exclude
+
+# enable = []
+
+# Directories to load user modules from
+# e.g. /path/to/my/modules
+extra = []
+
+# Services to load: maps channel names to white or black lists
+external = {
+    '#liberal': ['!'], # allow all
+    '#conservative': [], # allow none
+    '*': ['!'] # default whitelist, allow all
+}
+
+# Blacklisted urls for gettitle module:
+blacklisted_urls = []
+
+# IMAP credentials for mailing list reporter:
+# If you want .mailinglist last to work, you also need to set up filters on your receiving account
+# to file the list messages into folders/labels with the same name as the friendly-name.
+# A filter To: <list-address> should work.
+
+# imap_server = 'imap.gmail.com'
+# imap_user = 'someone@gmail.com'
+# imap_pass = 'supersecretpassword'
+
+# mailing_lists = {
+#     'friendly-name': ('list-address@example.com', '#channel-to-broadcast-to')
+# }
+
+# time between two undismissed pesters (in minutes; default = 60 (1 hr))
+minutes_to_pester = 60
+# time to wait before pestering after pester has been dismissed (in minutes;
+# default = 300 (5 hrs))
+pester_after_dismiss = 300
+
+sf_issues_url = ''

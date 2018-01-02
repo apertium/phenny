@@ -106,8 +106,7 @@ def suggest(phenny, input):
     uri = 'http://websitedev.de/temp-bin/suggest.pl?q='
     answer = web.get(uri + web.quote(query).replace('+', '%2B'))
     if answer: 
-        #phenny.say(answer)
-        more.add_messages(input.nick, phenny, answer)
+        phenny.say(answer)
     else: phenny.reply('Sorry, no result.')
 suggest.commands = ['suggest']
 

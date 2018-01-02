@@ -44,7 +44,7 @@ def f_reload(phenny, input):
     mtime = os.path.getmtime(module.__file__)
     modified = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(mtime))
 
-    phenny.register(vars(module))
+    phenny.register(module)
     phenny.bind_commands()
 
     phenny.reply('%r (version: %s)' % (module, modified))

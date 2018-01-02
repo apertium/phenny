@@ -7,10 +7,17 @@ Licensed under the Eiffel Forum License 2.
 http://inamidst.com/phenny/
 """
 
-import sys, os, re, threading, importlib
+import importlib
 import irc
+import logging
+import os
+import re
+import sys
+import threading
 import tools
 import logging
+
+logger = logging.getLogger('phenny')
 
 logger = logging.getLogger('phenny')
 
@@ -77,7 +84,7 @@ class Phenny(irc.Bot):
             else: 
                 if hasattr(module, 'setup'): 
                     module.setup(self)
-                self.register(vars(module))
+                self.register(module)
                 modules.append(name)
 
         if modules: 
@@ -87,83 +94,93 @@ class Phenny(irc.Bot):
 
         self.bind_commands()
 
-    def register(self, variables): 
+    def register(self, module):
         # This is used by reload.py, hence it being methodised
-        for name, obj in variables.items(): 
+        self.variables[module.__name__] = {}
+
+        for name, obj in vars(module).items():
             if hasattr(obj, 'commands') or hasattr(obj, 'rule'): 
-                self.variables[name] = obj
+                self.variables[module.__name__][name] = obj
 
-    def bind_commands(self): 
-        self.commands = {'high': {}, 'medium': {}, 'low': {}}
+    def bind(self, module, name, func, regexp):
+        # register documentation
+        if not hasattr(func, 'name'):
+            func.name = func.__name__
 
-        def bind(self, priority, regexp, func): 
-            print(priority, regexp.pattern.encode('utf-8'), func)
-            # register documentation
-            if not hasattr(func, 'name'): 
-                func.name = func.__name__
-            if func.__doc__: 
-                if hasattr(func, 'example'): 
-                    example = func.example
-                    example = example.replace('$nickname', self.nick)
-                else: example = None
-                self.doc[func.name] = (func.__doc__, example)
-            self.commands[priority].setdefault(regexp, []).append(func)
+        if func.__doc__:
+            if hasattr(func, 'example'):
+                example = func.example
+                example = example.replace('$nickname', self.nick)
+            else: example = None
+
+            self.doc[func.name] = (func.__doc__, example)
+
+        self.commands[func.priority].setdefault(regexp, []).append(func)
+
+    def bind_command(self, module, name, func):
+        logger.debug("Binding module '{:}' command '{:}'".format(module, name))
+
+        if not hasattr(func, 'priority'):
+            func.priority = 'medium'
+
+        if not hasattr(func, 'thread'):
+            func.thread = True
+
+        if not hasattr(func, 'event'):
+            func.event = 'PRIVMSG'
+        else:
+            func.event = func.event.upper()
 
         def sub(pattern, self=self): 
             # These replacements have significant order
             pattern = pattern.replace('$nickname', re.escape(self.nick))
             return pattern.replace('$nick', r'%s[,:] +' % re.escape(self.nick))
 
-        for name, func in self.variables.items(): 
-            # print name, func
-            if not hasattr(func, 'priority'): 
-                func.priority = 'medium'
+        if hasattr(func, 'rule'):
+            if isinstance(func.rule, str):
+                pattern = sub(func.rule)
+                regexp = re.compile(pattern)
+                self.bind(module, name, func, regexp)
 
-            if not hasattr(func, 'thread'): 
-                func.thread = True
+            if isinstance(func.rule, tuple):
+                # 1) e.g. ('$nick', '(.*)')
+                if len(func.rule) == 2 and isinstance(func.rule[0], str):
+                    prefix, pattern = func.rule
+                    prefix = sub(prefix)
+                    regexp = re.compile(prefix + pattern)
+                    self.bind(module, name, func, regexp)
 
-            if not hasattr(func, 'event'): 
-                func.event = 'PRIVMSG'
-            else: func.event = func.event.upper()
+                # 2) e.g. (['p', 'q'], '(.*)')
+                elif len(func.rule) == 2 and isinstance(func.rule[0], list):
+                    prefix = self.config.prefix
+                    commands, pattern = func.rule
+                    for command in commands:
+                        command = r'(%s)\b(?: +(?:%s))?' % (command, pattern)
+                        regexp = re.compile(prefix + command)
+                        self.bind(module, name, func, regexp)
 
-            if hasattr(func, 'rule'): 
-                if isinstance(func.rule, str): 
-                    pattern = sub(func.rule)
-                    regexp = re.compile(pattern)
-                    bind(self, func.priority, regexp, func)
+                # 3) e.g. ('$nick', ['p', 'q'], '(.*)')
+                elif len(func.rule) == 3:
+                    prefix, commands, pattern = func.rule
+                    prefix = sub(prefix)
+                    for command in commands:
+                        command = r'(%s) +' % command
+                        regexp = re.compile(prefix + command + pattern)
+                        self.bind(module, name, func, regexp)
 
-                if isinstance(func.rule, tuple): 
-                    # 1) e.g. ('$nick', '(.*)')
-                    if len(func.rule) == 2 and isinstance(func.rule[0], str): 
-                        prefix, pattern = func.rule
-                        prefix = sub(prefix)
-                        regexp = re.compile(prefix + pattern)
-                        bind(self, func.priority, regexp, func)
+        if hasattr(func, 'commands'):
+            for command in func.commands:
+                template = r'^%s(%s)(?: +(.*))?$'
+                pattern = template % (self.config.prefix, command)
+                regexp = re.compile(pattern)
+                self.bind(module, name, func, regexp)
 
-                    # 2) e.g. (['p', 'q'], '(.*)')
-                    elif len(func.rule) == 2 and isinstance(func.rule[0], list): 
-                        prefix = self.config.prefix
-                        commands, pattern = func.rule
-                        for command in commands: 
-                            command = r'(%s)\b(?: +(?:%s))?' % (command, pattern)
-                            regexp = re.compile(prefix + command)
-                            bind(self, func.priority, regexp, func)
+    def bind_commands(self):
+        self.commands = {'high': {}, 'medium': {}, 'low': {}}
 
-                    # 3) e.g. ('$nick', ['p', 'q'], '(.*)')
-                    elif len(func.rule) == 3: 
-                        prefix, commands, pattern = func.rule
-                        prefix = sub(prefix)
-                        for command in commands: 
-                            command = r'(%s) +' % command
-                            regexp = re.compile(prefix + command + pattern)
-                            bind(self, func.priority, regexp, func)
-
-            if hasattr(func, 'commands'): 
-                for command in func.commands: 
-                    template = r'^%s(%s)(?: +(.*))?$'
-                    pattern = template % (self.config.prefix, command)
-                    regexp = re.compile(pattern)
-                    bind(self, func.priority, regexp, func)
+        for module, functions in self.variables.items():
+            for name, func in functions.items():
+                self.bind_command(module, name, func)
 
     def wrapped(self, origin, text, match): 
         class PhennyWrapper(object): 

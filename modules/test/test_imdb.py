@@ -11,7 +11,7 @@ from tools import is_up
 
 class TestImdb(unittest.TestCase):
     def setUp(self):
-        if not is_up('http://omdbapi.com'):
+        if not is_up('http://www.omdbapi.com'):
             self.skipTest('OMDb server is down, skipping test.')
 
         if API_KEY is None:

@@ -10,6 +10,7 @@ from string import ascii_lowercase
 import os
 import web
 import logging
+from tools import db_path
 
 logger = logging.getLogger('phenny')
 
@@ -33,9 +34,8 @@ def scrape_ethnologue_codes():
             data[code] = name
     return data
 
-def filename(phenny):
-    name = phenny.nick + '-' + phenny.config.host + '.ethnologue.db'
-    return os.path.join(os.path.expanduser('~/.phenny'), name)
+def filename(self):
+    return db_path(self, 'ethnologue')
 
 def write_ethnologue_codes(phenny, raw=None):
     if raw is None or raw.admin:

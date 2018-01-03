@@ -7,10 +7,14 @@ Licensed under the Eiffel Forum License 2.
 http://inamidst.com/phenny/
 """
 
-import os, re, datetime, random
+import datetime
+import os
+import random
+import re
 import web
 from collections import Counter
 from modules import caseless_list
+from tools import db_path
 
 maximum = 4
 
@@ -134,8 +138,7 @@ def dumpReminders(fn, data):
     return True
 
 def setup(self): 
-    fn = self.nick + '-' + self.config.host + '.tell.db'
-    self.tell_filename = os.path.join(os.path.expanduser('~/.phenny'), fn)
+    self.tell_filename = db_path(self, 'tell')
     if not os.path.exists(self.tell_filename): 
         try: f = open(self.tell_filename, 'w')
         except OSError: pass
@@ -144,8 +147,7 @@ def setup(self):
             f.close()
     self.reminders = loadReminders(self.tell_filename) # @@ tell
 
-    fn2 = self.nick + '-' + self.config.host + '.alias.db'
-    self.alias_filename = os.path.join(os.path.expanduser('~/.phenny'), fn2)
+    self.alias_filename = db_path(self, 'alias')
     if not os.path.exists(self.alias_filename): 
         try: f = open(self.alias_filename, 'w')
         except OSError: pass

@@ -5,8 +5,10 @@ Author: Sean B. Palmer, inamidst.com
 About: http://inamidst.com/phenny/
 """
 
-import random, re
+import random
+import re
 import os
+from tools import db_path
 
 # if emptyHellos is True, respond to anyone sending a greeting to no one
 # if emptyHellos is False, don't respond unless addressed
@@ -19,8 +21,7 @@ temporaryMessage = None
 greetings = ('Hi', 'Hey', 'Hello', 'What\'s kicking', 'What\'s the good word', 'Top of the morning', 'Yo', 'What up', 'Sup', "What's hanging", "In the hood", "Kaixo", "Zer moduz", "Сәлем", "Қалың қалай", "Salom", "Привет", "No bugs is good bugs", "Mitä kuuluu", "حالت چطوره", "როგორა ხარ", "ինչպե՞ս ես", "сайн байна уу", "कैसे हो", "Como vai", "Nasılsın", "Ворчӏами")
 
 def countGuest(phenny, nick):
-    fn = phenny.nick + '-' + phenny.config.host + '.guests.db'
-    global_filename = os.path.join(os.path.expanduser('~/.phenny'), fn)
+    global_filename = db_path(phenny, 'guests')
     if not os.path.exists(global_filename): 
         try: f = open(global_filename, 'w')
         except OSError: pass
@@ -35,9 +36,7 @@ def countGuest(phenny, nick):
 
 def getGuests(phenny, input):
     if input.admin:
-
-        fn = phenny.nick + '-' + phenny.config.host + '.guests.db'
-        global_filename = os.path.join(os.path.expanduser('~/.phenny'), fn)
+        global_filename = db_path(phenny, 'guests')
         if not os.path.exists(global_filename): 
             try: f = open(global_filename, 'r')
             except OSError: pass

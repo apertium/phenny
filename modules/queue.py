@@ -7,12 +7,12 @@ import os
 import pickle
 import random
 from modules import more, caseless_equal
+from tools import db_path
 
 commands = '.queue display <name>?; .queue new <name> <items>; .queue delete <name>; .queue <name> add <items>; .queue <name> swap <item/index1>, <item/index2>; .queue <name> move <source_item/index>, <target_item/index>; .queue <name> replace <item/index>, <new_item>; .queue <name> remove <item>; .queue <name> pop; .queue <name> random; .queue <name> reassign <nick>; .queue <name> rename <new_name>'
 
-def filename(phenny):
-    name = phenny.nick + '-' + phenny.config.host + '.queue.db'
-    return os.path.join(os.path.expanduser('~/.phenny'), name)
+def filename(self):
+    return db_path(self, 'queue')
 
 def write_dict(filename, data):
     with open(filename, 'wb') as f:

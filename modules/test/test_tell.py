@@ -7,15 +7,18 @@ import datetime
 import os
 from mock import MagicMock, patch
 from modules import tell
+from tools import db_path
 
 class TestTell(unittest.TestCase):
 
     def setUp(self):
         self.phenny = MagicMock()
-        self.input = MagicMock()
         self.phenny.nick = 'phenny'
+        self.phenny.config.host = 'irc.freenode.net'
 
-        alias_file = os.path.expanduser('~/.phenny/aliases.db')
+        self.input = MagicMock()
+
+        alias_file = db_path(self.phenny, 'alias')
         os.makedirs(os.path.dirname(alias_file), exist_ok=True)
 
         self.phenny.alias_filename = alias_file

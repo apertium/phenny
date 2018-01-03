@@ -7,10 +7,10 @@ Author - mandarj
 import os, sqlite3
 from datetime import datetime
 from modules import caseless_list
+from tools import db_path
 
 def setup(self):
-    fn = self.nick + '-' + self.config.host + '.pester.db'
-    self.pester_db = os.path.join(os.path.expanduser('~/.phenny'), fn)
+    self.pester_db = db_path(self, 'pester')
     self.pester_conn = sqlite3.connect(self.pester_db)
 
     c = self.pester_conn.cursor()

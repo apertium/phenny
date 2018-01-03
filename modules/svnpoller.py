@@ -7,7 +7,7 @@ from subprocess import Popen, PIPE
 import xml.etree.ElementTree as ET
 from io import StringIO
 import time
-from tools import generate_report, truncate
+from tools import db_path, generate_report, truncate
 
 global_revisions = None
 global_filename = None
@@ -33,8 +33,7 @@ def dumpRevisions(fn, data):
 
 def setup(self):
 	global global_revisions, global_filename
-	fn = self.nick + '-' + self.config.host + '.repos.db'
-	global_filename = os.path.join(os.path.expanduser('~/.phenny'), fn)
+	global_filename = db_path(self, 'repos')
 	if not os.path.exists(global_filename): 
 		try: f = open(global_filename, 'w')
 		except OSError: pass

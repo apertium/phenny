@@ -11,6 +11,7 @@ import os
 import web
 from lxml import etree
 from datetime import datetime
+from tools import db_path
 
 APIKEY = "816cfe50ddeeb73c9987b85de5c19e71"
 APIURL = "https://ws.audioscrobbler.com/2.0/?api_key="+APIKEY+"&"
@@ -20,9 +21,8 @@ config.optionxform = str
 config_filename = ""
 
 def setup(self):
-    fn = self.nick + '-' + self.config.host + '.lastfm.db'
     global config_filename
-    config_filename = os.path.join(os.path.expanduser('~/.phenny'), fn)
+    config_filename = db_path(self, 'lastfm')
     if not os.path.exists(config_filename):
         try: f = open(config_filename, 'w')
         except OSError: pass

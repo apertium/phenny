@@ -21,7 +21,7 @@ import csv
 import logging
 from lxml import html
 from decimal import Decimal as dec
-from tools import deprecated
+from tools import db_path, deprecated
 
 logger = logging.getLogger('phenny')
 
@@ -308,9 +308,8 @@ def scrape_wiki_zones():
 
     return data
 
-def filename(phenny):
-    name = phenny.nick + '-' + phenny.config.host + '.timezones.db'
-    return os.path.join(os.path.expanduser('~/.phenny'), name)
+def filename(self):
+    return db_path(self, 'timezones')
 
 def write_dict(filename, data):
     with open(filename, 'w') as f:

@@ -7,11 +7,14 @@ Licensed under the Eiffel Forum License 2.
 http://inamidst.com/phenny/
 """
 
-import os, re, time, threading
+import os
+import re
+import threading
+import time
+from tools import db_path
 
 def filename(self): 
-    name = self.nick + '-' + self.config.host + '.reminders.db'
-    return os.path.join(os.path.expanduser('~/.phenny'), name)
+    return db_path(self, 'reminders')
 
 def load_database(name): 
     data = {}

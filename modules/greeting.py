@@ -2,13 +2,13 @@
 import math
 import os
 import sqlite3
+from tools import db_path
 
 def setup(self):
-    fn = self.nick + '-' + self.config.host + '.logger.db'
-    self.logger_db = os.path.join(os.path.expanduser('~/.phenny'), fn)
+    self.logger_db = db_path(self, 'logger')
     self.logger_conn = sqlite3.connect(self.logger_db)
-    fnl = self.nick + '-' + self.config.host + '.greeting.db'
-    self.greeting_db = os.path.join(os.path.expanduser('~/.phenny'), fnl)
+
+    self.greeting_db = db_path(self, 'greeting')
     self.greeting_conn = sqlite3.connect(self.greeting_db)
 
     self.greeting_count = {}

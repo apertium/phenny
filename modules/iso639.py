@@ -13,6 +13,7 @@ import os
 import threading
 import re
 import logging
+from tools import db_path
 
 logger = logging.getLogger('phenny')
 
@@ -136,13 +137,11 @@ def scrape_wiki_codes_convert():
             data[code] = iso3code
     return data
 
-def iso_filename(phenny):
-    name = phenny.nick + '-' + phenny.config.host + '.iso-codes.db'
-    return os.path.join(os.path.expanduser('~/.phenny'), name)
+def iso_filename(self):
+    return db_path(self, 'iso-codes')
 
-def iso_one_to_three_filename(phenny):
-    name = phenny.nick + '-' + phenny.config.host + '.iso-codes-conversion.db'
-    return os.path.join(os.path.expanduser('~/.phenny'), name)
+def iso_one_to_three_filename(self):
+    return db_path(self, 'iso-codes-conversion')
 
 def write_dict(filename, data):
     with open(filename, 'w', encoding="utf-8") as f:

@@ -7,10 +7,10 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 import os
 import random
 import sqlite3
+from tools import db_path
 
 def setup(self):
-    fn = self.nick + '-' + self.config.host + '.logger.db'
-    self.logger_db = os.path.join(os.path.expanduser('~/.phenny'), fn)
+    self.logger_db = db_path(self, 'logger')
     self.logger_conn = sqlite3.connect(self.logger_db)
 
     c = self.logger_conn.cursor()

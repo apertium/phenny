@@ -19,6 +19,7 @@ import sqlite3
 import logging
 import socket
 import socketserver
+import pickle
 from time import time
 
 logger = logging.getLogger('phenny')
@@ -41,6 +42,21 @@ def setup(self):
 def db_path(self, name):
     filename = self.nick + '-' + self.config.host + '.' + name + '.db'
     return os.path.join(os.path.expanduser('~/.phenny'), filename)
+
+def write_db(self, name, data):
+    path = db_path(self, name)
+
+    with open(path, 'wb') as f:
+        pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+
+def read_db(self, name, error_after=None):
+    path = db_path(self, name)
+
+    if error_after and (time.time() - os.path.getmtime(f)) > error_after:
+        raise ResourceWarning('Database out of date')
+
+    with open(path, 'rb') as f:
+        return pickle.load(f)
 
 class DatabaseCursor():
     def __init__(self, path):

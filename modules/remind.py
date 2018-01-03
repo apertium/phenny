@@ -12,6 +12,7 @@ import re
 import threading
 import time
 from tools import db_path
+from modules import clock
 
 def filename(self): 
     return db_path(self, 'reminders')
@@ -162,9 +163,10 @@ def at(phenny, input):
     if z.startswith('+') or z.startswith('-'):
         tz = int(z)
 
-    if z in phenny.tz_data:
-        tz = phenny.tz_data[z]
-    else: return phenny.reply("Sorry, didn't understand the time zone.")
+    tz = clock.get_offsets(phenny, z)
+    if not tz:
+        return phenny.reply("Sorry, didn't understand the time zone.")
+    tz = tz[0][1]
 
     d = time.strftime("%Y-%m-%d", time.gmtime())
     d = time.strptime(("%s %s" % (d, t)), "%Y-%m-%d %H:%M")

@@ -29,7 +29,7 @@ def check_python_version():
         sys.exit(1)
 
 def create_default_config(path):
-    source = os.path.join(os.path.dirname(__file__), 'default.py')
+    source = os.path.join(os.path.dirname(__file__), 'default.py.example')
     
     with open(source, 'r') as src, open(path, 'w') as dst:
         dst.write(src.read())

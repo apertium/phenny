@@ -28,11 +28,11 @@ def check_python_version():
         logger.critical('Requires Python 3.0 or later, from www.python.org')
         sys.exit(1)
 
-def create_default_config(fn):
-    os.system('cp {:} {:}'.format(
-        os.path.join(os.path.dirname(__file__), 'default.py'),
-        fn
-    ))
+def create_default_config(path):
+    source = os.path.join(os.path.dirname(__file__), 'default.py')
+    
+    with open(source, 'r') as src, open(path, 'w') as dst:
+        dst.write(src.read())
 
 def create_default_config_file(dotdir):
     logger.info('Creating a default config file at ~/.phenny/default.py...')

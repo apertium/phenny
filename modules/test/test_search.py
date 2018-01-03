@@ -4,7 +4,7 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
 import re
 import unittest
-from mock import MagicMock
+from mock import MagicMock, patch
 from modules.search import bing_search, bing, search, topics, suggest
 from tools import is_up
 from web import unquote
@@ -16,13 +16,12 @@ from web import unquote
 # http://stackoverflow.com/a/11206266/1846915
 #
 # update as of 2017-01-14: this has been fixed
-
 class TestSearch(unittest.TestCase):
     def setUp(self):
         self.skip_msg = '{:s} is down, skipping test.'
         self.engines = {
             'Bing': 'https://bing.com',
-            'DuckDuckGo': 'https://duckduckgo.com',
+            'DuckDuckGo': 'https://api.duckduckgo.com',
             'Suggestion script': 'http://websitedev.de/temp-bin/'
         }
         self.phenny = MagicMock()
@@ -41,6 +40,18 @@ class TestSearch(unittest.TestCase):
         self.input.group.return_value = 'swhack'
         bing(self.phenny, self.input)
         self.assertTrue(self.phenny.reply.called)
+
+    @patch('modules.search.requests.get')
+    def test_requests(self, mock_get):
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "AbstractText" : "TestText",
+            "AbstractURL" : "https://testurl.com"
+        }
+        mock_get.return_value = mock_response
+        self.input.group.return_value = 'test'
+        search(self.phenny, self.input)
+        self.phenny.say.assert_called_with('TestText - https://testurl.com')
 
     def test_search(self):
         if not is_up(self.engines['DuckDuckGo']):

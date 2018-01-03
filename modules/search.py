@@ -15,6 +15,8 @@ from tools import is_up
 
 r_bing = re.compile(r'<h2><a href="([^"]+)"')
 
+ddg_uri = 'https://api.duckduckgo.com/?format=json&pretty=1&q='
+
 def bing_search(query, lang='en-GB'): 
     query = web.quote(query)
     base = 'https://www.bing.com/search?mkt=%s&q=' % lang
@@ -40,29 +42,7 @@ def bing(phenny, input):
         phenny.bot.last_seen_uri[input.sender] = uri
     else: phenny.reply("No results found for '%s'." % query)
 bing.commands = ['bing']
-bing.example = '.bing swhack'
-
-r_duck = re.compile(r'nofollow" class="[^"]+" href=".*(http.*?)">')
-
-def duck_search(q):
-    if not is_up('https://api.duckduckgo.com'):
-        return 'Sorry, DuckDuckGo API is down.'
-
-    uri = 'https://api.duckduckgo.com/?format=json&pretty=1&q='
-    r = requests.get(uri + q)
-    try:
-        answer = r.json()['AbstractText']
-        if answer == '':
-            answer = r.json()['RelatedTopics'][0]['Text'] + ' ' + r.json()['RelatedTopics'][0]['FirstURL']
-            if answer == '':
-                return 'Sorry, no result.'
-        else:
-            if answer.count('.') > 1:
-                answer = re.match(r'(?:[^.:;]+[.:;]){2}', answer).group()
-            answer += ' - ' + r.json()['AbstractURL']
-    except:
-        return 'Sorry, no result.'
-    return answer
+bing.example = '.bing swhack'    
 
 def topics(phenny, input):
     if not is_up('https://api.duckduckgo.com'):
@@ -72,21 +52,18 @@ def topics(phenny, input):
         return phenny.reply('.topics about what?')
     query = input.group(2)
 
-    uri = 'https://api.duckduckgo.com/?format=json&pretty=1&q='
-    r = requests.get(uri + query)
+    r = requests.get(ddg_uri + query).json()
     try:
-        topics = r.json()['RelatedTopics']
+        topics = r['RelatedTopics']
         if len(topics) == 0:
             return phenny.say('Sorry, no topics found.')
         counter = 0
-        for topic in r.json()['RelatedTopics']:
+        for topic in r['RelatedTopics']:
             if counter < 3:
                 phenny.say(topic['Text'] + ' - ' + topic['FirstURL'])
             else:
                 break
             counter += 1
-        if len(topics) < 3:
-            phenny.reply('No more topics found.')
     except:
         return phenny.say('Sorry, no more topics found.')
 topics.commands = ['topics']
@@ -95,7 +72,24 @@ def search(phenny, input):
     if not input.group(2): 
         return phenny.reply('.search for what?')
     query = input.group(2)
-    answer = duck_search(query)
+
+    if not is_up('https://api.duckduckgo.com'):
+        return phenny.say('Sorry, DuckDuckGo API is down.')
+
+    r = requests.get(ddg_uri + query).json()
+    try:
+        answer = r['AbstractText']
+        if answer == '':
+            answer = r['RelatedTopics'][0]['Text'] + ' ' + r['RelatedTopics'][0]['FirstURL']
+            if answer == '':
+                return phenny.say('Sorry, no result.')
+        else:
+            if answer.count('.') > 1:
+                # Get first 2 sentences
+                answer = re.match(r'(?:[^.:;]+[.:;]){2}', answer).group()
+            answer += ' - ' + r['AbstractURL']
+    except:
+        return phenny.say('Sorry, no result.')
     phenny.say(answer)
 search.commands = ['search']
 

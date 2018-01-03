@@ -157,7 +157,7 @@ def give_time(phenny, tz, input_nick, to_user=None):
                         phenny.reply(proc.communicate()[0])
                 else: 
                     # error = "Sorry, I don't know about the '%s' timezone. Suggest the city on http://www.citytimezones.info" % tz
-                    error = "Sorry, I don't know about the '%s' timezone."
+                    error = "Sorry, I don't know about the '%s' timezone." % tz
                     phenny.reply(error)
             else:
                 timenow = time.gmtime(time.time() + (t * 3600))

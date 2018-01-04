@@ -17,7 +17,7 @@ from modules import more
 ddg_uri = 'https://api.duckduckgo.com/?format=json&pretty=1&q='  
 
 def gsearch(phenny, input):
-    phenny.reply('The search module has been rebuilt, it now uses .search instead.')
+    phenny.reply('.g is deprecated. Try .search powered by Duck Duck Go instead.')
 gsearch.commands = 'g'
 
 def topics(phenny, input):

@@ -45,7 +45,11 @@ def setup(phenny):
         pong.event = 'PONG'
         pong.thread = True
         pong.rule = r'.*'
-        phenny.variables['pong'] = pong
+
+        if 'startup' in phenny.variables:
+            phenny.variables['startup']['pong'] = pong
+        else:
+            phenny.variables['startup'] = {'pong': pong}
 
 def startup(phenny, input):
     import time

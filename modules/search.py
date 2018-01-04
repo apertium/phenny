@@ -12,37 +12,9 @@ import web
 import json
 import requests
 from tools import is_up, truncate
+from modules import more
 
-r_bing = re.compile(r'<h2><a href="([^"]+)"')
-
-ddg_uri = 'https://api.duckduckgo.com/?format=json&pretty=1&q='
-
-def bing_search(query, lang='en-GB'): 
-    query = web.quote(query)
-    base = 'https://www.bing.com/search?mkt=%s&q=' % lang
-    bytes = web.get(base + query)
-    m = r_bing.search(bytes)
-    if m: return m.group(1)
-
-def bing(phenny, input): 
-    """Queries Bing for the specified input."""
-    query = input.group(2)
-    if query.startswith(':'): 
-        lang, query = query.split(' ', 1)
-        lang = lang[1:]
-    else: lang = 'en-GB'
-    if not query:
-        return phenny.reply('.bing what?')
-
-    uri = bing_search(query, lang)
-    if uri: 
-        phenny.reply(uri)
-        if not hasattr(phenny.bot, 'last_seen_uri'):
-            phenny.bot.last_seen_uri = {}
-        phenny.bot.last_seen_uri[input.sender] = uri
-    else: phenny.reply("No results found for '%s'." % query)
-bing.commands = ['bing']
-bing.example = '.bing swhack'    
+ddg_uri = 'https://api.duckduckgo.com/?format=json&pretty=1&q='  
 
 def topics(phenny, input):
     if not is_up('https://api.duckduckgo.com'):
@@ -53,19 +25,20 @@ def topics(phenny, input):
     query = input.group(2)
 
     r = requests.get(ddg_uri + query).json()
-    try:
-        topics = r['RelatedTopics']
-        if len(topics) == 0:
-            return phenny.say('Sorry, no topics found.')
-        counter = 0
-        for topic in r['RelatedTopics']:
-            if counter < 3:
-                phenny.say(topic['Text'] + ' - ' + topic['FirstURL'])
-            else:
-                break
-            counter += 1
-    except:
-        return phenny.say('Sorry, no more topics found.')
+    topics = r['RelatedTopics']
+    if len(topics) == 0:
+        return phenny.say('Sorry, no topics found.')
+    topics_list = []
+    counter = 0
+    for topic in r['RelatedTopics']:
+        if counter < 10:
+            try:
+                topics_list.append(topic['Text'] + ' - ' + topic['FirstURL'])
+            except:
+                continue
+        else:
+            break
+    more.add_messages(input.nick, phenny, topics_list)
 topics.commands = ['topics']
 
 def search(phenny, input):
@@ -87,7 +60,7 @@ def search(phenny, input):
                 return phenny.say('Sorry, no result.')
     except:
         return phenny.say('Sorry, no result.')
-    phenny.say(( truncate(answer, share=' - ' + r['AbstractURL']) ) + ' - ' + answer_url)
+    phenny.say( (truncate(answer, share=' - ' + r['AbstractURL']) ) + ' - ' + answer_url)
 search.commands = ['search']
 
 def suggest(phenny, input): 

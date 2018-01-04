@@ -27,20 +27,6 @@ class TestSearch(unittest.TestCase):
         self.phenny = MagicMock()
         self.input = MagicMock()
 
-    def test_bing_search(self):
-        if not is_up(self.engines['Bing']):
-            self.skipTest(self.skip_msg.format('Bing'))
-        out = bing_search('phenny')
-        m = re.match('^https?://.*$', out, flags=re.UNICODE)
-        self.assertTrue(m)
-
-    def test_bing(self):
-        if not is_up(self.engines['Bing']):
-            self.skipTest(self.skip_msg.format('Bing'))
-        self.input.group.return_value = 'swhack'
-        bing(self.phenny, self.input)
-        self.assertTrue(self.phenny.reply.called)
-
     @patch('modules.search.requests.get')
     def test_requests(self, mock_get):
         mock_response = MagicMock()

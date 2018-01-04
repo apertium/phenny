@@ -32,19 +32,12 @@ r_local = re.compile(r'\([a-z]+_[A-Z]+\)')
 def get_offsets(phenny, key):
     offsets = []
 
-    try:
+    if key in phenny.time_zone_abbreviations:
         offsets.extend(phenny.time_zone_abbreviations[key])
-    except:
-        pass
 
     for (name, offset) in phenny.tz_database_time_zones.items():
-        if len(name) < len(key):
-            continue
-
-        if name[:len(key)] != key:
-            continue
-
-        offsets.append((name, offset))
+        if len(name) >= len(key) and name[:len(key)] == key:
+            offsets.append((name, offset))
 
     return offsets
 
@@ -240,10 +233,8 @@ def scrape_wiki_time_zone_abbreviations():
         for cell in row.findall('td'):
             if column == column_names.index('Abbr.'):
                 code = cell.text
-
             elif column == column_names.index('Name'):
                 name = cell.find('a').text
-
             elif column == column_names.index('UTC offset'):
                 offset = cell.find('a').text[3:]
                 offset = offset.replace('−', '-') # hyphen -> minus
@@ -289,7 +280,6 @@ def scrape_wiki_tz_database_time_zones():
                 text = text.replace('_', ' ').replace('−', '-')
 
                 name = text.split('/')[-1]
-
             elif column == column_names.index('UTC offset'):
                 text = cell.find('a').text
                 text = text.replace('_', ' ').replace('−', '-')

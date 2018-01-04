@@ -141,7 +141,9 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         msgs_default_channels = []
 
         repo = ''
-        event = 'unknown'
+        event = None
+
+        silent_on_purpose = False
 
         # handle GitHub triggers
         if 'GitHub' in self.headers['User-Agent']:
@@ -283,6 +285,8 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                                 msgs_by_channel[channel].append(message)
                             else:
                                 msgs_by_channel[channel] = [message]
+                        else:
+                            silent_on_purpose = True
 
             elif event == 'release':
                 template = '{:}: {:} * release {:} {:} {:}'
@@ -332,11 +336,13 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 except Exception:
                     logger.warning("unsupported data: " + str(commit))
 
-        if (not msgs_by_channel) and (not msgs_default_channels) and data['commits']:
+        if (not msgs_by_channel) and (not msgs_default_channels) and (not silent_on_purpose):
             # we couldn't get anything
-            # sometimes github sends empty pushes (eg. for releases), so check
-            # the data
-            msgs_default_channels.append("Unable to process event '" + event + "' with keys " + str(data.keys()))
+
+            if event:
+                msgs_default_channels.append("Don't know about '" + event + "' events")
+            else:
+                msgs_default_channels.append("Unable to deal with unknown event")
 
         # post all messages to all channels
         # except where specified in the config

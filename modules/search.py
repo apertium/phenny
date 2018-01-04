@@ -9,29 +9,13 @@ http://inamidst.com/phenny/
 
 import re
 import web
-
-from googleapiclient.discovery import build
-
-my_api_key = "AIzaSyDiWn9tB9NzxIxkohXXN6GNBNPRep6hIWM"
-my_cse_id = "017800230218291994756:re9_m1koe44"
-
-def google_search(search_term, api_key, cse_id, **kwargs):
-    service = build("customsearch", "v1", developerKey=api_key)
-    res = service.cse().list(q=search_term, cx=cse_id, **kwargs).execute()
-    return res['items']
-
-def gsearch(phenny, input):
-    str = input.replace(".g ", "")
-    results = google_search(
-        str, my_api_key, my_cse_id, num=10)
-    for result in results[:1]:
-        phenny.say("{} : {}".format(result['title'], result['link']))
-
-gsearch.commands = ['g']
-gsearch.name = 'g'
-gsearch.example = '.g Apertium'
+import json
+import requests
+from tools import is_up
 
 r_bing = re.compile(r'<h2><a href="([^"]+)"')
+
+ddg_uri = 'https://api.duckduckgo.com/?format=json&pretty=1&q='
 
 def bing_search(query, lang='en-GB'): 
     query = web.quote(query)
@@ -58,56 +42,55 @@ def bing(phenny, input):
         phenny.bot.last_seen_uri[input.sender] = uri
     else: phenny.reply("No results found for '%s'." % query)
 bing.commands = ['bing']
-bing.example = '.bing swhack'
+bing.example = '.bing swhack'    
 
-r_duck = re.compile(r'nofollow" class="[^"]+" href=".*(http.*?)">')
+def topics(phenny, input):
+    if not is_up('https://api.duckduckgo.com'):
+        return phenny.say('Sorry, DuckDuckGo API is down.')
 
-def duck_search(query): 
-    query = query.replace('!', '')
-    query = web.quote(query)
-    uri = 'https://duckduckgo.com/html/?q=%s&kl=uk-en' % query
-    bytes = web.get(uri)
-    m = r_duck.search(bytes)
-    if m: return web.decode(m.group(1))
-
-def duck(phenny, input): 
-    """Queries DuckDuckGo for specified input."""
+    if not input.group(2): 
+        return phenny.reply('.topics about what?')
     query = input.group(2)
-    if not query: return phenny.reply('.ddg what?')
 
-    uri = duck_search(query)
-    if uri: 
-        phenny.reply(uri)
-        if not hasattr(phenny.bot, 'last_seen_uri'):
-            phenny.bot.last_seen_uri = {}
-        phenny.bot.last_seen_uri[input.sender] = uri
-    else: phenny.reply("No results found for '%s'." % query)
-duck.commands = ['duck', 'ddg']
-duck.example = '.duck football'
+    r = requests.get(ddg_uri + query).json()
+    try:
+        topics = r['RelatedTopics']
+        if len(topics) == 0:
+            return phenny.say('Sorry, no topics found.')
+        counter = 0
+        for topic in r['RelatedTopics']:
+            if counter < 3:
+                phenny.say(topic['Text'] + ' - ' + topic['FirstURL'])
+            else:
+                break
+            counter += 1
+    except:
+        return phenny.say('Sorry, no more topics found.')
+topics.commands = ['topics']
 
-def search(phenny, input): 
+def search(phenny, input):
     if not input.group(2): 
         return phenny.reply('.search for what?')
     query = input.group(2)
-    gu = google_search(query) or '-'
-    bu = bing_search(query) or '-'
-    du = duck_search(query) or '-'
 
-    if (gu == bu) and (bu == du): 
-        result = '%s (g, b, d)' % gu
-    elif (gu == bu): 
-        result = '%s (g, b), %s (d)' % (gu, du)
-    elif (bu == du): 
-        result = '%s (b, d), %s (g)' % (bu, gu)
-    elif (gu == du): 
-        result = '%s (g, d), %s (b)' % (gu, bu)
-    else: 
-        if len(gu) > 250: gu = '(extremely long link)'
-        if len(bu) > 150: bu = '(extremely long link)'
-        if len(du) > 150: du = '(extremely long link)'
-        result = '%s (g), %s (b), %s (d)' % (gu, bu, du)
+    if not is_up('https://api.duckduckgo.com'):
+        return phenny.say('Sorry, DuckDuckGo API is down.')
 
-    phenny.reply(result)
+    r = requests.get(ddg_uri + query).json()
+    try:
+        answer = r['AbstractText']
+        if answer == '':
+            answer = r['RelatedTopics'][0]['Text'] + ' ' + r['RelatedTopics'][0]['FirstURL']
+            if answer == '':
+                return phenny.say('Sorry, no result.')
+        else:
+            if answer.count('.') > 1:
+                # Get first 2 sentences
+                answer = re.match(r'(?:[^.:;]+[.:;]){2}', answer).group()
+            answer += ' - ' + r['AbstractURL']
+    except:
+        return phenny.say('Sorry, no result.')
+    phenny.say(answer)
 search.commands = ['search']
 
 def suggest(phenny, input): 

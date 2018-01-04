@@ -5,7 +5,7 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 import re
 import unittest
 from mock import MagicMock, patch
-from modules.search import bing_search, bing, search, topics, suggest
+from modules.search import search, topics, suggest
 from tools import is_up
 from web import unquote
 
@@ -44,13 +44,6 @@ class TestSearch(unittest.TestCase):
             self.skipTest(self.skip_msg.format('DuckDuckGo'))
         self.input.group.return_value = 'Apertium'
         search(self.phenny, self.input)
-        self.assertTrue(self.phenny.say.called)
-
-    def test_topics(self):
-        if not is_up(self.engines['DuckDuckGo']):
-            self.skipTest(self.skip_msg.format('DuckDuckGo'))
-        self.input.group.return_value = 'San Francisco'
-        topics(self.phenny, self.input)
         self.assertTrue(self.phenny.say.called)
 
     def test_suggest(self):

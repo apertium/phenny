@@ -141,6 +141,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         msgs_default_channels = []
 
         repo = ''
+        event = 'unknown'
 
         # handle GitHub triggers
         if 'GitHub' in self.headers['User-Agent']:
@@ -335,7 +336,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             # we couldn't get anything
             # sometimes github sends empty pushes (eg. for releases), so check
             # the data
-            msgs_default_channels.append("Something went wrong: " + str(data.keys()))
+            msgs_default_channels.append("Unable to process event '" + event + "' with keys " + str(data.keys()))
 
         # post all messages to all channels
         # except where specified in the config

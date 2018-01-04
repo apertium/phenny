@@ -85,10 +85,6 @@ def search(phenny, input):
             answer_url = r['RelatedTopics'][0]['FirstURL']
             if answer == '':
                 return phenny.say('Sorry, no result.')
-        else:
-            if answer.count('.') > 1:
-                # Get first 2 sentences
-                answer = re.match(r'(?:[^.:;]+[.:;]){2}', answer).group()
     except:
         return phenny.say('Sorry, no result.')
     phenny.say(( truncate(answer, share=' - ' + r['AbstractURL']) ) + ' - ' + answer_url)

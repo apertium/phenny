@@ -16,6 +16,10 @@ from modules import more
 
 ddg_uri = 'https://api.duckduckgo.com/?format=json&pretty=1&q='  
 
+def gsearch(phenny, input):
+    phenny.reply('The search module has been rebuilt, it now uses .search instead.')
+gsearch.commands = 'g'
+
 def topics(phenny, input):
     if not is_up('https://api.duckduckgo.com'):
         return phenny.say('Sorry, DuckDuckGo API is down.')
@@ -30,14 +34,11 @@ def topics(phenny, input):
         return phenny.say('Sorry, no topics found.')
     topics_list = []
     counter = 0
-    for topic in r['RelatedTopics']:
-        if counter < 10:
-            try:
-                topics_list.append(topic['Text'] + ' - ' + topic['FirstURL'])
-            except:
-                continue
-        else:
-            break
+    for topic in r['RelatedTopics'][:10]:
+        try:
+            topics_list.append(topic['Text'] + ' - ' + topic['FirstURL'])
+        except KeyError:
+            continue
     more.add_messages(input.nick, phenny, topics_list)
 topics.commands = ['topics']
 

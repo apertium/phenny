@@ -60,7 +60,7 @@ def search(phenny, input):
                 return phenny.say('Sorry, no result.')
     except:
         return phenny.say('Sorry, no result.')
-    phenny.say( (truncate(answer, share=' - ' + r['AbstractURL']) ) + ' - ' + answer_url)
+    phenny.say(truncate(answer, share=' - ' + r['AbstractURL']) + ' - ' + answer_url)
 search.commands = ['search']
 
 def suggest(phenny, input): 

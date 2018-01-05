@@ -46,12 +46,7 @@ def irc_authenticated (phenny, input):
 	nick = phenny.config.nick
 	password = phenny.config.password
 
-	if hasattr(phenny.config, 'user') and phenny.config.user is not None:
-		user = phenny.config.user
-	else:
-		user = nick
-
-	auth = "\0".join((nick, user, password))
+	auth = "\0".join((nick, nick, password))
 	auth = base64.b64encode(str.encode(auth))
 
 	if auth is None:

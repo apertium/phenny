@@ -2,6 +2,7 @@ nick = 'phenny'
 host = 'irc.example.net'
 port = 6667
 ssl = False
+# This requires password to be set
 sasl = False
 ipv6 = False
 channels = ['#example', '#test']
@@ -9,7 +10,7 @@ owner = 'yournickname'
 greetings = {'#example': 'example greeting %name %channel', '#test': 'welcome to %channel %name'}
 
 # password is the NickServ password, serverpass is the server password
-password = 'example'
+# password = 'example'
 # serverpass = 'serverpass'
 
 # linx-enabled features (.linx, .lnx)

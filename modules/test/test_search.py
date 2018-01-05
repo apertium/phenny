@@ -20,7 +20,6 @@ class TestSearch(unittest.TestCase):
     def setUp(self):
         self.skip_msg = '{:s} is down, skipping test.'
         self.engines = {
-            'Bing': 'https://bing.com',
             'DuckDuckGo': 'https://api.duckduckgo.com',
             'Suggestion script': 'http://websitedev.de/temp-bin/'
         }

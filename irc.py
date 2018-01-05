@@ -145,7 +145,7 @@ class Bot(asynchat.async_chat):
                 logger.info('Authorizing using SASL...')
                 self.sasl_success = True
             else:
-                logger.info('ERROR: Couldn\'t authorize with SASL, password should be set in default.py!')
+                logger.error('ERROR: Couldn\'t authorize with SASL, password should be set in default.py!')
 
         if not self.sasl_success and self.password:
             self.write(('PASS', self.password))

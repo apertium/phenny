@@ -1,8 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 sasl.py - phenny SASL Authentication module
 """
 import base64
+import logging
+
+logger = logging.getLogger('phenny')
 
 def irc_cap (phenny, input):
 
@@ -68,8 +71,8 @@ irc_authenticated.priority = 'high'
 
 
 def irc_903 (phenny, input):
-	phenny.is_authenticated = True
 	irc_cap_end(phenny, input)
+	logger.info('SASL Authentication successful. ')
 	return
 irc_903.rule = r'(.*)'
 irc_903.event = '903'
@@ -78,6 +81,7 @@ irc_903.priority = 'high'
 
 def irc_904 (phenny, input):
 	irc_cap_end(phenny, input)
+	logger.error('SASL Authentication failed: Wrong credentials.')
 	return
 irc_904.rule = r'(.*)'
 irc_904.event = '904'
@@ -86,6 +90,7 @@ irc_904.priority = 'high'
 
 def irc_905 (phenny, input):
 	irc_cap_end(phenny, input)
+	logger.error('SASL Authentication failed: Message too long (up to 400 bytes). ')
 	return
 irc_905.rule = r'(.*)'
 irc_905.event = '905'
@@ -94,6 +99,7 @@ irc_905.priority = 'high'
 
 def irc_906 (phenny, input):
 	irc_cap_end(phenny, input)
+	logger.error('SASL Authentication failed: Cannot use \'*\' with AUTHENTICATE.')
 	return
 irc_906.rule = r'(.*)'
 irc_906.event = '906'
@@ -102,18 +108,19 @@ irc_906.priority = 'high'
 
 def irc_907 (phenny, input):
 	irc_cap_end(phenny, input)
+	logger.error('SASL Authentication failed: You have already authenticated using SASL. ')
 	return
 irc_907.rule = r'(.*)'
 irc_907.event = '907'
 irc_907.priority = 'high'
 
 
-def irc_001 (phenny, input):
-	phenny.is_connected = True
+def irc_908 (phenny, input):
+	logger.error('SASL Authentication failed: Unsupported mechanism.')
 	return
-irc_001.rule = r'(.*)'
-irc_001.event = '001'
-irc_001.priority = 'high'
+irc_908.rule = r'(.*)'
+irc_908.event = '908'
+irc_908.priority = 'high'
 
 
 def irc_cap_end (phenny, input):

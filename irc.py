@@ -44,6 +44,9 @@ class Bot(asynchat.async_chat):
         self.name = name
         self.password = password
 
+        self.use_sasl = False
+        self.sasl_success = False
+
         self.channels = channels or []
         self.stack = []
 
@@ -136,7 +139,15 @@ class Bot(asynchat.async_chat):
     def handle_connect(self): 
         logger.info('connected!')
 
-        if self.password: 
+        if self.use_sasl:
+            if self.password:
+                self.write(('CAP', 'LS'))
+                logger.info('Authorizing using SASL...')
+                self.sasl_success = True
+            else:
+                logger.info('ERROR: Couldn\'t authorize with SASL, password should be set in default.py!')
+
+        if not self.sasl_success and self.password:
             self.write(('PASS', self.password))
 
         self.write(('NICK', self.nick))

@@ -43,9 +43,10 @@ def run_phenny(config):
         delay = config.delay
     else: delay = 20
 
-    def connect(config): 
+    def connect(config):
         import bot
         p = bot.Phenny(config)
+        p.use_sasl = config.sasl
         p.run(config.host, config.port, config.ssl, config.ipv6,
               config.ca_certs)
 

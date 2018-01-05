@@ -236,7 +236,7 @@ class Phenny(irc.Bot):
         return False
 
     def dispatch(self, origin, args): 
-        bytes, event, args = args[0], args[1], args[2:]
+        bytes, event, args = args[0], args[1], args
         text = decode(bytes)
         event = decode(event)
 

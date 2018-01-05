@@ -2,13 +2,14 @@ nick = 'phenny'
 host = 'irc.example.net'
 port = 6667
 ssl = False
+sasl = False
 ipv6 = False
 channels = ['#example', '#test']
 owner = 'yournickname'
 greetings = {'#example': 'example greeting %name %channel', '#test': 'welcome to %channel %name'}
 
 # password is the NickServ password, serverpass is the server password
-# password = 'example'
+password = 'example'
 # serverpass = 'serverpass'
 
 # linx-enabled features (.linx, .lnx)
@@ -24,7 +25,7 @@ admins = [owner, 'someoneyoutrust']
 # But admin.py is disabled by default, as follows:
 exclude = ['admin', 'linx', 'foodforus']
 
-ignore = ['']
+ignore = []
 
 # If you want to enumerate a list of modules rather than disabling
 # some, use "enable = ['example']", which takes precedent over exclude

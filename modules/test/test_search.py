@@ -21,7 +21,7 @@ class TestSearch(unittest.TestCase):
         self.skip_msg = '{:s} is down, skipping test.'
         self.engines = {
             'DuckDuckGo': 'https://api.duckduckgo.com',
-            'Suggestion script': 'http://websitedev.de/temp-bin/'
+            'Suggestion API': 'http://suggestqueries.google.com/complete/search?output=toolbar&hl=en&q=test'
         }
         self.phenny = MagicMock()
         self.input = MagicMock()
@@ -45,9 +45,10 @@ class TestSearch(unittest.TestCase):
         search(self.phenny, self.input)
         self.assertTrue(self.phenny.say.called)
 
-    def test_suggest(self):
-        if not is_up(self.engines['Suggestion script']):
-            self.skipTest(self.skip_msg.format('Suggestion script'))
-        self.input.group.return_value = 'vtluug'
+    @patch('modules.search.more')
+    def test_suggest(self, mock_more):
+        if not is_up(self.engines['Suggestion API']):
+            self.skipTest(self.skip_msg.format('Suggestion API'))
+        self.input.group.return_value = 'test'
         suggest(self.phenny, self.input)
-        self.assertTrue(self.phenny.reply.called or self.phenny.say.called)
+        self.assertTrue(mock_more.add_messages.called)

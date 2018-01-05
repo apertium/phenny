@@ -64,15 +64,14 @@ def search(phenny, input):
     phenny.say(truncate(answer, share=' - ' + r['AbstractURL']) + ' - ' + answer_url)
 search.commands = ['search']
 
-def suggest(phenny, input): 
+def suggest(phenny, input):
     if not input.group(2):
         return phenny.reply("No query term.")
     query = input.group(2)
-    uri = 'http://websitedev.de/temp-bin/suggest.pl?q='
-    answer = web.get(uri + web.quote(query).replace('+', '%2B'))
-    if answer: 
-        phenny.say(answer)
-    else: phenny.reply('Sorry, no result.')
+    uri = 'http://suggestqueries.google.com/complete/search?client=firefox&hl=en&q='
+    answer = requests.get(uri + query)
+    suggestions = answer.json()[1][:10]
+    more.add_messages(input.nick, phenny, suggestions)
 suggest.commands = ['suggest']
 
 def lmgtfy(phenny, input):

@@ -28,8 +28,14 @@ httpd = None
 
 
 def close_socket():
-    if not httpd is None:
+    global httpd, Handler
+
+    if httpd:
+        httpd.shutdown()
         httpd.server_close()
+
+    httpd = None
+    Handler = None
 
 atexit.register(close_socket)
 
@@ -384,13 +390,8 @@ setup_server.event = 'MODE'
 
 
 def teardown(phenny):
-    global Handler, httpd
-    if httpd is not None:
-        httpd.shutdown()
-        httpd.server_close()
-        httpd = None
-        Handler = None
-        phenny.say("Server has stopped on port %s" % PORT)
+    close_socket()
+    phenny.say("Server has stopped on port %s" % PORT)
 
 
 def gitserver(phenny, input):

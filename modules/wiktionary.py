@@ -10,13 +10,13 @@ http://inamidst.com/phenny/
 import re
 import web
 import json
-import re, urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
+from tools import query_string
 
 uri = 'http://en.wiktionary.org/wiki/{0}?printable=yes'
-wikiapi = 'http://en.wiktionary.org/w/api.php?action=query&titles={0}&prop=revisions&rvprop=content&format=json'
-wikisearchapi = 'http://en.wiktionary.org/w/api.php?action=query&list=search&srlimit=1&format=json&srsearch={0}'
-#r_tag = re.compile(r'<[^>]+>')
-r_ul = re.compile(r'(?ims)<ul>.*?</ul>')
+
 r_li = re.compile(r'^# ')
 r_img = re.compile(r'\[\[Image:.*\]\]')
 r_link1 = re.compile(r'\[\[([A-Za-z0-9\-_ ]+?)\]\]')
@@ -25,6 +25,13 @@ r_context = re.compile(r'{{context\|(.+?)}}')
 r_template1 = re.compile(r'{{.+?\|(.+?)}}')
 r_template2 = re.compile(r'{{(.+?)}}')
 r_sqrbracket = re.compile(r'\[.+?\]')
+
+def get_endpoint(params):
+    params['action'] = 'query'
+    params['format'] = 'json'
+    params['redirects'] = ''
+
+    return 'https://en.wiktionary.org/w/api.php' + query_string(params)
 
 def text(html):
     text = r_li.sub('', html).strip()
@@ -39,7 +46,13 @@ def text(html):
     return text
 
 def wiktionary(phenny, word):
-    bytes = web.get(wikiapi.format(web.quote(word)))
+    params = {
+        'titles': word,
+        'prop': 'revisions',
+        'rvprop': 'content'
+    }
+
+    bytes = web.get(get_endpoint(params))
     pages = json.loads(bytes)
     pages = pages['query']['pages']
     pg = next(iter(pages))
@@ -160,7 +173,13 @@ def wikitionary_lookup(phenny, word, to_user=None, suggests=True):
         else:
             phenny.say(result)
     elif suggests:
-        apiResponse = json.loads(str(web.get(wikisearchapi.format(word))))
+        params = {
+            'list': 'search',
+            'srlimit': '1',
+            'srsearch': word
+        }
+
+        apiResponse = json.loads(str(web.get(get_endpoint(params))))
         if 'suggestion' in apiResponse['query']['searchinfo']:
             word = apiResponse['query']['searchinfo']['suggestion']
             phenny.say("Perhaps you meant %s?" % repr(word))

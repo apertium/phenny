@@ -10,6 +10,7 @@ http://inamidst.com/phenny/
 import os
 import re
 import base64
+from urllib.parse import quote_plus as url_encode
 import sqlite3
 import logging
 from requests.exceptions import ConnectionError, HTTPError, Timeout
@@ -199,6 +200,21 @@ def decorate(obj, delegate):
             return setattr(obj, attr, value)
 
     return Decorator()
+
+def html_clean_text(html):
+    html = re.sub('<.+?>', '', html)
+    html = re.sub(r'[\t\r\n ]+', ' ', html)
+    return html_unescape(html)
+
+def html_unescape(text):
+    text = text.replace('&gt;', '>')
+    text = text.replace('&lt;', '<')
+    text = text.replace('&amp;', '&')
+    text = text.replace('&#160;', ' ')
+    return text
+
+def query_string(params):
+    return '?' + '&'.join([url_encode(key) + '=' + url_encode(value) for key, value in params.items()])
 
 class GrumbleError(Exception):
     pass

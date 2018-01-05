@@ -9,10 +9,9 @@ from io import StringIO
 import json
 import os
 import re
-import socketserver
 import time
 import atexit
-from tools import generate_report, truncate
+from tools import generate_report, PortReuseTCPServer, truncate
 import urllib.parse
 import web
 from modules import more
@@ -376,8 +375,7 @@ def setup_server(phenny, input=None):
     global Handler, httpd
     Handler = MyHandler
     Handler.phenny = phenny
-    httpd = socketserver.TCPServer(("", PORT), Handler)
-    httpd.allow_reuse_address = True
+    httpd = PortReuseTCPServer(("", PORT), Handler)
     Thread(target=httpd.serve_forever).start()
     phenny.say("Server is up and running on port %s" % PORT)
 setup_server.rule = '(.*)'

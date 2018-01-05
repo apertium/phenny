@@ -35,7 +35,6 @@ irc_cap.rule = r'(.*)'
 irc_cap.event = 'CAP'
 irc_cap.priority = 'high'
 
-
 def irc_authenticated(phenny, input):
 	auth = None
 	
@@ -59,7 +58,6 @@ irc_authenticated.rule = r'(.*)'
 irc_authenticated.event = 'AUTHENTICATE'
 irc_authenticated.priority = 'high'
 
-
 def irc_903(phenny, input):
 	irc_cap_end(phenny, input)
 	logger.info('SASL Authentication successful. ')
@@ -67,7 +65,6 @@ def irc_903(phenny, input):
 irc_903.rule = r'(.*)'
 irc_903.event = '903'
 irc_903.priority = 'high'
-
 
 def irc_904(phenny, input):
 	irc_cap_end(phenny, input)
@@ -86,7 +83,6 @@ irc_905.rule = r'(.*)'
 irc_905.event = '905'
 irc_905.priority = 'high'
 
-
 def irc_906 (phenny, input):
 	irc_cap_end(phenny, input)
 	logger.error('SASL Authentication failed: Cannot use \'*\' with AUTHENTICATE.')
@@ -94,7 +90,6 @@ def irc_906 (phenny, input):
 irc_906.rule = r'(.*)'
 irc_906.event = '906'
 irc_906.priority = 'high'
-
 
 def irc_907 (phenny, input):
 	irc_cap_end(phenny, input)
@@ -104,7 +99,6 @@ irc_907.rule = r'(.*)'
 irc_907.event = '907'
 irc_907.priority = 'high'
 
-
 def irc_908 (phenny, input):
 	logger.error('SASL Authentication failed: Unsupported mechanism.')
 	return
@@ -112,11 +106,9 @@ irc_908.rule = r'(.*)'
 irc_908.event = '908'
 irc_908.priority = 'high'
 
-
 def irc_cap_end (phenny, input):
 	phenny.write(('CAP', 'END'))
 	return
-
 
 if __name__ == '__main__':
 	print(__doc__.strip())

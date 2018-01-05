@@ -91,7 +91,11 @@ def show_more(phenny, sender, target, count):
         message = messages[0]
 
         if remaining > 0:
-            phenny.msg(sender, message + " (" + str(remaining) + " remaining)")
+            if len(message + " (" + str(remaining) + " remaining)") > max_message_length:
+                phenny.msg(sender, message)
+                phenny.msg(sender, str(remaining) + " message(s) remaining")
+            else:
+                phenny.msg(sender, message + " (" + str(remaining) + " remaining)")
         else:
             phenny.msg(sender, message)
 

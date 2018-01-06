@@ -176,7 +176,7 @@ def apertium_analyse(phenny, input):
     for analysis, original in jobj:
         messages.append(original + '  →  ' + analysis)
 
-    more.add_messages(input.nick, phenny, messages)
+    more.add_messages(phenny, 'analyse', input.nick, messages)
 
 apertium_analyse.name = 'analyse'
 apertium_analyse.commands = ['analyse', 'analyze']
@@ -203,7 +203,7 @@ def apertium_generate(phenny, input):
     for generation, original in jobj:
         messages.append(original + '  →  ' + generation)
 
-    more.add_messages(input.nick, phenny, messages)
+    more.add_messages(phenny, 'generate', input.nick, messages)
 
 apertium_generate.name = 'generate'
 apertium_generate.commands = ['generate']
@@ -230,7 +230,7 @@ def apertium_identlang(phenny, input):
     for key, value in jsdata.items():
         messages.append(key + ' = ' + str(value))
 
-    more.add_messages(input.nick, phenny, messages)
+    more.add_messages(phenny, 'identlang', input.nick, messages)
 
 apertium_identlang.name = 'identlang'
 apertium_identlang.commands = ['identlang']

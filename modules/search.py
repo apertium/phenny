@@ -41,7 +41,7 @@ def topics(phenny, input):
             continue
     phenny.say(topics_list[0])
     phenny.reply('Check PM for more topics.')
-    more.add_messages(input.nick, phenny, topics_list[1:])
+    more.add_messages(phenny, 'topics', input.nick, topics_list[1:])
 topics.commands = ['topics']
 
 def search(phenny, input):

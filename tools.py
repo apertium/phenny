@@ -17,6 +17,8 @@ import web
 import itertools
 import sqlite3
 import logging
+import socket
+import socketserver
 from time import time
 
 logger = logging.getLogger('phenny')
@@ -56,6 +58,11 @@ class DatabaseCursor():
     def __exit__(self, *args):
         self.cursor.close()
         self.connection.close()
+
+class PortReuseTCPServer(socketserver.TCPServer):
+    def server_bind(self):
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.socket.bind(self.server_address)
 
 def encodeIfNot(text):
     if isinstance(text, str):

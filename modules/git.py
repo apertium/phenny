@@ -9,10 +9,9 @@ from io import StringIO
 import json
 import os
 import re
-import socketserver
 import time
 import atexit
-from tools import generate_report, truncate
+from tools import generate_report, PortReuseTCPServer, truncate
 import urllib.parse
 import web
 from modules import more
@@ -29,8 +28,14 @@ httpd = None
 
 
 def close_socket():
-    if not httpd is None:
+    global httpd, Handler
+
+    if httpd:
+        httpd.shutdown()
         httpd.server_close()
+
+    httpd = None
+    Handler = None
 
 atexit.register(close_socket)
 
@@ -377,8 +382,7 @@ def setup_server(phenny, input=None):
     global Handler, httpd
     Handler = MyHandler
     Handler.phenny = phenny
-    httpd = socketserver.TCPServer(("", PORT), Handler)
-    httpd.allow_reuse_address = True
+    httpd = PortReuseTCPServer(("", PORT), Handler)
     Thread(target=httpd.serve_forever).start()
     phenny.say("Server is up and running on port %s" % PORT)
 setup_server.rule = '(.*)'
@@ -386,13 +390,8 @@ setup_server.event = 'MODE'
 
 
 def teardown(phenny):
-    global Handler, httpd
-    if httpd is not None:
-        httpd.shutdown()
-        httpd.server_close()
-        httpd = None
-        Handler = None
-        phenny.say("Server has stopped on port %s" % PORT)
+    close_socket()
+    phenny.say("Server has stopped on port %s" % PORT)
 
 
 def gitserver(phenny, input):

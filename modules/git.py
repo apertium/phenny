@@ -11,6 +11,7 @@ import os
 import re
 import time
 import atexit
+import signal
 from tools import generate_report, PortReuseTCPServer, truncate
 import urllib.parse
 import web
@@ -38,6 +39,13 @@ def close_socket():
     Handler = None
 
 atexit.register(close_socket)
+
+def signal_handler(signal, frame):
+    close_socket()
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGQUIT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
 
 
 # githooks handler

@@ -183,7 +183,7 @@ def gettitle(phenny, input, uri):
                     info = info[0]
             except web.HTTPError:
                 try:
-                    info = requests.get(uri, headers=web.default_headers, verify=True)
+                    info = requests.get(uri, headers=web.default_headers, verify=True, timeout=61)
                     status = str(info.status_code)
                     info = info.headers
                 except web.HTTPError:

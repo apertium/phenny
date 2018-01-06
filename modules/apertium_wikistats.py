@@ -18,7 +18,7 @@ def filename(name):
 
 def setup(phenny):
     for files in [BOT, LEXCCOUNTER, AUTOCOVERAGE]:
-        r = requests.get(files[0])
+        r = requests.get(files[0], timeout=61)
         if r.status_code == 200:
             with open(filename(files[1]), 'wb') as f:
                 for chunk in r.iter_content():

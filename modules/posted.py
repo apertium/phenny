@@ -31,7 +31,7 @@ def check_posted(phenny, input, url):
 
     if ':' not in url:
         url = 'http://' + url
-    dest_url = requests.get(url).url
+    dest_url = requests.get(url, timeout=61).url
 
     with DatabaseCursor(phenny.posted_db) as cursor:
         cursor.execute("SELECT nick, time FROM posted WHERE channel=? AND url=?", (input.sender, dest_url))

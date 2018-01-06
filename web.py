@@ -28,11 +28,11 @@ from urllib.parse import quote, unquote
 user_agent = "Mozilla/5.0 (Phenny)"
 default_headers = {'User-Agent': user_agent}
 
-def get(uri, headers={}, verify=True, **kwargs): 
+def get(uri, headers={}, verify=True, timeout=61, **kwargs):
     if not uri.startswith('http'): 
         return
     headers.update(default_headers)
-    r = requests.get(uri, headers=headers, verify=verify, **kwargs)
+    r = requests.get(uri, headers=headers, verify=verify, timeout=timeout, **kwargs)
     r.raise_for_status()
     # Fix charset if necessary
     if 'Content-Type' in r.headers:

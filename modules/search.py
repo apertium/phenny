@@ -29,7 +29,7 @@ def topics(phenny, input):
         return phenny.reply('.topics about what?')
     query = input.group(2)
 
-    r = requests.get(ddg_uri + query).json()
+    r = requests.get(ddg_uri + query, timeout=61).json()
     topics = r['RelatedTopics']
     if len(topics) == 0:
         return phenny.say('Sorry, no topics found.')
@@ -53,7 +53,7 @@ def search(phenny, input):
     if not is_up('https://api.duckduckgo.com'):
         return phenny.say('Sorry, DuckDuckGo API is down.')
 
-    r = requests.get(ddg_uri + query).json()
+    r = requests.get(ddg_uri + query, timeout=61).json()
     try:
         answer = r['AbstractText']
         answer_url = r['AbstractURL']

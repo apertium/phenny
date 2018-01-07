@@ -39,7 +39,9 @@ def topics(phenny, input):
             topics_list.append(topic['Text'] + ' - ' + topic['FirstURL'])
         except KeyError:
             continue
-    more.add_messages('#apertium_testing', phenny, topics_list)
+    phenny.say(topics_list[0])
+    phenny.reply('Check PM for more topics.')
+    more.add_messages(input.nick, phenny, topics_list[1:])
 topics.commands = ['topics']
 
 def search(phenny, input):

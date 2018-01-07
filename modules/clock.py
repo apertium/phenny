@@ -216,7 +216,6 @@ def f_time(phenny, input):
     if matched_point:
         to_nick = matched_point.groups()[0]
         tz2 = matched_point.groups()[1]
-        print(tz2)
 
         give_time(phenny, tz2, input.nick, to_user=to_nick)
         return

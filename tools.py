@@ -52,7 +52,7 @@ def write_db(self, name, data):
 def read_db(self, name, error_after=None):
     path = db_path(self, name)
 
-    if error_after and (time.time() - os.path.getmtime(f)) > error_after:
+    if error_after and (time() - os.path.getmtime(path)) > error_after:
         raise ResourceWarning('Database out of date')
 
     with open(path, 'rb') as f:

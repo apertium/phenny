@@ -82,7 +82,7 @@ class TestAPy(unittest.TestCase):
 
         # non-existent language
         self.input.group.return_value = 'spa-zzz ' + self.texts['spa']
-        mock_open.side_effect = HTTPError('url', 400, 'msg', 'hdrs', 'fp')
+        mock_open.side_effect = HTTPError('url', 400, 'msg', 'hdrs', None)
         apy.apertium_translate(self.phenny, self.input)
         self.assertTrue(mock_handle.called)
         self.phenny.say.assert_called_once_with('spa-zzz: some message')
@@ -98,7 +98,7 @@ class TestAPy(unittest.TestCase):
         # non-existent language with actual language
         self.input.group.return_value = 'spa-eng spa-zzz ' + self.texts['spa']
         mock_open.side_effect = [mock.MagicMock(read=lambda: self.fake_json('eng')),
-                                 HTTPError('url', 400, 'msg', 'hdrs', 'fp')]
+                                 HTTPError('url', 400, 'msg', 'hdrs', None)]
         apy.apertium_translate(self.phenny, self.input)
         self.assertEqual(mock_open.call_args_list, [mock.call(self.format_query('spa', 'eng')),
                                                     mock.call(self.format_query('spa', 'zzz'))])

@@ -102,15 +102,15 @@ def give_time(phenny, tz, input_nick, to_user=None):
     tz_offsets = get_offsets(phenny, TZ)
 
     if tz_offsets:
-        tz_offset = tz_offsets[0]
-        offset = tz_offset[1] * 3600 + math_add
-        timenow = time.gmtime(time.time() + offset)
-        msg = time.strftime("%a, %d %b %Y %H:%M:%S " + tz_offset[0], timenow)
+        for tz_offset in tz_offsets:
+            offset = tz_offset[1] * 3600 + math_add
+            timenow = time.gmtime(time.time() + offset)
+            msg = time.strftime("%a, %d %b %Y %H:%M:%S " + tz_offset[0], timenow)
 
-        if to_user:
-            phenny.say(to_user + ', ' + msg)
-        else:
-            phenny.reply(msg)
+            if to_user:
+                phenny.say(to_user + ', ' + msg)
+            else:
+                phenny.reply(msg)
 
         return
 

@@ -7,7 +7,6 @@ import datetime
 import unittest
 from mock import MagicMock, patch
 from modules.clock import f_time, beats, yi, tock, npl
-from nose.tools import nottest
 from tools import is_up
 
 
@@ -18,12 +17,12 @@ class TestClock(unittest.TestCase):
         self.input = MagicMock()
 
     @unittest.skip('Test requires timezone and city databases, which are currently tricky to '
-                   'properly configure on Travis CI. This could be a separate issue on GitHub.')
+                   'properly configure on Travis CI.')
     def test_time(self, mock_time):
         mock_time.return_value = 1338674651
         self.input.group.return_value = 'EDT'
         f_time(self.phenny, self.input)
-        self.phenny.msg.called_once_with('#phenny',
+        self.phenny.msg.assert_called_once_with('#phenny',
                 "Sat, 02 Jun 2012 18:04:11 EDT")
 
     def test_beats_zero(self, mock_time):

@@ -27,11 +27,7 @@ logger = logging.getLogger('phenny')
 
 r_local = re.compile(r'\([a-z]+_[A-Z]+\)')
 
-
-def give_time(phenny, tz, input_nick, to_user=None):
-    if "->" in tz: return
-    if "→" in tz: return
-
+def time_calc(phenny, tz, sender, to_user, diff):
     tz_complete = tz.upper()
 
     math_add = 0
@@ -99,9 +95,11 @@ def give_time(phenny, tz, input_nick, to_user=None):
                 timenow = time.gmtime(time.time() + offset)
                 msg = time.strftime("%a, %d %b %Y %H:%M:%S " + str(slug), timenow)
                 if to_user:
-                    phenny.say(to_user+', '+msg)
+                    return to_user+', '+msg
+                elif diff:
+                    return msg
                 else:
-                    phenny.reply(msg)
+                    return sender+', '+msg
                 skip=True
                 break
     else:
@@ -109,40 +107,50 @@ def give_time(phenny, tz, input_nick, to_user=None):
         timenow = time.gmtime(time.time() + offset)
         msg = time.strftime("%a, %d %b %Y %H:%M:%S " + str(tz_complete), timenow)
         if to_user:
-            phenny.say(to_user+', '+msg)
+            return to_user+', '+msg
+        elif diff:
+            return msg
         else:
-            phenny.reply(msg)
+            return sender+', '+msg
         skip=True
 
     if skip ==False:
         if (TZ == 'UTC') or (TZ == 'Z'):
             msg = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
             if to_user:
-                phenny.say(to_user+', '+msg)
+                return to_user+', '+msg
+            elif diff:
+                return msg
             else:
-                phenny.reply(msg)
+                return sender+', '+msg
         elif r_local.match(tz): # thanks to Mark Shoulsdon (clsn)
             locale.setlocale(locale.LC_TIME, (tz[1:-1], 'UTF-8'))
             msg = time.strftime("%A, %d %B %Y %H:%M:%SZ", time.gmtime())
             if to_user:
-                phenny.say(to_user+', '+msg)
+                return to_user+', '+msg
+            elif diff:
+                return msg
             else:
-                phenny.reply(msg)
+                return sender+', '+msg
         elif TZ in phenny.tz_data:
             offset = phenny.tz_data[TZ] * 3600 + math_add
             timenow = time.gmtime(time.time() + offset)
             msg = time.strftime("%a, %d %b %Y %H:%M:%S " + str(tz_complete), timenow)
             if to_user:
-                phenny.say(to_user+', '+msg)
+                return to_user+', '+msg
+            elif diff:
+                return msg
             else:
-                phenny.reply(msg)
+                return sender+', '+msg
         elif tz and tz[0] in ('+', '-') and 4 <= len(tz) <= 6:
             timenow = time.gmtime(time.time() + (int(tz[:3]) * 3600))
             msg = time.strftime("%a, %d %b %Y %H:%M:%S " + str(tz_complete), timenow)
             if to_user:
-                phenny.say(to_user+', '+msg)
+                return to_user+', '+msg
+            elif diff:
+                return msg
             else:
-                phenny.reply(msg)
+                return sender+', '+msg
         else:
             try: t = float(tz)
             except ValueError:
@@ -152,9 +160,11 @@ def give_time(phenny, tz, input_nick, to_user=None):
                     cmd, PIPE = 'TZ=%s date' % tz, subprocess.PIPE
                     proc = subprocess.Popen(cmd, shell=True, stdout=PIPE)
                     if to_user:
-                        phenny.say(to_user+', '+proc.communicate()[0])
+                        return to_user+', '+proc.communicate()[0]
+                    elif diff:
+                        return msg
                     else:
-                        phenny.reply(proc.communicate()[0])
+                        return sender+', '+proc.communicate()[0]
                 else: 
                     # error = "Sorry, I don't know about the '%s' timezone. Suggest the city on http://www.citytimezones.info" % tz
                     error = "Sorry, I don't know about the '%s' timezone." % tz
@@ -163,14 +173,44 @@ def give_time(phenny, tz, input_nick, to_user=None):
                 timenow = time.gmtime(time.time() + (t * 3600))
                 msg = time.strftime("%a, %d %b %Y %H:%M:%S " + str(tz_complete), timenow)
                 if to_user:
-                    phenny.say(to_user+', '+msg)
+                    return to_user+', '+msg
+                elif diff:
+                    return msg
                 else:
-                    phenny.reply(msg)
+                    return sender+', '+msg
+
+def give_time(phenny, tz, input_nick, to_user=None):
+    if "->" in tz: return
+    if "→" in tz: return
+
+    tzs = tz.split(' ')
+    if len(tzs) == 2:
+        tz_times = []
+        for t in tzs:
+            t = time_calc(phenny, t, input_nick, None, True)
+            if t is None:
+                return
+            t = datetime.datetime.strptime(t.split(' ')[4], '%H:%M:%S')
+            tz_times.append(t)
+        if tz_times[1] < tz_times[0]:
+            time_diff = tz_times[0] - tz_times[1]
+            msg = '-' + str(int(time_diff.seconds/3600)) + 'h'
+        else:
+            time_diff = tz_times[1] - tz_times[0]
+            msg = '+' + str(int(time_diff.seconds/3600)) + 'h'
+        if to_user:
+            phenny.say(to_user + ', ' + msg)
+        else:
+            phenny.say(input_nick + ', ' + msg)
+    else:
+        t = time_calc(phenny, tz, input_nick, to_user, False)
+        if t is None:
+            return
+        phenny.say(t)
 
 def f_time(phenny, input):
     """.time [timezone] - Show current time in defined timezone. Defaults to GMT. (supports pointing)"""
     tz = input.group(2) or 'GMT'
-
     match_point_cmd = r'point\s(\S*)\s(.*)'
     matched_point = re.compile(match_point_cmd).match(tz)
     if matched_point:

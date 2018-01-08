@@ -19,8 +19,6 @@ import logging
 
 logger = logging.getLogger('phenny')
 
-logger = logging.getLogger('phenny')
-
 home = os.getcwd()
 
 def decode(bytes): 
@@ -96,7 +94,8 @@ class Phenny(irc.Bot):
 
     def register(self, module):
         # This is used by reload.py, hence it being methodised
-        self.variables[module.__name__] = {}
+        if module.__name__ not in self.variables:
+            self.variables[module.__name__] = {}
 
         for name, obj in vars(module).items():
             if hasattr(obj, 'commands') or hasattr(obj, 'rule'): 

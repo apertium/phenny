@@ -41,23 +41,26 @@ class Watcher(object):
 def run_phenny(config): 
     if hasattr(config, 'delay'): 
         delay = config.delay
-    else: delay = 20
+    else:
+        delay = 20
+        
+    try:
+        Watcher()
+    except Exception as error:
+        logger.warning(str(error) + ' (in __init__.py)')
 
-    def connect(config):
+    try:
         import bot
         p = bot.Phenny(config)
         p.use_sasl = config.sasl
-        p.run(config.host, config.port, config.ssl, config.ipv6,
-              config.ca_certs)
-
-    try: Watcher()
-    except Exception as e:
-        logger.warning(str(e) + ' (in __init__.py)')
+    except KeyboardInterrupt:
+        sys.exit()
 
     while True: 
-        try: connect(config)
+        try:
+            p.run(config.host, config.port, config.ssl, config.ipv6, config.ca_certs)
         except KeyboardInterrupt:
-             sys.exit()
+            sys.exit()
 
         if not isinstance(delay, int):
             break

@@ -39,7 +39,9 @@ def topics(phenny, input):
             topics_list.append(topic['Text'] + ' - ' + topic['FirstURL'])
         except KeyError:
             continue
-    more.add_messages(input.nick, phenny, topics_list)
+    phenny.say(topics_list[0])
+    phenny.reply('Check PM for more topics.')
+    more.add_messages(input.nick, phenny, topics_list[1:])
 topics.commands = ['topics']
 
 def search(phenny, input):
@@ -61,6 +63,8 @@ def search(phenny, input):
                 return phenny.say('Sorry, no result.')
     except:
         return phenny.say('Sorry, no result.')
+    # Removes html tags, if exist
+    answer = re.sub('<[^<]+>', '', answer)
     phenny.say(truncate(answer, share=' - ' + r['AbstractURL']) + ' - ' + answer_url)
 search.commands = ['search']
 

@@ -9,10 +9,10 @@ from io import StringIO
 import json
 import os
 import re
-import socketserver
 import time
 import atexit
-from tools import generate_report, truncate
+import signal
+from tools import generate_report, PortReuseTCPServer, truncate
 import urllib.parse
 import web
 from modules import more
@@ -24,20 +24,32 @@ logger = logging.getLogger('phenny')
 PORT = 1234
 
 # module-global variables
-Handler = None
 httpd = None
 
 
 def close_socket():
-    if not httpd is None:
+    global httpd
+
+    if httpd:
+        httpd.shutdown()
         httpd.server_close()
 
+    httpd = None
+
 atexit.register(close_socket)
+
+def signal_handler(signal, frame):
+    close_socket()
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGQUIT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
 
 
 # githooks handler
 class MyHandler(http.server.SimpleHTTPRequestHandler):
-    phenny = None
+    def __init__(self, phenny):
+        self.phenny = phenny
 
     def return_data(self, site, data, commit):
         '''Generates a report for the specified site and commit.'''
@@ -374,25 +386,20 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
 def setup_server(phenny, input=None):
     '''Set up and start hooks server.'''
 
-    global Handler, httpd
-    Handler = MyHandler
-    Handler.phenny = phenny
-    httpd = socketserver.TCPServer(("", PORT), Handler)
-    httpd.allow_reuse_address = True
-    Thread(target=httpd.serve_forever).start()
+    global httpd
+
+    if not httpd or True:
+        httpd = PortReuseTCPServer(("", PORT), MyHandler(phenny))
+        Thread(target=httpd.serve_forever).start()
+
     phenny.say("Server is up and running on port %s" % PORT)
 setup_server.rule = '(.*)'
 setup_server.event = 'MODE'
 
 
 def teardown(phenny):
-    global Handler, httpd
-    if httpd is not None:
-        httpd.shutdown()
-        httpd.server_close()
-        httpd = None
-        Handler = None
-        phenny.say("Server has stopped on port %s" % PORT)
+    close_socket()
+    phenny.say("Server has stopped on port %s" % PORT)
 
 
 def gitserver(phenny, input):
@@ -401,7 +408,7 @@ def gitserver(phenny, input):
         .gitserver start (admins only)
         .gitserver stop (admins only)'''
 
-    global Handler, httpd
+    global httpd
 
     command = input.group(1).strip()
     if input.admin:

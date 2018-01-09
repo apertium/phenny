@@ -2,24 +2,23 @@
 test_remind.py - tests for the remind module
 author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
-import re
+
 import unittest
-import threading
 import time
-import tools
 from mock import MagicMock, patch
 from modules import remind
 
 
 class TestRemind(unittest.TestCase):
+
     def setUp(self):
         self.phenny = MagicMock()
         self.input = MagicMock()
         self.phenny.nick = 'phenny'
         self.phenny.config.host = 'test-phenny.example.com'
 
-        remind.load_database = lambda name: {}
-        remind.dump_database = lambda name, data: name
+        remind.load_database = lambda phenny: {}
+        remind.dump_database = lambda phenny: None
         remind.setup(self.phenny)
 
     def test_remind(self):

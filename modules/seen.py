@@ -12,7 +12,7 @@ import os
 import shelve
 import sqlite3
 import time
-from tools import deprecated
+from tools import db_path, deprecated
 
 logger = logging.getLogger('phenny')
 
@@ -58,9 +58,8 @@ f_seen.rule = (['seen'], r'(\S+)')
 def f_note(self, origin, match, args):
     def note(self, origin, match, args):
         if not hasattr(self.bot, 'seen'):
-            fn = self.nick + '-' + self.config.host + '.seen'
-            path = os.path.join(os.path.expanduser('~/.phenny'), fn)
-            self.bot.seen = shelve.open(path)
+            self.bot.seen = shelve.open(db_path(self, 'seen'))
+
         if origin.sender.startswith('#'):
             self.seen[origin.nick.lower()] = (origin.sender, time.time())
             self.seen.sync()

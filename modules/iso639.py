@@ -13,7 +13,7 @@ import os
 import threading
 import re
 import logging
-from tools import db_path
+from tools import read_db, write_db
 
 logger = logging.getLogger('phenny')
 
@@ -137,39 +137,16 @@ def scrape_wiki_codes_convert():
             data[code] = iso3code
     return data
 
-def iso_filename(self):
-    return db_path(self, 'iso-codes')
-
-def iso_one_to_three_filename(self):
-    return db_path(self, 'iso-codes-conversion')
-
-def write_dict(filename, data):
-    with open(filename, 'w', encoding="utf-8") as f:
-        for k, v in data.items():
-            f.write('{}${}\n'.format(k, v))
-
-def read_dict(filename):
-    data = {}
-    with open(filename, 'r', encoding="utf-8") as f:
-        for line in f.readlines():
-            if line == '\n':
-                continue
-            code, name = line.replace('\n', '').split('$')
-            data[code] = name
-    return data
-
 def refresh_database(phenny, raw=None):
     if raw.admin or raw is None:
-        f = iso_filename(phenny)
         write_ethnologue_codes(phenny)
         phenny.iso_data = scrape_wiki_codes()
         phenny.iso_data.update(phenny.ethno_data)
-        write_dict(f, phenny.iso_data)
+        write_db(phenny, 'iso-codes', phenny.iso_data)
         phenny.say('ISO code database successfully written')
 
-        f2 = iso_one_to_three_filename(phenny)
         phenny.iso_conversion_data = scrape_wiki_codes_convert()
-        write_dict(f2, phenny.iso_conversion_data)
+        write_db(phenny, 'iso-codes-conversion', phenny.iso_conversion_data)
         phenny.say('ISO conversion db successfully written')
     else:
         phenny.say('Only admins can execute that command!')
@@ -183,33 +160,24 @@ def thread_check(phenny, raw):
         phenny.say('No ISO code updating thread running')
 
 def setup(phenny):
-    ethno_setup(phenny) #populate ethnologue codes
-    f = iso_filename(phenny)
-    if os.path.exists(f):
-        try:
-            phenny.iso_data = read_dict(f)
-        except ValueError:
-            logger.warning('iso database read failed, refreshing it')
-            phenny.iso_data = scrape_wiki_codes()
-            phenny.iso_data.update(phenny.ethno_data)
-            write_dict(f, phenny.iso_data)
-    else:
+    # populate ethnologue codes
+    ethno_setup(phenny)
+
+    try:
+        phenny.iso_data = read_db(phenny, 'iso-codes')
+    except:
+        logger.debug('iso database read failed, refreshing it')
         phenny.iso_data = scrape_wiki_codes()
         phenny.iso_data.update(phenny.ethno_data)
-        write_dict(f, phenny.iso_data)
+        write_db(phenny, 'iso-codes', phenny.iso_data)
 
     # Conversion hash
-    f2 = iso_one_to_three_filename(phenny)
-    if os.path.exists(f2):
-        try:
-            phenny.iso_conversion_data = read_dict(f2)
-        except ValueError:
-            logger.warning('iso conversion db read failed, refreshing it')
-            phenny.iso_conversion_data = scrape_wiki_codes_convert()
-            write_dict(f2, phenny.iso_conversion_data)
-    else:
+    try:
+        phenny.iso_conversion_data = read_db(phenny, 'iso-codes-conversion')
+    except ValueError:
+        logger.debug('iso conversion db read failed, refreshing it')
         phenny.iso_conversion_data = scrape_wiki_codes_convert()
-        write_dict(f2, phenny.iso_conversion_data)
+        write_db(phenny, 'iso-codes-conversion', phenny.iso_conversion_data)
 
 
 iso639.name = 'iso639'

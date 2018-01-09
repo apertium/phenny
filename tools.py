@@ -30,15 +30,20 @@ headers = {
 # overriden if max_message_length exists in the config
 max_message_length = 430
 
+dot_dir = os.path.expanduser('~/.phenny')
+
 def setup(self):
     global max_message_length
 
     if hasattr(self.config, 'max_message_length'):
         max_message_length = self.config.max_message_length
 
+def dot_path(filename):
+    os.makedirs(dot_dir, exist_ok=True)
+    return os.path.join(dot_dir, filename)
+
 def db_path(self, name):
-    filename = self.nick + '-' + self.config.host + '.' + name + '.db'
-    return os.path.join(os.path.expanduser('~/.phenny'), filename)
+    return dot_path(self.nick + '-' + self.config.host + '.' + name + '.db')
 
 def write_db(self, name, data):
     path = db_path(self, name)

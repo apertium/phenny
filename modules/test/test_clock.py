@@ -4,7 +4,7 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
 import re
 import unittest
-from mock import MagicMock, patch
+from mock import MagicMock, patch, call
 from modules import clock
 from web import catch_timeouts
 
@@ -12,18 +12,41 @@ from web import catch_timeouts
 @patch('time.time')
 @catch_timeouts
 class TestClock(unittest.TestCase):
+
     def setUp(self):
         self.phenny = MagicMock()
-        self.input = MagicMock()
+        self.phenny.nick = 'phenny'
+        self.phenny.config.host = 'irc.freenode.net'
 
-    @unittest.skip('Test requires timezone and city databases, which are currently tricky to '
-                   'properly configure on Travis CI.')
+        self.input = MagicMock()
+        self.input.nick = 'Testsworth'
+
+        clock.setup(self.phenny)
+
     def test_time(self, mock_time):
         mock_time.return_value = 1338674651
         self.input.group.return_value = 'EDT'
         clock.f_time(self.phenny, self.input)
-        self.phenny.msg.assert_called_once_with('#phenny',
-                "Sat, 02 Jun 2012 18:04:11 EDT")
+        self.phenny.reply.assert_called_once_with(
+            "Sat, 02 Jun 2012 18:04:11 Eastern Daylight Time")
+
+    def test_time_multi(self, mock_time):
+        mock_time.return_value = 1338674651
+        self.input.group.return_value = 'ACT'
+        clock.f_time(self.phenny, self.input)
+        calls = [
+            call("Sat, 02 Jun 2012 17:04:11 Acre Time"),
+            call("Sun, 03 Jun 2012 04:34:11 ASEAN Common Time"),
+            call("Sun, 03 Jun 2012 08:04:11 ACT")
+        ]
+        self.phenny.reply.assert_has_calls(calls)
+
+    def test_time_none(self, mock_time):
+        mock_time.return_value = 1338674651
+        self.input.group.return_value = 'FIZZ'
+        clock.f_time(self.phenny, self.input)
+        self.phenny.reply.assert_called_once_with(
+            "Sorry, I don't know about the 'FIZZ' timezone.")
 
     def test_beats_zero(self, mock_time):
         mock_time.return_value = 0

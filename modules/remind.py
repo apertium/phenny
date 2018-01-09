@@ -7,55 +7,35 @@ Licensed under the Eiffel Forum License 2.
 http://inamidst.com/phenny/
 """
 
-import os
 import re
 import threading
 import time
-from tools import db_path
 from modules import clock
+from tools import read_db, write_db
 
-def filename(self): 
-    return db_path(self, 'reminders')
+def load_database(phenny):
+    return read_db(phenny, 'reminders')
 
-def load_database(name): 
-    data = {}
-    if os.path.isfile(name): 
-        f = open(name, 'r')
-        for line in f: 
-            unixtime, channel, nick, message = line.split('\t')
-            message = message.rstrip('\n')
-            t = int(unixtime)
-            reminder = (channel, nick, message)
-            try: data[t].append(reminder)
-            except KeyError: data[t] = [reminder]
-        f.close()
-    return data
-
-def dump_database(name, data): 
-    f = open(name, 'w')
-    for unixtime, reminders in data.items(): 
-        for channel, nick, message in reminders: 
-            f.write('%s\t%s\t%s\t%s\n' % (unixtime, channel, nick, message))
-    f.close()
+def dump_database(phenny):
+    write_db(phenny, 'reminders', phenny.remind_data)
 
 def setup(phenny): 
-    phenny.rfn = filename(phenny)
-    phenny.rdb = load_database(phenny.rfn)
+    phenny.remind_data = load_database(phenny)
 
     def monitor(phenny): 
         time.sleep(5)
         while True: 
             now = int(time.time())
-            unixtimes = [int(key) for key in phenny.rdb]
+            unixtimes = [int(key) for key in phenny.remind_data]
             oldtimes = [t for t in unixtimes if t <= now]
             if oldtimes: 
                 for oldtime in oldtimes: 
-                    for (channel, nick, message) in phenny.rdb[oldtime]: 
+                    for (channel, nick, message) in phenny.remind_data[oldtime]:
                         if message: 
                             phenny.msg(channel, nick + ': ' + message)
                         else: phenny.msg(channel, nick + '!')
-                    del phenny.rdb[oldtime]
-                dump_database(phenny.rfn, phenny.rdb)
+                    del phenny.remind_data[oldtime]
+                dump_database(phenny)
             time.sleep(2.5)
 
     targs = (phenny,)
@@ -124,10 +104,10 @@ def remind(phenny, input):
     t = int(time.time()) + duration
     reminder = (input.sender, input.nick, message)
 
-    try: phenny.rdb[t].append(reminder)
-    except KeyError: phenny.rdb[t] = [reminder]
+    try: phenny.remind_data[t].append(reminder)
+    except KeyError: phenny.remind_data[t] = [reminder]
 
-    dump_database(phenny.rfn, phenny.rdb)
+    dump_database(phenny)
 
     if duration >= 60: 
         w = ''
@@ -181,11 +161,11 @@ def at(phenny, input):
 
     reminder = (input.sender, input.nick, message)
     # phenny.say(str((d, reminder)))
-    try: phenny.rdb[d].append(reminder)
-    except KeyError: phenny.rdb[d] = [reminder]
+    try: phenny.remind_data[d].append(reminder)
+    except KeyError: phenny.remind_data[d] = [reminder]
 
     phenny.sending.acquire()
-    dump_database(phenny.rfn, phenny.rdb)
+    dump_database(phenny)
     phenny.sending.release()
 
     phenny.reply("Reminding at %s %s - in %s minute(s)" % (t, z, duration))

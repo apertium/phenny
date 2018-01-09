@@ -4,10 +4,8 @@ Tests for phenny's tell.py
 
 import unittest
 import datetime
-import os
-from mock import MagicMock, patch
+from mock import MagicMock
 from modules import tell
-from tools import db_path
 
 class TestTell(unittest.TestCase):
 
@@ -18,10 +16,7 @@ class TestTell(unittest.TestCase):
 
         self.input = MagicMock()
 
-        alias_file = db_path(self.phenny, 'alias')
-        os.makedirs(os.path.dirname(alias_file), exist_ok=True)
-
-        self.phenny.alias_filename = alias_file
+        tell.setup(self.phenny)
 
     def create_alias(self, alias):
         self.input.group = lambda x: ['', 'add', alias][x]

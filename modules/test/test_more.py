@@ -3,7 +3,7 @@ Tests for phenny's more.py
 """
 
 import unittest
-from mock import MagicMock, patch, call
+from mock import MagicMock, call
 from modules import more
 
 class TestMore(unittest.TestCase):

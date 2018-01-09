@@ -4,9 +4,8 @@ Tests for phenny's greeting.py
 
 import unittest
 import math
-import os
-from mock import MagicMock, patch, call
-from modules import greeting, posted, logger
+from mock import MagicMock
+from modules import greeting, logger
 
 class TestGreeting(unittest.TestCase):
 
@@ -15,8 +14,6 @@ class TestGreeting(unittest.TestCase):
         self.input = MagicMock()
         self.phenny.nick = 'phenny'
         self.phenny.config.host = 'irc.freenode.net'
-
-        os.makedirs(os.path.expanduser('~/.phenny'), exist_ok=True)
 
         logger.setup(self.phenny)
         greeting.setup(self.phenny)

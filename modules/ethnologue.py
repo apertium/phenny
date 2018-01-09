@@ -10,7 +10,7 @@ from string import ascii_lowercase
 import os
 import web
 import logging
-from tools import db_path
+from tools import read_db, write_db
 
 logger = logging.getLogger('phenny')
 
@@ -34,17 +34,10 @@ def scrape_ethnologue_codes():
             data[code] = name
     return data
 
-def filename(self):
-    return db_path(self, 'ethnologue')
-
 def write_ethnologue_codes(phenny, raw=None):
     if raw is None or raw.admin:
-        file = filename(phenny)
-        data = scrape_ethnologue_codes()
-        with open(file, 'w') as f:
-            for k, v in data.items():
-                f.write('{}${}\n'.format(k, v))
-        phenny.ethno_data = data
+        phenny.ethno_data = scrape_ethnologue_codes()
+        write_db(phenny, 'ethnologue', phenny.ethno_data)
         logger.debug('Ethnologue iso-639 code fetch successful')
         if raw:
             phenny.say('Ethnologue iso-639 code fetch successful')
@@ -55,14 +48,8 @@ write_ethnologue_codes.name = 'write_ethnologue_codes'
 write_ethnologue_codes.commands = ['write-ethno-codes']
 write_ethnologue_codes.priority = 'low'
 
-def read_ethnologue_codes(phenny, raw=None):
-    file = filename(phenny)
-    data = {}
-    with open(file, 'r') as f:
-        for line in f.readlines():
-            code, name = line.split('$')
-            data[code] = name
-    phenny.ethno_data = data
+def read_ethnologue_codes(phenny):
+    phenny.ethno_data = read_db(phenny, 'ethnologue')
     logger.debug('Ethnologue iso-639 database read successful')
 
 def parse_num_speakers(s):
@@ -141,8 +128,7 @@ ethnologue.example = '.ethnologue khk'
 ethnologue.priority = 'low'
 
 def setup(phenny):
-    file = filename(phenny)
-    if os.path.exists(file):
+    try:
         read_ethnologue_codes(phenny)
-    else:
+    except:
         write_ethnologue_codes(phenny)

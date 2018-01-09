@@ -64,7 +64,7 @@ def search(phenny, input):
     except:
         return phenny.say('Sorry, no result.')
     # Removes html tags, if exist
-    answer = re.sub('<[^<]+>', '', answer)
+    answer = re.sub('<.+?>', '', answer)
     phenny.say(truncate(answer, share=' - ' + r['AbstractURL']) + ' - ' + answer_url)
 search.commands = ['search']
 

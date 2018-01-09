@@ -123,7 +123,10 @@ def main(argv=None):
  
         if not hasattr(module, 'port'): 
             module.port = 6667
- 
+            
+        if not hasattr(module, 'sasl'):
+            module.sasl = False
+        
         if not hasattr(module, 'ssl'):
             module.ssl = False
 

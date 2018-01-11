@@ -9,7 +9,7 @@ import os
 import mock
 from modules import ethnologue, iso639
 from web import catch_timeouts
-from tools import db_path, read_db, write_db
+from tools import db_path, GrumbleError, read_db, write_db
 
 
 @catch_timeouts
@@ -113,7 +113,7 @@ class TestISO639(unittest.TestCase):
         try:
             iso_data = read_db(self.phenny, 'iso-codes')
             self.assertEqual(iso_data, self.phenny.iso_data, 'ISO data written is not the same as the scraped ISO data')
-        except IOError:
+        except GrumbleError:
             self.fail("ISO database was not written at all")
 
     def test_iso_one_to_three_write_db(self):
@@ -127,7 +127,7 @@ class TestISO639(unittest.TestCase):
         try:
             iso_conversion_data = read_db(self.phenny, 'iso-codes-conversion')
             self.assertEqual(iso_conversion_data, self.phenny.iso_conversion_data, 'ISO data written is not the same as the scraped ISO data')
-        except IOError:
+        except GrumbleError:
             self.fail("ISO database was not written at all")
 
     def test_lang_search(self):

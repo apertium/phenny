@@ -13,7 +13,7 @@ import os
 import threading
 import re
 import logging
-from tools import read_db, write_db
+from tools import GrumbleError, read_db, write_db
 
 logger = logging.getLogger('phenny')
 
@@ -165,7 +165,7 @@ def setup(phenny):
 
     try:
         phenny.iso_data = read_db(phenny, 'iso-codes')
-    except:
+    except GrumbleError:
         logger.debug('iso database read failed, refreshing it')
         phenny.iso_data = scrape_wiki_codes()
         phenny.iso_data.update(phenny.ethno_data)
@@ -174,7 +174,7 @@ def setup(phenny):
     # Conversion hash
     try:
         phenny.iso_conversion_data = read_db(phenny, 'iso-codes-conversion')
-    except ValueError:
+    except GrumbleError:
         logger.debug('iso conversion db read failed, refreshing it')
         phenny.iso_conversion_data = scrape_wiki_codes_convert()
         write_db(phenny, 'iso-codes-conversion', phenny.iso_conversion_data)

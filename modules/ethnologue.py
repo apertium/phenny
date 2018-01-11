@@ -10,7 +10,7 @@ from string import ascii_lowercase
 import os
 import web
 import logging
-from tools import read_db, write_db
+from tools import GrumbleError, read_db, write_db
 
 logger = logging.getLogger('phenny')
 
@@ -130,5 +130,5 @@ ethnologue.priority = 'low'
 def setup(phenny):
     try:
         read_ethnologue_codes(phenny)
-    except:
+    except GrumbleError:
         write_ethnologue_codes(phenny)

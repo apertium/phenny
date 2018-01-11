@@ -8,14 +8,14 @@ import pickle
 import random
 from modules import caseless_equal
 from modules import more
-from tools import read_db, write_db
+from tools import GrumbleError, read_db, write_db
 
 commands = '.queue display <name>?; .queue new <name> <items>; .queue delete <name>; .queue <name> add <items>; .queue <name> swap <item/index1>, <item/index2>; .queue <name> move <source_item/index>, <target_item/index>; .queue <name> replace <item/index>, <new_item>; .queue <name> remove <item>; .queue <name> pop; .queue <name> random; .queue <name> reassign <nick>; .queue <name> rename <new_name>'
 
 def setup(phenny):
     try:
         phenny.queue_data = read_db(phenny, 'queue')
-    except:
+    except GrumbleError:
         logger.debug('queue database read failed, initializing data')
         phenny.queue_data = {}
 

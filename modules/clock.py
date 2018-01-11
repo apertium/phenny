@@ -22,7 +22,7 @@ import logging
 import subprocess
 from lxml import html
 from decimal import Decimal as dec
-from tools import deprecated, read_db, write_db
+from tools import deprecated, GrumbleError, read_db, write_db
 
 logger = logging.getLogger('phenny')
 
@@ -305,8 +305,8 @@ def write_wiki_zones(phenny):
 
 def read_wiki_zones(phenny):
     thirty_days = 30*24*60*60
-    phenny.time_zone_abbreviations = read_db(phenny, 'tz_abbr', error_after=thirty_days)
-    phenny.tz_database_time_zones = read_db(phenny, 'tz_db', error_after=thirty_days)
+    phenny.time_zone_abbreviations = read_db(phenny, 'tz_abbr', warn_after=thirty_days)
+    phenny.tz_database_time_zones = read_db(phenny, 'tz_db', warn_after=thirty_days)
 
 def refresh_database_tz(phenny, raw=None):
     if raw.admin or raw is None:
@@ -331,7 +331,7 @@ thread_check_tz.commands = ['tzdb status']
 def setup(phenny):
     try:
         read_wiki_zones(phenny)
-    except:
+    except (GrumbleError, ResourceWarning):
         logger.debug('timezone database read failed, refreshing it')
         scrape_wiki_zones(phenny)
         write_wiki_zones(phenny)

@@ -51,14 +51,23 @@ def write_db(self, name, data):
     with open(path, 'wb') as f:
         pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
 
-def read_db(self, name, error_after=None):
+def read_db(self, name, warn_after=None):
     path = db_path(self, name)
 
-    if error_after and (time() - os.path.getmtime(path)) > error_after:
+    try:
+        last_changed = os.path.getmtime(path)
+    except FileNotFoundError:
+        raise GrumbleError()
+
+    if warn_after and (time() - last_changed) > warn_after:
         raise ResourceWarning('Database out of date')
 
-    with open(path, 'rb') as f:
-        return pickle.load(f)
+    try:
+        with open(path, 'rb') as f:
+            return pickle.load(f)
+    # Pickling may throw anything
+    except:
+        raise GrumbleError()
 
 class DatabaseCursor():
     def __init__(self, path):

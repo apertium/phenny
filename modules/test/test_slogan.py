@@ -17,12 +17,16 @@ class TestSlogan(unittest.TestCase):
 
     def test_sloganize(self):
         out = sloganize('slogan')
+        if out == '\x15\x03\x01':
+            self.skipTest('Server SSL error')
         self.assertRegex(out, ".*slogan.*")
 
     def test_slogan(self):
         self.input.group.return_value = 'slogan'
         slogan(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
+        if out == '\x15\x03\x01':
+            self.skipTest('Server SSL error')
         self.assertRegex(out, ".*slogan.*")
 
     def test_slogan_none(self):

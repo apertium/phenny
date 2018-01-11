@@ -11,7 +11,7 @@ import re
 import web
 import urllib.request
 
-uri = 'http://www.sloganizer.net/en/outbound.php?slogan='
+uri = 'https://www.sloganizer.net/en/outbound.php?slogan='
 
 headers = [(
     'User-Agent', 'Mozilla/5.0' +

@@ -8,6 +8,7 @@ import sqlite3
 from humanize import naturaltime
 import requests
 from tools import DatabaseCursor, db_path
+from web import REQUEST_TIMEOUT
 
 def setup(self):
     self.posted_db = db_path(self, 'posted')
@@ -31,7 +32,7 @@ def check_posted(phenny, input, url):
 
     if ':' not in url:
         url = 'http://' + url
-    dest_url = requests.get(url, timeout=61).url
+    dest_url = requests.get(url, timeout=REQUEST_TIMEOUT).url
 
     with DatabaseCursor(phenny.posted_db) as cursor:
         cursor.execute("SELECT nick, time FROM posted WHERE channel=? AND url=?", (input.sender, dest_url))

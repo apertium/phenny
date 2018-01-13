@@ -13,6 +13,7 @@ import time
 import requests
 from html.entities import name2codepoint
 import web
+from web import REQUEST_TIMEOUT
 from tools import deprecated
 
 from modules.apertium_wiki import awik
@@ -183,7 +184,7 @@ def gettitle(phenny, input, uri):
                     info = info[0]
             except web.HTTPError:
                 try:
-                    info = requests.get(uri, headers=web.default_headers, verify=True, timeout=61)
+                    info = requests.get(uri, headers=web.default_headers, verify=True, timeout=REQUEST_TIMEOUT)
                     status = str(info.status_code)
                     info = info.headers
                 except web.HTTPError:

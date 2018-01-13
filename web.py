@@ -12,6 +12,8 @@ import json as jsonlib
 import lxml.html as lhtml
 
 
+REQUEST_TIMEOUT = 10 # seconds
+
 class Grab(urllib.request.URLopener): 
     def __init__(self, *args): 
         self.version = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.52 Safari/537.17'
@@ -28,7 +30,7 @@ from urllib.parse import quote, unquote
 user_agent = "Mozilla/5.0 (Phenny)"
 default_headers = {'User-Agent': user_agent}
 
-def get(uri, headers={}, verify=True, timeout=61, **kwargs):
+def get(uri, headers={}, verify=True, timeout=REQUEST_TIMEOUT, **kwargs):
     if not uri.startswith('http'): 
         return
     headers.update(default_headers)

@@ -3,7 +3,13 @@
 apertium_wiki.py - Phenny Apertium Wiki Stats Module
 """
 
-import requests, subprocess, shlex, os, urllib.request, urllib.error
+import os
+import requests
+import shlex
+import subprocess
+import urllib.request
+import urllib.error
+from web import REQUEST_TIMEOUT
 
 BOT = ('https://svn.code.sf.net/p/apertium/svn/trunk/apertium-tools/wiki-tools/bot.py', 'apertium_wikistats_bot.py')
 LEXCCOUNTER = ('https://svn.code.sf.net/p/apertium/svn/trunk/apertium-tools/lexccounter.py', 'lexccounter.py')
@@ -18,7 +24,7 @@ def filename(name):
 
 def setup(phenny):
     for files in [BOT, LEXCCOUNTER, AUTOCOVERAGE]:
-        r = requests.get(files[0], timeout=61)
+        r = requests.get(files[0], timeout=REQUEST_TIMEOUT)
         if r.status_code == 200:
             with open(filename(files[1]), 'wb') as f:
                 for chunk in r.iter_content():

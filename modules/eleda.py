@@ -6,13 +6,14 @@ Any questions can go to Qasim Iqbal (nick: Qasim) (email: me@qas.im)
 """
 
 import http.client
-import re, json
+import re
+import json
 import sys
-#from apertium_translate import translate
 import urllib.request, urllib.parse, urllib.error
 import web
 from tools import GrumbleError, translate
 from modules import caseless_equal
+from web import get_page
 
 follows = []
 
@@ -28,12 +29,6 @@ class Eleda(object):
 		self.sender = sender
 		self.nick = nick
 		self.dir = tuple(dir)
-
-def get_page(domain, url, encoding='utf-8', port=80): #get the HTML of a webpage.
-	conn = http.client.HTTPConnection(domain, port, timeout=60)
-	conn.request("GET", url, headers=headers)
-	res = conn.getresponse()
-	return res.read().decode(encoding)
 
 def follow(phenny, input): #follow a user
 	"""Follow someone and translate as they speak."""

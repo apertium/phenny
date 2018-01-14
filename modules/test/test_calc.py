@@ -5,8 +5,7 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
 import unittest
 from mock import MagicMock
-from modules.calc import c
-from tools import is_up
+from modules import calc
 
 
 class TestCalc(unittest.TestCase):
@@ -17,25 +16,25 @@ class TestCalc(unittest.TestCase):
 
     def test_c(self):
         self.input.group.return_value = '5*5'
-        c(self.phenny, self.input)
+        calc.c(self.phenny, self.input)
         self.phenny.say.assert_called_once_with('25')
 
     def test_c_sqrt(self):
         self.input.group.return_value = '4^(1/2)'
-        c(self.phenny, self.input)
+        calc.c(self.phenny, self.input)
         self.phenny.say.assert_called_once_with('2')
 
     def test_c_none(self):
         self.input.group.return_value = 'aif'
-        c(self.phenny, self.input)
+        calc.c(self.phenny, self.input)
         self.phenny.say.assert_called_once_with('Sorry, no result.')
 
     def test_c_equation(self):
         self.input.group.return_value = '4*x+4=x*5'
-        c(self.phenny, self.input)
+        calc.c(self.phenny, self.input)
         self.phenny.say.assert_called_once_with('4')
 
     def test_c_sin(self):
         self.input.group.return_value = 'log(90)'
-        c(self.phenny, self.input)
+        calc.c(self.phenny, self.input)
         self.phenny.say.assert_called_once_with('4.499809670330265')

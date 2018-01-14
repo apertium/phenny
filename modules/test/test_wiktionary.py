@@ -7,25 +7,26 @@ import re
 import unittest
 from mock import MagicMock
 from modules import wiktionary
-from tools import is_up
+from web import catch_timeout
 
 
 class TestWiktionary(unittest.TestCase):
     def setUp(self):
-        if not is_up('https://en.wiktionary.org'):
-            self.skipTest('Wiktionary is down, skipping test.')
         self.phenny = MagicMock()
         self.input = MagicMock()
 
+    @catch_timeout
     def test_wiktionary(self):
         w = wiktionary.wiktionary(self.phenny, 'test')
         self.assertTrue(len(w[1]) > 0)
 
+    @catch_timeout
     def test_wiktionary_none(self):
         w = wiktionary.wiktionary(self.phenny, 'Hell!')
         self.assertEqual(len(w[0]), 0)
         self.assertEqual(len(w[1]), 0)
 
+    @catch_timeout
     def test_w(self):
         self.input.group.return_value = 'test'
         wiktionary.w(self.phenny, self.input)
@@ -33,6 +34,7 @@ class TestWiktionary(unittest.TestCase):
         m = re.match('^test — noun: .*$', out, flags=re.UNICODE)
         self.assertTrue(m)
 
+    @catch_timeout
     def test_w_none(self):
         word = 'boook'
         self.input.group.return_value = word

@@ -2,23 +2,18 @@
 test_weather.py - tests for the weather module
 author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
-import re
 import unittest
-from mock import MagicMock, patch
-from modules.weather import location, local, code, f_weather
-from tools import is_up
+from mock import MagicMock
+from modules import weather
+from web import catch_timeout
 
 
 class TestWeather(unittest.TestCase):
     def setUp(self):
-        for dom, name in [('https://nominatim.openstreetmap.org', 'Location'),
-                          ('http://www.flightstats.com', 'Airport'),
-                          ('http://tgftp.nws.noaa.gov', 'NOAA weather')]:
-            if not is_up(dom):
-                self.skipTest('{:s} data domain is down, skipping test.'.format(name))
         self.phenny = MagicMock()
         self.input = MagicMock()
 
+    @catch_timeout
     def test_locations(self):
         def check_places(*args):
             def validate(actual_name, actual_lat, actual_lon):
@@ -51,25 +46,29 @@ class TestWeather(unittest.TestCase):
         ]
 
         for loc, validator in locations:
-            names, lat, lon = location(loc)
+            names, lat, lon = weather.location(loc)
             validator(names, lat, lon)
 
+    @catch_timeout
     def test_code_94110(self):
-        icao = code(self.phenny, '94110')
+        icao = weather.code(self.phenny, '94110')
         self.assertEqual(icao, 'KSFO')
 
+    @catch_timeout
     def test_airport(self):
         self.input.group.return_value = 'KIAD'
-        f_weather(self.phenny, self.input)
+        weather.f_weather(self.phenny, self.input)
         self.assertTrue(self.phenny.say.called)
 
+    @catch_timeout
     def test_place(self):
         self.input.group.return_value = 'Blacksburg'
-        f_weather(self.phenny, self.input)
+        weather.f_weather(self.phenny, self.input)
         self.assertTrue(self.phenny.say.called)
 
+    @catch_timeout
     def test_notfound(self):
         self.input.group.return_value = 'Hell'
-        f_weather(self.phenny, self.input)
+        weather.f_weather(self.phenny, self.input)
         self.phenny.say.called_once_with('#phenny',
                 "No NOAA data available for that location.")

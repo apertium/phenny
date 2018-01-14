@@ -10,9 +10,18 @@ import urllib.parse
 import requests
 import json as jsonlib
 import lxml.html as lhtml
+import unittest
+from time import time
+from requests.exceptions import ConnectionError, HTTPError, InvalidURL, ReadTimeout
+from html.entities import name2codepoint
+from urllib.parse import quote, unquote
 
 
 REQUEST_TIMEOUT = 10 # seconds
+user_agent = "Mozilla/5.0 (Phenny)"
+default_headers = {'User-Agent': user_agent}
+
+up_down = {}
 
 class Grab(urllib.request.URLopener): 
     def __init__(self, *args): 
@@ -22,13 +31,26 @@ class Grab(urllib.request.URLopener):
         return urllib.addinfourl(fp, [headers, errcode], "http:" + url)
 urllib.request._urlopener = Grab()
 
+def is_up(url):
+    global up_down
 
-from requests.exceptions import ConnectionError, HTTPError, InvalidURL
-from html.entities import name2codepoint
-from urllib.parse import quote, unquote
+    if (url not in up_down) or (time() - up_down[url][1] > 600):
+        try:
+            requests.get(url, timeout=5).raise_for_status()
+            up_down[url] = (True, time())
+        except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError,
+                requests.exceptions.Timeout):
+            up_down[url] = (False, time())
+    return up_down[url][0]
 
-user_agent = "Mozilla/5.0 (Phenny)"
-default_headers = {'User-Agent': user_agent}
+def catch_timeout(f):
+    def wrapper(*args, **kw):
+        try:
+            return f(*args, **kw)
+        except ReadTimeout:
+            raise unittest.SkipTest("The server did not send any data in the allowed amount of time. Skipping test.")
+
+    return wrapper
 
 def get(uri, headers={}, verify=True, timeout=REQUEST_TIMEOUT, **kwargs):
     if not uri.startswith('http'): 
@@ -56,6 +78,12 @@ def get(uri, headers={}, verify=True, timeout=REQUEST_TIMEOUT, **kwargs):
                     r.encoding = meta.get("charset")
                     return r.text
     return r.text
+
+def get_page(domain, url, encoding='utf-8', port=80):
+    conn = http.client.HTTPConnection(domain, port, timeout=REQUEST_TIMEOUT)
+    conn.request("GET", url, headers=headers)
+    res = conn.getresponse()
+    return res.read().decode(encoding)
 
 def head(uri, headers={}, verify=True, **kwargs): 
     if not uri.startswith('http'): 

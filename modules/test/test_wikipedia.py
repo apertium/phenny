@@ -6,7 +6,7 @@ import re
 import unittest
 from mock import MagicMock
 from modules import wikipedia, posted
-from tools import is_up
+from web import catch_timeout
 
 
 class TestWikipedia(unittest.TestCase):
@@ -20,14 +20,13 @@ class TestWikipedia(unittest.TestCase):
         return group
 
     def setUp(self):
-        if not is_up('https://en.wikipedia.org'):
-            self.skipTest('Wikipedia is down, skipping test.')
         self.phenny = MagicMock(variables=['posted'], nick='phenny')
         self.phenny.config.host = 'irc.freenode.net'
         posted.DB_DIR = '.'
         posted.setup(self.phenny)
         self.input = MagicMock(sender='#phenny', nick='tester')
 
+    @catch_timeout
     def test_wik(self):
         self.input.group = lambda x: ['', 'wik', '', 'Human back'][x]
         wikipedia.wik(self.phenny, self.input)
@@ -36,6 +35,7 @@ class TestWikipedia(unittest.TestCase):
                 out, flags=re.UNICODE)
         self.assertTrue(m)
 
+    @catch_timeout
     def test_wik_fragment(self):
         term = "New York City#Climate"
         self.input.group = lambda x: ['', 'wik', '', term][x]
@@ -45,6 +45,7 @@ class TestWikipedia(unittest.TestCase):
                 out, flags=re.UNICODE)
         self.assertTrue(m)
 
+    @catch_timeout
     def test_wik_none(self):
         term = "Ajgoajh"
         self.input.group = lambda x: ['', 'wik', '', term][x]

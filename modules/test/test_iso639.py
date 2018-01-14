@@ -7,24 +7,16 @@ author: william1835
 import unittest
 import os
 import mock
-import modules.iso639 as iso639
-from tools import is_up
+from modules import iso639
 from modules.ethnologue import scrape_ethnologue_codes
+from web import catch_timeout
 
 
 class TestISO639(unittest.TestCase):
 
     @classmethod
+    @catch_timeout
     def setUpClass(cls):
-        cls.urls = [
-            'https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes',
-            'https://en.wikipedia.org/wiki/List_of_ISO_639-2_codes'
-        ]
-
-        for uri in cls.urls:
-            if not is_up(uri):
-                cls.skipTest(cls.skip_msg.format('Wikipedia'))
-
         cls.phenny = mock.MagicMock()
         cls.input = mock.MagicMock()
 

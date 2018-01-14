@@ -5,27 +5,24 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
 import re
 import unittest
-import tools
 from mock import MagicMock
 from modules import tfw
-from tools import is_up
+from web import catch_timeout
 
 
 class TestTfw(unittest.TestCase):
     def setUp(self):
-        if not is_up('https://nominatim.openstreetmap.org'):
-            self.skipTest('OpenStreetMap API is down, skipping test.')
-        if not is_up('http://tgftp.nws.noaa.gov'):
-            self.skipTest('NOAA weather data unavailable, skipping test.')
         self.phenny = MagicMock()
         self.input = MagicMock()
 
+    @catch_timeout
     def test_badloc(self):
         self.input.group.return_value = 'tu3jgoajgoahghqog'
         tfw.tfw(self.phenny, self.input)
         self.phenny.say.assert_called_once_with(
             "WHERE THE FUCK IS THAT? Try another location.")
 
+    @catch_timeout
     def test_celsius(self):
         self.input.group.return_value = '24060'
         tfw.tfw(self.phenny, self.input, celsius=True)
@@ -34,6 +31,7 @@ class TestTfw(unittest.TestCase):
                      flags=re.UNICODE)
         self.assertTrue(m)
 
+    @catch_timeout
     def test_fahrenheit(self):
         self.input.group.return_value = '24060'
         tfw.tfw(self.phenny, self.input, fahrenheit=True)
@@ -42,6 +40,7 @@ class TestTfw(unittest.TestCase):
                      flags=re.UNICODE)
         self.assertTrue(m)
 
+    @catch_timeout
     def test_mev(self):
         self.input.group.return_value = '24060'
         tfw.tfwev(self.phenny, self.input)
@@ -50,6 +49,7 @@ class TestTfw(unittest.TestCase):
                      flags=re.UNICODE)
         self.assertTrue(m)
 
+    @catch_timeout
     def test_meter(self):
         self.input.group.return_value = '24060'
         tfw.tfw(self.phenny, self.input)
@@ -58,6 +58,7 @@ class TestTfw(unittest.TestCase):
                      flags=re.UNICODE)
         self.assertTrue(m)
 
+    @catch_timeout
     def test_sexy_time(self):
         self.input.group.return_value = 'KBCB'
         tfw.web = MagicMock()

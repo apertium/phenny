@@ -7,14 +7,10 @@ Licensed under the Eiffel Forum License 2.
 http://inamidst.com/phenny/
 """
 
-import http.client
 import os
 import re
-import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 import json
-import requests
-import web
-import itertools
 import sqlite3
 import logging
 import socket
@@ -222,25 +218,6 @@ def generate_report(repo, author, comment, modified_paths, added_paths, removed_
         return msg
     #else: final_path = "empty"
     #if final_path is None: final_path = "empty"
-
-
-def get_page(domain, url, encoding='utf-8', port=80): #get the HTML of a webpage.
-    conn = http.client.HTTPConnection(domain, port, timeout=60)
-    conn.request("GET", url, headers=headers)
-    res = conn.getresponse()
-    return res.read().decode(encoding)
-
-up_down = {}
-def is_up(url):
-    global up_down
-    if (url not in up_down) or (time() - up_down[url][1] > 600):
-        try:
-            requests.get(url, timeout=4).raise_for_status()
-            up_down[url] = (True, time())
-        except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError,
-                requests.exceptions.Timeout):
-            up_down[url] = (False, time())
-    return up_down[url][0]
 
 def translate(phenny, translate_me, input_lang, output_lang='en'): 
     input_lang, output_lang = urllib.parse.quote(input_lang), urllib.parse.quote(output_lang)

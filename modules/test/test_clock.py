@@ -6,10 +6,11 @@ import re
 import unittest
 from mock import MagicMock, patch
 from modules import clock
-from web import catch_timeout
+from web import catch_timeouts
 
 
 @patch('time.time')
+@catch_timeouts
 class TestClock(unittest.TestCase):
     def setUp(self):
         self.phenny = MagicMock()
@@ -49,7 +50,6 @@ class TestClock(unittest.TestCase):
         clock.yi(self.phenny, None)
         self.phenny.say.assert_called_with('Yes! PARTAI!')
 
-    @catch_timeout
     def test_tock(self, mock_time):
         clock.tock(self.phenny, None)
         out = self.phenny.say.call_args[0][0]
@@ -57,7 +57,6 @@ class TestClock(unittest.TestCase):
                 out, flags=re.UNICODE)
         self.assertTrue(m)
 
-    @catch_timeout
     def test_npl(self, mock_time):
         clock.npl(self.phenny, None)
         out = self.phenny.say.call_args[0][0]

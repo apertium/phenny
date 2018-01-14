@@ -6,14 +6,16 @@ import re
 import unittest
 from mock import MagicMock
 from modules import urbandict
-from web import catch_timeout
+from web import catch_timeouts
 
+
+@catch_timeouts
 class TestUrbandict(unittest.TestCase):
+
     def setUp(self):
         self.phenny = MagicMock()
         self.input = MagicMock()
 
-    @catch_timeout
     def test_result(self):
         word = 'slemp'
         self.input.group.return_value = word
@@ -23,7 +25,6 @@ class TestUrbandict(unittest.TestCase):
                      out, flags=re.UNICODE)
         self.assertTrue(m)
 
-    @catch_timeout
     def test_none(self):
         word = '__no_word_here__'
         self.input.group.return_value = word

@@ -7,11 +7,12 @@ Licensed under the Eiffel Forum License 2.
 http://inamidst.com/phenny/
 """
 
+import re
 import web
 import requests
 from tools import truncate
 from modules import more
-from web import catch_timeout, REQUEST_TIMEOUT
+from web import catch_timeout, is_up, REQUEST_TIMEOUT
 
 ddg_uri = 'https://api.duckduckgo.com/?format=json&pretty=1&q='
 suggest_uri = 'http://suggestqueries.google.com/complete/search?client=firefox&hl=en&q='

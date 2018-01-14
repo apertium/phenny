@@ -6,9 +6,10 @@ import re
 import unittest
 from mock import MagicMock
 from modules import imdb
-from web import catch_timeout
+from web import catch_timeouts
 
 
+@catch_timeouts
 class TestImdb(unittest.TestCase):
     def setUp(self):
         if imdb.API_KEY is None:
@@ -17,7 +18,6 @@ class TestImdb(unittest.TestCase):
         self.phenny = MagicMock()
         self.input = MagicMock()
 
-    @catch_timeout
     def test_imdb_search(self):
         data = imdb.imdb_search('Hackers')
         self.assertIn('Plot', data)
@@ -25,7 +25,6 @@ class TestImdb(unittest.TestCase):
         self.assertIn('Year', data)
         self.assertIn('imdbID', data)
 
-    @catch_timeout
     def test_imdb(self):
         self.input.group.return_value = 'Antitrust'
         imdb.imdb(self.phenny, self.input)
@@ -35,7 +34,6 @@ class TestImdb(unittest.TestCase):
             flags=re.UNICODE)
         self.assertRegex(out, pattern)
 
-    @catch_timeout
     def test_imdb_none(self):
         self.input.group.return_value = None
         imdb.imdb(self.phenny, self.input)

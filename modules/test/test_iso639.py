@@ -9,13 +9,13 @@ import os
 import mock
 from modules import iso639
 from modules.ethnologue import scrape_ethnologue_codes
-from web import catch_timeout
+from web import catch_timeouts
 
 
+@catch_timeouts
 class TestISO639(unittest.TestCase):
 
     @classmethod
-    @catch_timeout
     def setUpClass(cls):
         cls.phenny = mock.MagicMock()
         cls.input = mock.MagicMock()

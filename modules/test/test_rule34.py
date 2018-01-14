@@ -5,15 +5,17 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 import re
 import unittest
 from mock import MagicMock
-from web import catch_timeout
+from modules import rule34
+from web import catch_timeouts
 
 
+@catch_timeouts
 class TestRule34(unittest.TestCase):
+
     def setUp(self):
         self.phenny = MagicMock()
         self.input = MagicMock()
 
-    @catch_timeout
     def test_result(self):
         self.input.group.return_value = 'python'
         rule34.rule34(self.phenny, self.input)
@@ -23,7 +25,6 @@ class TestRule34(unittest.TestCase):
                 flags=re.UNICODE)
         self.assertTrue(m)
 
-    @catch_timeout
     def test_none(self):
         self.input.group.return_value = '__no_results_for_this__'
         rule34.rule34(self.phenny, self.input)

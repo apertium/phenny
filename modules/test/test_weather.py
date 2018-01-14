@@ -5,15 +5,16 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 import unittest
 from mock import MagicMock
 from modules import weather
-from web import catch_timeout
+from web import catch_timeouts
 
 
+@catch_timeouts
 class TestWeather(unittest.TestCase):
+
     def setUp(self):
         self.phenny = MagicMock()
         self.input = MagicMock()
 
-    @catch_timeout
     def test_locations(self):
         def check_places(*args):
             def validate(actual_name, actual_lat, actual_lon):
@@ -49,24 +50,20 @@ class TestWeather(unittest.TestCase):
             names, lat, lon = weather.location(loc)
             validator(names, lat, lon)
 
-    @catch_timeout
     def test_code_94110(self):
         icao = weather.code(self.phenny, '94110')
         self.assertEqual(icao, 'KSFO')
 
-    @catch_timeout
     def test_airport(self):
         self.input.group.return_value = 'KIAD'
         weather.f_weather(self.phenny, self.input)
         self.assertTrue(self.phenny.say.called)
 
-    @catch_timeout
     def test_place(self):
         self.input.group.return_value = 'Blacksburg'
         weather.f_weather(self.phenny, self.input)
         self.assertTrue(self.phenny.say.called)
 
-    @catch_timeout
     def test_notfound(self):
         self.input.group.return_value = 'Hell'
         weather.f_weather(self.phenny, self.input)

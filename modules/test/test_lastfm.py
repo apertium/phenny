@@ -6,9 +6,10 @@ import re
 import unittest
 from mock import MagicMock
 from modules import lastfm
-from web import catch_timeout
+from web import catch_timeouts
 
 
+@catch_timeouts
 class TestLastfm(unittest.TestCase):
     user1 = 'test'
     user2 = 'telnoratti'
@@ -17,7 +18,6 @@ class TestLastfm(unittest.TestCase):
         self.phenny = MagicMock()
         self.input = MagicMock()
 
-    @catch_timeout
     def test_now_playing(self):
         self.input.group.return_value = self.user1
         lastfm.now_playing(self.phenny, self.input)
@@ -26,7 +26,6 @@ class TestLastfm(unittest.TestCase):
                      out, flags=re.UNICODE)
         self.assertTrue(m)
 
-    @catch_timeout
     def test_now_playing_sender(self):
         self.input.group.return_value = ''
         self.input.nick = self.user1

@@ -6,10 +6,12 @@ import re
 import unittest
 from mock import MagicMock
 from modules import wikipedia, posted
-from web import catch_timeout
+from web import catch_timeouts
 
 
+@catch_timeouts
 class TestWikipedia(unittest.TestCase):
+
     def makegroup(*args):
         args2 = [] + list(args)
         def group(x):
@@ -26,7 +28,6 @@ class TestWikipedia(unittest.TestCase):
         posted.setup(self.phenny)
         self.input = MagicMock(sender='#phenny', nick='tester')
 
-    @catch_timeout
     def test_wik(self):
         self.input.group = lambda x: ['', 'wik', '', 'Human back'][x]
         wikipedia.wik(self.phenny, self.input)
@@ -35,7 +36,6 @@ class TestWikipedia(unittest.TestCase):
                 out, flags=re.UNICODE)
         self.assertTrue(m)
 
-    @catch_timeout
     def test_wik_fragment(self):
         term = "New York City#Climate"
         self.input.group = lambda x: ['', 'wik', '', term][x]
@@ -45,7 +45,6 @@ class TestWikipedia(unittest.TestCase):
                 out, flags=re.UNICODE)
         self.assertTrue(m)
 
-    @catch_timeout
     def test_wik_none(self):
         term = "Ajgoajh"
         self.input.group = lambda x: ['', 'wik', '', term][x]

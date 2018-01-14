@@ -5,22 +5,22 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 import unittest
 from mock import MagicMock
 from modules import slogan
-from web import catch_timeout
+from web import catch_timeouts
 
 
+@catch_timeouts
 class TestSlogan(unittest.TestCase):
+
     def setUp(self):
         self.phenny = MagicMock()
         self.input = MagicMock()
 
-    @catch_timeout
     def test_sloganize(self):
         out = slogan.sloganize('slogan')
         if out == '\x15\x03\x01':
             self.skipTest('Server SSL error')
         self.assertRegex(out, ".*slogan.*")
 
-    @catch_timeout
     def test_slogan(self):
         self.input.group.return_value = 'slogan'
         slogan.slogan(self.phenny, self.input)
@@ -29,7 +29,6 @@ class TestSlogan(unittest.TestCase):
             self.skipTest('Server SSL error')
         self.assertRegex(out, ".*slogan.*")
 
-    @catch_timeout
     def test_slogan_none(self):
         self.input.group.return_value = None
         slogan.slogan(self.phenny, self.input)

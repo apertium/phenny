@@ -5,7 +5,7 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 import unittest
 from mock import MagicMock, patch
 from modules import search
-from web import catch_timeout, unquote
+from web import catch_timeouts, unquote
 
 
 # tests involving Google searches are expected to fail because Google's Web
@@ -14,7 +14,9 @@ from web import catch_timeout, unquote
 # http://stackoverflow.com/a/11206266/1846915
 #
 # update as of 2017-01-14: this has been fixed
+@catch_timeouts
 class TestSearch(unittest.TestCase):
+
     def setUp(self):
         self.engines = {
             'DuckDuckGo': 'https://api.duckduckgo.com',
@@ -24,7 +26,6 @@ class TestSearch(unittest.TestCase):
         self.input = MagicMock()
 
     @patch('modules.search.requests.get')
-    @catch_timeout
     def test_requests(self, mock_get):
         mock_response = MagicMock()
         mock_response.json.return_value = {
@@ -36,14 +37,12 @@ class TestSearch(unittest.TestCase):
         search.search(self.phenny, self.input)
         self.phenny.say.assert_called_with('TestText - https://testurl.com')
 
-    @catch_timeout
     def test_search(self):
         self.input.group.return_value = 'Apertium'
         search.search(self.phenny, self.input)
         self.assertTrue(self.phenny.say.called)
 
     @patch('modules.search.more')
-    @catch_timeout
     def test_suggest(self, mock_more):
         self.input.group.return_value = 'test'
         search.suggest(self.phenny, self.input)

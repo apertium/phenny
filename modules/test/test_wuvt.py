@@ -6,14 +6,15 @@ import re
 import unittest
 from mock import MagicMock
 from modules import wuvt
-from web import catch_timeout
+from web import catch_timeouts
 
 
+@catch_timeouts
 class TestWuvt(unittest.TestCase):
+
     def setUp(self):
         self.phenny = MagicMock()
 
-    @catch_timeout
     def test_wuvt(self):
         wuvt.wuvt(self.phenny, None)
         out = self.phenny.say.call_args[0][0]

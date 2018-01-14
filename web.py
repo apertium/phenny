@@ -11,6 +11,7 @@ import requests
 import json as jsonlib
 import lxml.html as lhtml
 import unittest
+import inspect
 from time import time
 from requests.exceptions import ConnectionError, HTTPError, InvalidURL, ReadTimeout
 from html.entities import name2codepoint
@@ -36,21 +37,28 @@ def is_up(url):
 
     if (url not in up_down) or (time() - up_down[url][1] > 600):
         try:
-            requests.get(url, timeout=5).raise_for_status()
+            requests.get(url, timeout=REQUEST_TIMEOUT).raise_for_status()
             up_down[url] = (True, time())
         except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError,
                 requests.exceptions.Timeout):
             up_down[url] = (False, time())
     return up_down[url][0]
 
-def catch_timeout(f):
+def catch_timeout(fn):
     def wrapper(*args, **kw):
         try:
-            return f(*args, **kw)
+            return fn(*args, **kw)
         except ReadTimeout:
             raise unittest.SkipTest("The server did not send any data in the allowed amount of time. Skipping test.")
 
+    wrapper.__name__ = fn.__name__
     return wrapper
+
+def catch_timeouts(cls):
+    for name, method in inspect.getmembers(cls, inspect.ismethod):
+        setattr(cls, name, catch_timeout(method))
+
+    return cls
 
 def get(uri, headers={}, verify=True, timeout=REQUEST_TIMEOUT, **kwargs):
     if not uri.startswith('http'): 

@@ -7,22 +7,22 @@ import re
 import unittest
 from mock import MagicMock
 from modules import tfw
-from web import catch_timeout
+from web import catch_timeouts
 
 
+@catch_timeouts
 class TestTfw(unittest.TestCase):
+
     def setUp(self):
         self.phenny = MagicMock()
         self.input = MagicMock()
 
-    @catch_timeout
     def test_badloc(self):
         self.input.group.return_value = 'tu3jgoajgoahghqog'
         tfw.tfw(self.phenny, self.input)
         self.phenny.say.assert_called_once_with(
             "WHERE THE FUCK IS THAT? Try another location.")
 
-    @catch_timeout
     def test_celsius(self):
         self.input.group.return_value = '24060'
         tfw.tfw(self.phenny, self.input, celsius=True)
@@ -31,7 +31,6 @@ class TestTfw(unittest.TestCase):
                      flags=re.UNICODE)
         self.assertTrue(m)
 
-    @catch_timeout
     def test_fahrenheit(self):
         self.input.group.return_value = '24060'
         tfw.tfw(self.phenny, self.input, fahrenheit=True)
@@ -40,7 +39,6 @@ class TestTfw(unittest.TestCase):
                      flags=re.UNICODE)
         self.assertTrue(m)
 
-    @catch_timeout
     def test_mev(self):
         self.input.group.return_value = '24060'
         tfw.tfwev(self.phenny, self.input)
@@ -49,7 +47,6 @@ class TestTfw(unittest.TestCase):
                      flags=re.UNICODE)
         self.assertTrue(m)
 
-    @catch_timeout
     def test_meter(self):
         self.input.group.return_value = '24060'
         tfw.tfw(self.phenny, self.input)
@@ -58,7 +55,6 @@ class TestTfw(unittest.TestCase):
                      flags=re.UNICODE)
         self.assertTrue(m)
 
-    @catch_timeout
     def test_sexy_time(self):
         self.input.group.return_value = 'KBCB'
         tfw.web = MagicMock()

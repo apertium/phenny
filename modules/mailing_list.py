@@ -106,7 +106,7 @@ def check_mail(phenny):
         rc, data = mail.uid('store', uid, '+FLAGS', '(\\Seen)')
 
     for channel in messages.keys():
-        more.add_messages(phenny, 'mailinglist', channel, messages[channel])
+        more.add_messages(phenny, channel, messages[channel])
 
     mail.logout()
     phenny.mailing_list_timer = threading.Timer(60*5, check_mail, (phenny,))

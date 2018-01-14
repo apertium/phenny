@@ -20,6 +20,7 @@ import logging
 import socket
 import socketserver
 import pickle
+import inspect
 from time import time
 
 logger = logging.getLogger('phenny')
@@ -154,6 +155,11 @@ def truncate(text, share=None, max_length=max_message_length):
 
 class GrumbleError(Exception):
     pass
+
+def calling_module():
+    frame = inspect.stack()[2]
+    module = inspect.getmodule(frame[0])
+    return module.__name__
 
 def deprecated(old): 
     def new(phenny, input, old=old): 

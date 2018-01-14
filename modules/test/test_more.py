@@ -36,7 +36,7 @@ class TestMore(unittest.TestCase):
 
     def create_messages(self, target, num):
         # TODO: test tagging system
-        more.add_messages(self.phenny, 'test', target, self.messages[:num+1])
+        more.add_messages(self.phenny, target, self.messages[:num+1], tag='test')
 
     def test_more_user_user(self):
         self.create_messages(self.input.nick, 2)

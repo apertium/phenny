@@ -80,20 +80,20 @@ def queue(phenny, raw):
                 queue_names = disambiguate_name(phenny.queue_data, search)
                 if type(queue_names) is str:
                     #there was only one possible queue
-                    more.add_messages(phenny, 'queue', raw.nick, print_queue(queue_names, phenny.queue_data[queue_names]))
+                    more.add_messages(phenny, raw.nick, print_queue(queue_names, phenny.queue_data[queue_names]))
                 elif len(queue_names) > 0:
                     queue_exact = list(queue_names)
                     for q in queue_names:
                         if caseless_equal(q.split(':')[0], raw.nick) and caseless_equal(q[len(raw.nick)+1:], search):
                             #current user owns queue with exact name
-                            more.add_messages(phenny, 'queue', raw.nick, print_queue(q, phenny.queue_data[q]))
+                            more.add_messages(phenny, raw.nick, print_queue(q, phenny.queue_data[q]))
                             return
                         elif q[q.find(':')+1:] != search:
                             #filter queues with exact name
                             queue_exact.remove(q)
                     if len(queue_exact) == 1:
                         #only one user owns queue with exact name
-                        more.add_messages(phenny, 'queue', raw.nick, print_queue(queue_exact[0], phenny.queue_data[queue_exact[0]]))
+                        more.add_messages(phenny, raw.nick, print_queue(queue_exact[0], phenny.queue_data[queue_exact[0]]))
                     elif len(queue_exact) > 1:
                         #more users own queues with exact name
                         phenny.reply('Did you mean: ' + ', '.join(queue_exact) + '?')
@@ -177,7 +177,7 @@ def queue(phenny, raw):
                                     return
                             queue['queue'][id1], queue['queue'][id2] = queue['queue'][id2], queue['queue'][id1]
                             write_dict(filename(phenny), phenny.queue_data)
-                            more.add_messages(phenny, 'queue', raw.nick, print_queue(queue_name, queue))
+                            more.add_messages(phenny, raw.nick, print_queue(queue_name, queue))
                         else:
                             phenny.reply('Syntax: .queue <name> swap <index/item1>, <index/item2>')
                     elif command in ['move', 'mv']:
@@ -198,7 +198,7 @@ def queue(phenny, raw):
                             #queue['queue'][id2 + (-1 if id1 < id2 else 0)] = queue['queue'].pop(id1)
                             queue['queue'].insert(id2, queue['queue'].pop(id1))
                             write_dict(filename(phenny), phenny.queue_data)
-                            more.add_messages(phenny, 'queue', raw.nick, print_queue(queue_name, queue))
+                            more.add_messages(phenny, raw.nick, print_queue(queue_name, queue))
                         else:
                             phenny.reply('Syntax: .queue <name> move <source_index/item>, <target_index/item>')
                     elif command == 'replace':
@@ -214,7 +214,7 @@ def queue(phenny, raw):
                                     return
                             queue['queue'][old_id] = new.strip()
                             write_dict(filename(phenny), phenny.queue_data)
-                            more.add_messages(phenny, 'queue', raw.nick, print_queue(queue_name, queue))
+                            more.add_messages(phenny, raw.nick, print_queue(queue_name, queue))
                         else:
                             phenny.reply('Syntax: .queue <name> replace <index/item>, <new_item>')
                     elif command in ['remove', 'delete', 'del', 'rm']:
@@ -223,11 +223,11 @@ def queue(phenny, raw):
                             if item in queue['queue']:
                                 queue['queue'].remove(item)
                                 write_dict(filename(phenny), phenny.queue_data)
-                                more.add_messages(phenny, 'queue', raw.nick, print_queue(queue_name, queue))
+                                more.add_messages(phenny, raw.nick, print_queue(queue_name, queue))
                             elif search_queue(queue['queue'], item):
                                 queue['queue'].pop(search_queue(queue['queue'], item))
                                 write_dict(filename(phenny), phenny.queue_data)
-                                more.add_messages(phenny, 'queue', raw.nick, print_queue(queue_name, queue))
+                                more.add_messages(phenny, raw.nick, print_queue(queue_name, queue))
                             else:
                                 phenny.reply('{} not found in {}'.format(item, queue_name))
                         else:
@@ -236,7 +236,7 @@ def queue(phenny, raw):
                         try:
                             queue['queue'].pop(0)
                             write_dict(filename(phenny), phenny.queue_data)
-                            more.add_messages(phenny, 'queue', raw.nick, print_queue(queue_name, queue))
+                            more.add_messages(phenny, raw.nick, print_queue(queue_name, queue))
                         except IndexError:
                             phenny.reply('That queue is already empty.')
                     elif command == 'random':
@@ -248,7 +248,7 @@ def queue(phenny, raw):
                             phenny.queue_data.pop(queue_name)
                             phenny.queue_data[new_queue_name] = {'owner': new_owner, 'queue': queue['queue']}
                             write_dict(filename(phenny), phenny.queue_data)
-                            more.add_messages(phenny, 'queue', raw.nick, print_queue(new_queue_name, queue))
+                            more.add_messages(phenny, raw.nick, print_queue(new_queue_name, queue))
                         else:
                             phenny.reply('Syntax: .queue <name> reassign <nick>')
                     elif command.lower() in ['rename', 'ren']:
@@ -256,7 +256,7 @@ def queue(phenny, raw):
                             new_queue_name = queue['owner'] + ':' + raw.group(3)
                             phenny.queue_data[new_queue_name] = phenny.queue_data.pop(queue_name)
                             write_dict(filename(phenny), phenny.queue_data)
-                            more.add_messages(phenny, 'queue', raw.nick, print_queue(new_queue_name, queue))
+                            more.add_messages(phenny, raw.nick, print_queue(new_queue_name, queue))
                         else:
                             phenny.reply('Syntax: .queue <name> rename <new_name>')
                 elif command == 'random':
@@ -264,7 +264,7 @@ def queue(phenny, raw):
                 else:
                     phenny.reply('You aren\'t the owner of this queue!')
             else:
-                more.add_messages(phenny, 'queue', raw.nick, print_queue(queue_name, queue))
+                more.add_messages(phenny, raw.nick, print_queue(queue_name, queue))
         else:
             if raw.group(3):
                 phenny.reply('That\'s not a command. Commands: ' + commands)

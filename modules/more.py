@@ -5,7 +5,7 @@ Author - mandarj
 """
 
 import sqlite3
-from tools import break_up, DatabaseCursor, db_path, max_message_length
+from tools import break_up, calling_module, DatabaseCursor, db_path, max_message_length
 
 def setup(self):
     self.more_db = db_path(self, 'more')
@@ -15,15 +15,15 @@ def setup(self):
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS more (
         id         INTEGER PRIMARY KEY AUTOINCREMENT,
-        tag        VARCHAR(255),
         target     VARCHAR(255),
-        message    VARCHAR({max_msg_len})
+        message    VARCHAR({max_msg_len}),
+        tag        VARCHAR(255)
     );'''.format(max_msg_len=max_message_length))
 
     cursor.close()
     connection.close()
 
-def add_messages(phenny, tag, target, messages):
+def add_messages(phenny, target, messages, tag=None):
     if not type(messages) is list:
         messages = [messages]
 
@@ -31,6 +31,10 @@ def add_messages(phenny, tag, target, messages):
         messages = list(map(lambda message: target + ': ' + message, messages))
 
     messages = sum(map(lambda message: break_up(message), messages), [])
+
+    if not tag:
+        tag = calling_module()
+        print(tag)
 
     if len(messages) <= 2:
         for message in messages:
@@ -42,8 +46,8 @@ def add_messages(phenny, tag, target, messages):
         target = target.casefold()
 
         with DatabaseCursor(phenny.more_db) as cursor:
-            values = [(tag, target, message) for message in messages]
-            cursor.executemany("INSERT INTO more (tag, target, message) VALUES (?, ?, ?)", values)
+            values = [(target, message, tag) for message in messages]
+            cursor.executemany("INSERT INTO more (target, message, tag) VALUES (?, ?, ?)", values)
 
 def more(phenny, input):
     ''' '.more N' prints the next N messages.

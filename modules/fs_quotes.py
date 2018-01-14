@@ -110,7 +110,7 @@ def randquote_fetcher(phenny, topic, to_user):
         phenny.say("Sorry, no quotes returned!")
         return
 
-    more.add_messages(phenny, 'randquote', to_user, response.split('\n'))
+    more.add_messages(phenny, to_user, response.split('\n'))
 
 def randquote(phenny, input):
     """.randquote (<topic>) - Get a random quote from quotes.firespeaker.org (about topic). (supports pointing)"""

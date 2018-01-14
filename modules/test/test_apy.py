@@ -174,7 +174,7 @@ class TestAPy(unittest.TestCase):
         mock_open.assert_called_once_with('{:s}/analyse?lang={:s}&q={:s}'.format(
             self.phenny.config.APy_analyseURL, 'eng', quote(' '.join(words))))
         msgs = ['{:s}  →  {:s}'.format(orig, ana) for ana, orig in anas]
-        self.assertEqual(mock_addmsgs.call_args[0][3], msgs)
+        self.assertEqual(mock_addmsgs.call_args[0][2], msgs)
         self.reset_mocks(mock_open, mock_addmsgs)
 
         # generate
@@ -185,7 +185,7 @@ class TestAPy(unittest.TestCase):
         mock_open.assert_called_once_with('{:s}/generate?lang={:s}&q={:s}'.format(
             self.phenny.config.APy_analyseURL, 'eng', quote('^generate<tags>$')))
         msgs = ['{:s}  →  {:s}'.format(orig, gen) for gen, orig in gens]
-        self.assertEqual(mock_addmsgs.call_args[0][3], msgs)
+        self.assertEqual(mock_addmsgs.call_args[0][2], msgs)
         self.reset_mocks(mock_open, mock_addmsgs)
 
         # bad input
@@ -201,7 +201,7 @@ class TestAPy(unittest.TestCase):
         mock_open.assert_called_once_with('{:s}/identifyLang?q={:s}'.format(
             self.phenny.config.APy_url, quote(self.texts['eng'])))
         msgs = set('{:s} = {:s}'.format(lg, str(val)) for lg, val in langs.items())
-        self.assertEqual(set(mock_addmsgs.call_args[0][3]), msgs)
+        self.assertEqual(set(mock_addmsgs.call_args[0][2]), msgs)
         self.reset_mocks(mock_open, mock_addmsgs)
 
     def test_stats(self, mock_open):

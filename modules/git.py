@@ -366,7 +366,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                     msgs_by_channel[channel] = [message]
 
         for channel in msgs_by_channel.keys():
-            more.add_messages(self.phenny, 'git', channel, msgs_by_channel[channel])
+            more.add_messages(self.phenny, channel, msgs_by_channel[channel])
 
         # send OK code
         self.send_response(200)

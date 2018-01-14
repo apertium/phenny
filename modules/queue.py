@@ -157,7 +157,7 @@ def queue(phenny, raw):
                             new_queue = list(map(lambda x: x.strip(), new_queue))
                             queue['queue'] += new_queue
                             write_dict(filename(phenny), phenny.queue_data)
-                            more.add_messages(raw.nick.lower(), phenny, print_queue(queue_name, queue))
+                            more.add_messages(phenny, raw.nick, print_queue(queue_name, queue))
                         else:
                             phenny.reply('Syntax: .queue <name> add <item1>, <item2> ...')
                     elif command == 'swap':

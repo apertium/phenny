@@ -34,7 +34,6 @@ def add_messages(phenny, target, messages, tag=None):
 
     if not tag:
         tag = calling_module()
-        print(tag)
 
     if len(messages) <= 2:
         for message in messages:

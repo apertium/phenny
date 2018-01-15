@@ -11,10 +11,13 @@ import re
 import threading
 import time
 from modules import clock
-from tools import read_db, write_db
+from tools import GrumbleError, read_db, write_db
 
 def load_database(phenny):
-    return read_db(phenny, 'reminders')
+    try:
+        return read_db(phenny, 'reminders')
+    except GrumbleError:
+        return {}
 
 def dump_database(phenny):
     write_db(phenny, 'reminders', phenny.remind_data)

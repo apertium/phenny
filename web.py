@@ -12,6 +12,7 @@ import json as jsonlib
 import lxml.html as lhtml
 import unittest
 import inspect
+import socket
 from time import time
 from requests.exceptions import ConnectionError, HTTPError, InvalidURL, ReadTimeout
 from html.entities import name2codepoint
@@ -19,6 +20,8 @@ from urllib.parse import quote, unquote
 
 
 REQUEST_TIMEOUT = 10 # seconds
+socket.setdefaulttimeout(REQUEST_TIMEOUT)
+
 user_agent = "Mozilla/5.0 (Phenny)"
 default_headers = {'User-Agent': user_agent}
 

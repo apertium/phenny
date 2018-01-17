@@ -299,6 +299,9 @@ def scrape_wiki_tz_database_time_zones():
 
             column += 1
 
+        if '+' in name or '-' in name:
+            continue
+
         data[name.upper()] = float(text)
 
     return data

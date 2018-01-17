@@ -47,40 +47,6 @@ def give_time(phenny, tz, input_nick, to_user=None):
 
     tz_complete = tz.upper()
 
-    math_add = 0
-    if '+' in tz or '-' in tz:
-        zone_and_add = tz.split('+') if '+' in tz else tz.split('-')
-        to_add = zone_and_add[1]
-        if ':' in to_add:
-            parts = to_add.split(':')
-            if len(parts[1]) > 2:
-                phenny.reply('Minutes to add allowed only upto 59. Please convert to hours if you want more.')
-                return
-            if int(parts[1]) > 59:
-                phenny.reply('Minutes to add allowed only upto 59. Please convert to hours if you want more.')
-                return
-            if len(parts[0]) > 2:
-                phenny.reply('Time to add allowed only upto 24 hours.')
-                return
-            if int(parts[0]) > 24:
-                phenny.reply('Time to add allowed only upto 24 hours.')
-                return
-            if int(parts[0]) == 24 and int(parts[1]) > 0:
-                phenny.reply('Time to add allowed only upto 24 hours.')
-                return
-            math_add = int(parts[0]) * 3600 + int(parts[1]) * 60
-        else:
-            if len(to_add) > 2:
-                phenny.reply('Time to add allowed only upto 24 hours.')
-                return
-            if int(to_add) > 24:
-                phenny.reply('Time to add allowed only upto 24 hours.')
-                return
-            math_add = int(to_add) * 3600
-        if '-' in tz:
-            math_add *= -1
-        tz = zone_and_add[0]
-
     try:
         read_wiki_zones(phenny)
     except:
@@ -103,7 +69,7 @@ def give_time(phenny, tz, input_nick, to_user=None):
 
     if tz_offsets:
         for tz_offset in tz_offsets:
-            offset = tz_offset[1] * 3600 + math_add
+            offset = tz_offset[1] * 3600
             timenow = time.gmtime(time.time() + offset)
             msg = time.strftime("%a, %d %b %Y %H:%M:%S " + tz_offset[0], timenow)
 

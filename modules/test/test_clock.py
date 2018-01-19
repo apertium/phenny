@@ -28,18 +28,18 @@ class TestClock(unittest.TestCase):
         self.input.group.return_value = 'EDT'
         clock.f_time(self.phenny, self.input)
         self.phenny.reply.assert_called_once_with(
-            "Sat, 02 Jun 2012 18:04:11 Eastern Daylight Time")
+            "Eastern Daylight Time: Sat, 02 Jun 2012 18:04:11")
 
     def test_time_multi(self, mock_time):
         mock_time.return_value = 1338674651
         self.input.group.return_value = 'ACT'
         clock.f_time(self.phenny, self.input)
-        calls = [
-            call("Sat, 02 Jun 2012 17:04:11 Acre Time"),
-            call("Sun, 03 Jun 2012 04:34:11 ASEAN Common Time"),
-            call("Sun, 03 Jun 2012 08:04:11 ACT")
+        msgs = [
+            "Acre Time: Sat, 02 Jun 2012 17:04:11",
+            "ASEAN Common Time: Sun, 03 Jun 2012 04:34:11",
+            "ACT: Sun, 03 Jun 2012 08:04:11"
         ]
-        self.phenny.reply.assert_has_calls(calls)
+        self.phenny.reply.assert_called_once_with('; '.join(msgs))
 
     def test_time_none(self, mock_time):
         mock_time.return_value = 1338674651

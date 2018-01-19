@@ -102,15 +102,19 @@ def give_time(phenny, tz, input_nick, to_user=None):
     tz_offsets = get_offsets(phenny, TZ)
 
     if tz_offsets:
+        msgs = []
+
         for tz_offset in tz_offsets[:3]:
             offset = tz_offset[1] * 3600 + math_add
             timenow = time.gmtime(time.time() + offset)
-            msg = time.strftime("%a, %d %b %Y %H:%M:%S " + tz_offset[0], timenow)
+            msgs.append(tz_offset[0] + ': ' + time.strftime("%a, %d %b %Y %H:%M:%S", timenow))
 
-            if to_user:
-                phenny.say(to_user + ', ' + msg)
-            else:
-                phenny.reply(msg)
+        msg = '; '.join(msgs)
+
+        if to_user:
+            phenny.say(to_user + ', ' + msg)
+        else:
+            phenny.reply(msg)
 
         if len(tz_offsets) > 3:
             msg = 'Found ' + str(len(tz_offsets)) + ' more matching timezones.'

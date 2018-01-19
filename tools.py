@@ -30,7 +30,7 @@ headers = {
 # overriden if max_message_length exists in the config
 max_message_length = 430
 
-dot_dir = os.path.expanduser('~/.phenny')
+dotdir = os.path.expanduser('~/.phenny')
 
 def setup(self):
     global max_message_length
@@ -39,8 +39,8 @@ def setup(self):
         max_message_length = self.config.max_message_length
 
 def dot_path(filename):
-    os.makedirs(dot_dir, exist_ok=True)
-    return os.path.join(dot_dir, filename)
+    os.makedirs(dotdir, exist_ok=True)
+    return os.path.join(dotdir, filename)
 
 def db_path(self, name):
     return dot_path(self.nick + '-' + self.config.host + '.' + name + '.db')

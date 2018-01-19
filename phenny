@@ -17,7 +17,7 @@ import logging
 import os
 import sys
 from textwrap import dedent as trim
-from tools import dot_dir
+from tools import dotdir
 
 logging.basicConfig(format='%(levelname)s: %(message)s')
 logger = logging.getLogger('phenny')

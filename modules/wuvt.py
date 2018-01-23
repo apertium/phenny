@@ -14,7 +14,7 @@ def wuvt(phenny, input):
                    headers={'Accept': "application/json"})
     trackinfo = json.loads(data)
 
-    if 'listeners' in trackinfo:
+    if 'listeners' in trackinfo and trackinfo['listeners'] is not None:
         phenny.say(
             "{dj} is currently playing \"{title}\" by {artist} with "
             "{listeners:d} online listeners".format(

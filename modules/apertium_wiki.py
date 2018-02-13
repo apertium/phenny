@@ -9,7 +9,6 @@ import json
 from lxml import etree
 import lxml.html
 import lxml.html.clean
-from modules.posted import check_posted
 from tools import truncate
 
 wikiuri = 'http://wiki.apertium.org/wiki/{:s}'
@@ -75,9 +74,6 @@ def apertium_wiki(phenny, input, origterm, to_nick=None):
 
     sentences = text.text_content().split(". ")
     sentence = '"' + sentences[0] + '"'
-
-    if hasattr(input, 'sender'):
-        check_posted(phenny, input, wikiuri.format(format_term_display(term)))
 
     if to_nick:
         sentence = truncate(sentence, to_nick + ', ' + ' - ' + wikiuri.format(format_term_display(term)))

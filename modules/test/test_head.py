@@ -7,18 +7,14 @@ import time
 import unittest
 from web import HTTPError
 from mock import MagicMock, patch
-from modules import posted
 from modules import head
 
 @patch('modules.head.web.head')
 class TestHead(unittest.TestCase):
 
     def setUp(self):
-        self.phenny = MagicMock(variables=['posted'], nick='phenny')
+        self.phenny = MagicMock(nick='phenny')
         self.phenny.config.host = 'irc.freenode.net'
-
-        posted.DB_DIR = '.'
-        posted.setup(self.phenny)
 
         head.setup(self.phenny)
         self.input = MagicMock(sender='#phenny', nick='tester')
@@ -62,19 +58,19 @@ class TestHead(unittest.TestCase):
             'header in the response.')
 
     @patch('modules.head.web.get')
-    @patch('modules.posted.requests.get')
-    def test_snarfuri(self, mock_rget, mock_wget, mock_head):
+    def test_snarfuri(self, mock_wget, mock_head):
         mock_head.return_value = {
             'status': '200',
             'content-type': 'text/html; charset=utf-8'
         }
         mock_wget.return_value = '<html><title>Some Page</title></html>'
         self.input.group.return_value = 'https://www.somepage.com'
-        mock_rget.return_value.url = self.input.group.return_value
+        self.assertFalse('https://www.somepage.com' in self.phenny.recent_titles)
         head.snarfuri(self.phenny, self.input)
+        self.assertTrue('https://www.somepage.com' in self.phenny.recent_titles)
         mock_head.assert_called_once_with('https://www.somepage.com')
         mock_wget.assert_called_once_with('https://www.somepage.com')
-        self.assertIn('Some Page', self.phenny.msg.call_args[0][1])
+        self.phenny.msg.assert_called_once_with(self.input.sender, '[ Some Page ]')
 
     @patch('modules.head.requests.get')
     def test_snarfuri_405(self, mock_get, mock_head):
@@ -85,33 +81,3 @@ class TestHead(unittest.TestCase):
         mock_head.assert_called_once_with('http://405notallowed.com')
         self.assertEqual(mock_get.call_args[0][0], 'http://405notallowed.com')
         self.assertFalse(self.phenny.msg.called)
-
-    @patch('modules.head.web.get')
-    @patch('modules.posted.requests.get')
-    def test_snarfuri_repeat(self, mock_rget, mock_wget, mock_head):
-        mock_head.return_value = {
-            'status': '200',
-            'content-type': 'text/html; charset=utf-8'
-        }
-        mock_wget.return_value = '<html><title>Some Page</title></html>'
-        self.input.group.return_value = 'https://www.somepage.com'
-        mock_rget.return_value.url = self.input.group.return_value
-
-        self.assertFalse('https://www.somepage.com' in self.phenny.recent_titles)
-
-        posted.check_posted = lambda x, y, z: None
-        head.snarfuri(self.phenny, self.input)
-        self.assertTrue('https://www.somepage.com' in self.phenny.recent_titles)
-        self.phenny.msg.assert_called_once_with(self.input.sender, '[ Some Page ]')
-
-        self.phenny.msg.reset_mock()
-
-        posted.check_posted = lambda x, y, z: '5 minutes ago by tester'
-        head.snarfuri(self.phenny, self.input)
-        self.phenny.msg.assert_not_called()
-
-        real_time = time.time
-        time.time = lambda: real_time() + 300
-
-        head.snarfuri(self.phenny, self.input)
-        self.phenny.msg.assert_called_once_with(self.input.sender, '[ Some Page ] (posted: 5 minutes ago by tester)')

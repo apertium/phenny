@@ -5,7 +5,7 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 import re
 import unittest
 from mock import MagicMock
-from modules import wikipedia, posted
+from modules import wikipedia
 from web import catch_timeout
 
 
@@ -21,10 +21,8 @@ class TestWikipedia(unittest.TestCase):
         return group
 
     def setUp(self):
-        self.phenny = MagicMock(variables=['posted'], nick='phenny')
+        self.phenny = MagicMock(nick='phenny')
         self.phenny.config.host = 'irc.freenode.net'
-        posted.DB_DIR = '.'
-        posted.setup(self.phenny)
         self.input = MagicMock(sender='#phenny', nick='tester')
 
     @catch_timeout

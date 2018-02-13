@@ -12,7 +12,6 @@ from lxml import etree
 import lxml.html
 import lxml.html.clean
 import web
-from modules.posted import check_posted
 from tools import truncate
 
 wikiapi = 'https://%s.wikipedia.org/w/api.php?action=query&list=search&srsearch={0}&limit=1&prop=snippet&format=json'
@@ -96,7 +95,7 @@ def wikipedia(phenny, input, origterm, lang, to_user = None):
     if result is not None:
         #Disregarding [0], the snippet
         url = result.split("|")[-1]
-        check_posted(phenny, input, url)
+
         if to_user:
             phenny.say(to_user + ', ' + parse_wiki_page(url, term, section))
         else:

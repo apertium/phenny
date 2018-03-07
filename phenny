@@ -138,6 +138,9 @@ def main(argv=None):
         if not hasattr(module, 'password'): 
             module.password = None
 
+        if not hasattr(module, 'githook_autostart'):
+            module.githook_autostart = False
+
         if module.host == 'irc.example.net': 
             logger.critical('You must edit the config file first!')
             logger.critical("You're currently using %s" % module.filename)

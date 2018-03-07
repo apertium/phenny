@@ -46,6 +46,11 @@ signal.signal(signal.SIGQUIT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
 
+def setup(phenny):
+    if phenny.config.githook_autostart:
+        setup_server(phenny)
+
+
 # githooks handler
 class MyHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, phenny):
@@ -389,18 +394,16 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         return toReturn
 
 
-def setup_server(phenny, input=None):
+def setup_server(phenny):
     '''Set up and start hooks server.'''
 
     global httpd
 
-    if not httpd or True:
+    if not httpd:
         httpd = PortReuseTCPServer(("", PORT), MyHandler(phenny))
         Thread(target=httpd.serve_forever).start()
 
     phenny.say("Server is up and running on port %s" % PORT)
-setup_server.rule = '(.*)'
-setup_server.event = 'MODE'
 
 
 def teardown(phenny):

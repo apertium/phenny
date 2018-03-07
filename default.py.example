@@ -9,6 +9,8 @@ channels = ['#example', '#test']
 owner = 'yournickname'
 greetings = {'#example': 'example greeting %name %channel', '#test': 'welcome to %channel %name'}
 
+githook_autostart = False
+
 # password is the NickServ password, serverpass is the server password
 # password = 'example'
 # serverpass = 'serverpass'

@@ -48,6 +48,12 @@ def add_messages(phenny, target, messages, tag=None):
             values = [(target, message, tag) for message in messages]
             cursor.executemany("INSERT INTO more (target, message, tag) VALUES (?, ?, ?)", values)
 
+def joinAlert(phenny, input):
+    if has_more(phenny, input.nick):
+        phenny.say(input.nick + ': You have queued messages. Type ".more", and I\'ll read them out.')
+joinAlert.event = 'JOIN'
+joinAlert.rule = r'.*'
+
 def more(phenny, input):
     ''''.more [N] [tag]' shows queued messages.
     Optional N: number of messages to show
@@ -66,7 +72,7 @@ def more(phenny, input):
 more.name = 'more'
 more.rule = r'[.]more(?: ([1-9][0-9]*))?(?: (\S+))?'
 
-def has_more(phenny, target, tag):
+def has_more(phenny, target, tag=None):
     target = target.casefold()
 
     with DatabaseCursor(phenny.more_db) as cursor:
@@ -77,7 +83,7 @@ def has_more(phenny, target, tag):
 
         return cursor.fetchone()[0] > 0
 
-def show_more(phenny, sender, target, count, tag):
+def show_more(phenny, sender, target, count, tag=None):
     target = target.casefold()
 
     with DatabaseCursor(phenny.more_db) as cursor:

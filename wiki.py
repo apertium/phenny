@@ -2,6 +2,9 @@ import html
 import json
 import re
 import web
+from web import ServerFault
+from requests.exceptions import ContentDecodingError
+from json.decoder import JSONDecodeError
 
 
 r_tr = re.compile(r'(?ims)<tr[^>]*>.*?</tr>')
@@ -39,14 +42,19 @@ class Wiki(object):
 
         try:
             result = json.loads(bytes)
-            result = result['query']['search']
-        except ValueError:
-            return None
+        except JSONDecodeError as e:
+            raise ContentDecodingError(str(e))
+
+        if 'error' in result:
+            raise ServerFault(result['error'])
+
+        result = result['query']['search']
 
         if not result:
             return None
 
-        term = result[0]['title']
+        result = result[0]
+        term = result['title']
         term = term.replace(' ', '_')
-        snippet = clean_text(result[0]['snippet'])
+        snippet = clean_text(result['snippet'])
         return "{0}|{1}".format(snippet, self.url.format(term))

@@ -13,7 +13,7 @@ import unittest
 import inspect
 import socket
 from time import time
-from requests.exceptions import ConnectionError, HTTPError, Timeout
+from requests.exceptions import ConnectionError, ContentDecodingError, HTTPError, Timeout
 from html.entities import name2codepoint
 from urllib.parse import quote, unquote
 
@@ -25,6 +25,12 @@ user_agent = "Mozilla/5.0 (Phenny)"
 default_headers = {'User-Agent': user_agent}
 
 up_down = {}
+
+class ServerFault(Exception):
+    def __init__(self, description):
+        self.description = description
+    def __str__(self):
+        return str(self.description)
 
 class Grab(urllib.request.URLopener): 
     def __init__(self, *args): 
@@ -49,7 +55,7 @@ def catch_timeout(fn):
     def wrapper(*args, **kw):
         try:
             return fn(*args, **kw)
-        except (HTTPError, ConnectionError, Timeout):
+        except (ConnectionError, ContentDecodingError, HTTPError, ServerFault, Timeout):
             raise unittest.SkipTest("The server is apparently down. Skipping test.")
 
     wrapper.__name__ = fn.__name__

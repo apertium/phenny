@@ -16,7 +16,7 @@ notifications:
     irc:
         channels:
             - secure: "lSEaxLxhus1XntMbAJI0kR8mv3ikfsZaAjG18VNQ6fqAm8PmtXKe/UNlwbhK+tTmMjCrtNhES6Hn/rPjiQh+7WHlI8NtF3lBwoCdYkam1RfSLN/ADev/r1KsGmgaF3gsm/DVBhYr1iVFFMAchUZYkbIF5jN7vC92eXcdT30ewbw="
-    on_failure: always
+    on_failure: change
     on_success: never
 # The irc channel is encrypted for apertium/phenny, so build notifications from forks won't show up on the IRC channel
 # Encrypt with:

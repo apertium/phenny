@@ -55,12 +55,6 @@ def catch_timeout(fn):
     wrapper.__name__ = fn.__name__
     return wrapper
 
-def catch_timeouts(cls):
-    for name, method in inspect.getmembers(cls, inspect.ismethod):
-        setattr(cls, name, catch_timeout(method))
-
-    return cls
-
 def get(uri, headers={}, verify=True, timeout=REQUEST_TIMEOUT, **kwargs):
     if not uri.startswith('http'): 
         return

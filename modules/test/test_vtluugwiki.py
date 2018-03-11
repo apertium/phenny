@@ -6,18 +6,16 @@ import re
 import unittest
 from mock import MagicMock
 from modules import vtluugwiki
-from web import catch_timeouts
+from web import catch_timeout
 
 
-# these tests are probably skipped because the vtluug.org website appears to be
-# permanently down
-@catch_timeouts
 class TestVtluugwiki(unittest.TestCase):
 
     def setUp(self):
         self.phenny = MagicMock()
         self.input = MagicMock()
 
+    @catch_timeout
     def test_vtluug(self):
         self.input.groups.return_value = ['', "VT-Wireless"]
         vtluugwiki.vtluug(self.phenny, self.input)
@@ -26,6 +24,7 @@ class TestVtluugwiki(unittest.TestCase):
                 out, flags=re.UNICODE)
         self.assertTrue(m)
 
+    @catch_timeout
     def test_vtluug_invalid(self):
         term = "EAP-TLS#netcfg"
         self.input.groups.return_value = ['', term]
@@ -33,6 +32,7 @@ class TestVtluugwiki(unittest.TestCase):
         self.phenny.say.assert_called_once_with( "Can't find anything in "\
                 "the VTLUUG Wiki for \"{0}\".".format(term))
 
+    @catch_timeout
     def test_vtluug_none(self):
         term = "Ajgoajh"
         self.input.groups.return_value = ['', term]

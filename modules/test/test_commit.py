@@ -5,14 +5,14 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 import unittest
 from mock import MagicMock
 from modules import commit
-from web import catch_timeouts
+from web import catch_timeout
 
 
-@catch_timeouts
 class TestCommit(unittest.TestCase):
     def setUp(self):
         self.phenny = MagicMock()
 
+    @catch_timeout
     def test_commit(self):
         commit.commit(self.phenny, None)
         self.assertTrue(self.phenny.reply.called)

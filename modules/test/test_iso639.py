@@ -8,14 +8,14 @@ import unittest
 import os
 import mock
 from modules import ethnologue, iso639
-from web import catch_timeouts
+from web import catch_timeout
 from tools import db_path, GrumbleError, read_db, write_db
 
 
-@catch_timeouts
 class TestISO639(unittest.TestCase):
 
     @classmethod
+    @catch_timeout
     def setUpClass(cls):
         cls.phenny = mock.MagicMock()
         cls.input = mock.MagicMock()

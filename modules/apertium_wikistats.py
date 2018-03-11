@@ -31,14 +31,13 @@ def setup(phenny):
 def awikstats(phenny, input):
     """Issue commands to the Apertium Stem Counter Bot."""
 
-    if not hasattr(phenny.config, 'stemCounterBotLogin'):
-        phenny.say('Bot login not set; set it in default.py')
+    if (not hasattr(phenny.config, 'stemCounterBotLogin') or
+        not hasattr(phenny.config, 'stemCounterBotPassword')):
+        phenny.say('Bot login/password needs to be set in configuration file (default.py).')
+        phenny.say('Keys are stemCounterBotLogin and stemCounterBotPassword.')
         return
+
     botLogin = phenny.config.stemCounterBotLogin
-    
-    if not hasattr(phenny.config, 'stemCounterBotPassword'):
-        phenny.say('Bot password not set; set it in default.py')
-        return
     botPassword = phenny.config.stemCounterBotPassword
 
     try:

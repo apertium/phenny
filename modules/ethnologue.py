@@ -4,13 +4,10 @@ ethnologue.py - Ethnologue.com language lookup
 author: mattr555
 """
 
-#from modules.iso639 import ISOcodes
 from lxml import html
 from string import ascii_lowercase
-import os
 import web
 import logging
-from tools import GrumbleError, read_db, write_db
 
 logger = logging.getLogger('phenny')
 
@@ -22,22 +19,21 @@ def shorten_num(n):
     elif n < 1000000000:
         return '{}M'.format(str(round(n/1000000, 1)).rstrip('0').rstrip('.'))
 
-def scrape_ethnologue_codes():
+def scrape_ethnologue_codes(phenny):
     data = {}
     base_url = 'https://www.ethnologue.com/browse/codes/'
     for letter in ascii_lowercase:
-        resp = web.get(base_url + letter)
+        resp = web.get(base_url + letter, cache=True)
         h = html.document_fromstring(resp)
         for e in h.find_class('views-field-field-iso-639-3'):
             code = e.find('div/a').text
             name = e.find('div/a').attrib['title']
             data[code] = name
-    return data
+    phenny.ethno_data = data
 
 def write_ethnologue_codes(phenny, raw=None):
     if raw is None or raw.admin:
-        phenny.ethno_data = scrape_ethnologue_codes()
-        write_db(phenny, 'ethnologue', phenny.ethno_data)
+        scrape_ethnologue_codes()
         logger.debug('Ethnologue iso-639 code fetch successful')
         if raw:
             phenny.say('Ethnologue iso-639 code fetch successful')
@@ -47,10 +43,6 @@ def write_ethnologue_codes(phenny, raw=None):
 write_ethnologue_codes.name = 'write_ethnologue_codes'
 write_ethnologue_codes.commands = ['write-ethno-codes']
 write_ethnologue_codes.priority = 'low'
-
-def read_ethnologue_codes(phenny):
-    phenny.ethno_data = read_db(phenny, 'ethnologue')
-    logger.debug('Ethnologue iso-639 database read successful')
 
 def parse_num_speakers(s):
     hits = []
@@ -128,7 +120,4 @@ ethnologue.example = '.ethnologue khk'
 ethnologue.priority = 'low'
 
 def setup(phenny):
-    try:
-        read_ethnologue_codes(phenny)
-    except GrumbleError:
-        write_ethnologue_codes(phenny)
+    scrape_ethnologue_codes(phenny)

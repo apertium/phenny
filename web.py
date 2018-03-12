@@ -16,6 +16,7 @@ from time import time
 from requests.exceptions import ConnectionError, ContentDecodingError, HTTPError, Timeout
 from html.entities import name2codepoint
 from urllib.parse import quote, unquote
+from tools import read_cache, write_cache
 
 
 REQUEST_TIMEOUT = 10 # seconds
@@ -61,17 +62,28 @@ def catch_timeout(fn):
     wrapper.__name__ = fn.__name__
     return wrapper
 
-def get(uri, headers={}, verify=True, timeout=REQUEST_TIMEOUT, **kwargs):
-    if not uri.startswith('http'): 
+def get(url, cache=False, headers={}, verify=True, timeout=REQUEST_TIMEOUT, **kwargs):
+    if not url.startswith('http'):
         return
-    headers.update(default_headers)
-    r = requests.get(uri, headers=headers, verify=verify, timeout=timeout, **kwargs)
-    r.raise_for_status()
+
+    if cache:
+        response = read_cache(url)
+    else:
+        response = None
+
+    if not response:
+        headers.update(default_headers)
+        response = requests.get(url, headers=headers, verify=verify, timeout=timeout, **kwargs)
+        response.raise_for_status()
+
+    if cache:
+        write_cache(url, response)
+
     # Fix charset if necessary
-    if 'Content-Type' in r.headers:
-        content_type = r.headers['Content-Type']
+    if 'Content-Type' in response.headers:
+        content_type = response.headers['Content-Type']
         if 'text/html' in content_type and 'charset' not in content_type:
-            doc = lhtml.document_fromstring(r.text)
+            doc = lhtml.document_fromstring(response.text)
             head = doc.find("head")
             metas = head.findall("meta")
             for meta in metas:
@@ -81,12 +93,12 @@ def get(uri, headers={}, verify=True, timeout=REQUEST_TIMEOUT, **kwargs):
                     for content in contents:
                         splitted = content.split("=")
                         if splitted[0] != None and splitted[0].lower() == "charset":
-                            r.encoding = splitted[1]
-                            return r.text
+                            response.encoding = splitted[1]
+                            return response.text
                 if meta.get("charset"):
-                    r.encoding = meta.get("charset")
-                    return r.text
-    return r.text
+                    response.encoding = meta.get("charset")
+                    return response.text
+    return response.text
 
 def get_page(domain, url, encoding='utf-8', port=80):
     conn = http.client.HTTPConnection(domain, port, timeout=REQUEST_TIMEOUT)

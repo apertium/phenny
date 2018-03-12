@@ -7,9 +7,8 @@ author: william1835
 import unittest
 import os
 import mock
-from modules import ethnologue, iso639
+from modules import iso639
 from web import catch_timeout
-from tools import db_path, GrumbleError, read_db, write_db
 
 
 class TestISO639(unittest.TestCase):
@@ -42,25 +41,11 @@ class TestISO639(unittest.TestCase):
 
         cls.langs = ['English','French','German','Catalan','Spanish']
 
-        # Prepare ISO 639 data
-        cls.phenny.ethno_data = ethnologue.scrape_ethnologue_codes()
-        cls.phenny.iso_data = iso639.scrape_wiki_codes()
-        cls.phenny.iso_data.update(cls.phenny.ethno_data)
-
-        # Prepare code conversion data
-        cls.phenny.iso_conversion_data = iso639.scrape_wiki_codes_convert()
-
         # Mock IRC data
         cls.phenny.config.host = 'irc.fakeserver.net'
         cls.phenny.nick = 'fakebot'
 
-        # Database filenames
-        cls.iso_filename = db_path(cls.phenny, 'iso-codes')
-        cls.iso_one_to_three_filename = db_path(cls.phenny, 'iso-codes-conversion')
-
-        # Write databases
-        iso639.write_db(cls.phenny, 'iso-codes', cls.phenny.iso_data)
-        iso639.write_db(cls.phenny, 'iso-codes-conversion', cls.phenny.iso_conversion_data)
+        iso639.setup(cls.phenny)
 
     def reset_mock(self, *mocks):
         for mock in mocks:
@@ -102,34 +87,6 @@ class TestISO639(unittest.TestCase):
             self.input.group.assert_called_once_with(2)
             self.reset_mock(self.phenny, self.input)
 
-    def test_iso_to_lang_write_db(self):
-        try:
-            f = open(self.iso_filename,'r')
-            f.close()
-        except IOError:
-            self.fail("ISO database was not written at all")
-
-    def test_iso_to_lang_read_db(self):
-        try:
-            iso_data = read_db(self.phenny, 'iso-codes')
-            self.assertEqual(iso_data, self.phenny.iso_data, 'ISO data written is not the same as the scraped ISO data')
-        except GrumbleError:
-            self.fail("ISO database was not written at all")
-
-    def test_iso_one_to_three_write_db(self):
-        try:
-            f = open(self.iso_one_to_three_filename,'r')
-            f.close()
-        except IOError:
-            self.fail("ISO database was not written at all")
-
-    def test_iso_one_to_three_read_db(self):
-        try:
-            iso_conversion_data = read_db(self.phenny, 'iso-codes-conversion')
-            self.assertEqual(iso_conversion_data, self.phenny.iso_conversion_data, 'ISO data written is not the same as the scraped ISO data')
-        except GrumbleError:
-            self.fail("ISO database was not written at all")
-
     def test_lang_search(self):
         for lang in self.langs:
             self.input.group.return_value = lang
@@ -138,8 +95,3 @@ class TestISO639(unittest.TestCase):
             for k, v in self.phenny.iso_data.items():
                 if lang in v:
                     self.assertIn(k + ' = ' + v, phenny_say_return_value)
-
-    @classmethod
-    def tearDownClass(cls):
-        os.remove(cls.iso_filename)
-        os.remove(cls.iso_one_to_three_filename)

@@ -17,12 +17,10 @@ import datetime
 import web
 import os
 import threading
-import csv
 import logging
 import subprocess
 from lxml import html
 from decimal import Decimal as dec
-from tools import deprecated, GrumbleError, read_db, write_db
 
 logger = logging.getLogger('phenny')
 
@@ -80,11 +78,6 @@ def give_time(phenny, tz, input_nick, to_user=None):
         if '-' in tz:
             math_add *= -1
         tz = zone_and_add[0]
-
-    try:
-        read_wiki_zones(phenny)
-    except:
-        logger.warning('timezone database read failed, update it')
 
     # Personal time zones, because they're rad
     if hasattr(phenny.config, 'timezones'):
@@ -233,7 +226,7 @@ def scrape_wiki_time_zone_abbreviations():
     data = {}
 
     url = 'http://en.wikipedia.org/wiki/List_of_time_zone_abbreviations'
-    doc = html.document_fromstring(web.get(url))
+    doc = html.document_fromstring(web.get(url, cache=True))
     table = doc.find_class('wikitable')[0]
     rows = table.findall('tr')
 
@@ -277,7 +270,7 @@ def scrape_wiki_tz_database_time_zones():
     data = {}
 
     url = 'http://en.wikipedia.org/wiki/List_of_tz_database_time_zones'
-    doc = html.document_fromstring(web.get(url))
+    doc = html.document_fromstring(web.get(url, cache=True))
     table = doc.find_class('wikitable')[0]
     rows = table.findall('tr')
 
@@ -314,18 +307,9 @@ def scrape_wiki_zones(phenny):
     phenny.time_zone_abbreviations = scrape_wiki_time_zone_abbreviations()
     phenny.tz_database_time_zones = scrape_wiki_tz_database_time_zones()
 
-def write_wiki_zones(phenny):
-    write_db(phenny, 'tz_abbr', phenny.time_zone_abbreviations)
-    write_db(phenny, 'tz_db', phenny.tz_database_time_zones)
-
-def read_wiki_zones(phenny):
-    thirty_days = 30*24*60*60
-    phenny.time_zone_abbreviations = read_db(phenny, 'tz_abbr', warn_after=thirty_days)
-    phenny.tz_database_time_zones = read_db(phenny, 'tz_db', warn_after=thirty_days)
-
 def refresh_database_tz(phenny, raw=None):
     if raw.admin or raw is None:
-        rescrape_wiki_tz(phenny)
+        scrape_wiki_zones(phenny)
         phenny.say('Timezone database successfully written')
     else:
         phenny.say('Only admins can execute that command!')
@@ -344,12 +328,7 @@ thread_check_tz.name = 'timezone_thread_check'
 thread_check_tz.commands = ['tzdb status']
 
 def setup(phenny):
-    try:
-        read_wiki_zones(phenny)
-    except (GrumbleError, ResourceWarning):
-        logger.debug('timezone database read failed, refreshing it')
-        scrape_wiki_zones(phenny)
-        write_wiki_zones(phenny)
+    scrape_wiki_zones(phenny)
 
 def beats(phenny, input):
     """Shows the internet time in Swatch beats."""

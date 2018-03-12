@@ -9,6 +9,7 @@ http://inamidst.com/phenny/
 
 import os
 import re
+import base64
 import urllib.parse
 import json
 import sqlite3
@@ -38,22 +39,20 @@ def setup(self):
     if hasattr(self.config, 'max_message_length'):
         max_message_length = self.config.max_message_length
 
+def urlsafe_encode(string):
+    return base64.urlsafe_b64encode(string.encode('utf-8')).decode('ascii')
+
 def dot_path(filename):
-    os.makedirs(dotdir, exist_ok=True)
-    return os.path.join(dotdir, filename)
+    path = os.path.join(dotdir, filename)
+    dirname = os.path.dirname(path)
+    os.makedirs(dirname, exist_ok=True)
+    return path
 
-def db_path(self, name):
-    return dot_path(self.nick + '-' + self.config.host + '.' + name + '.db')
-
-def write_db(self, name, data):
-    path = db_path(self, name)
-
+def write_obj(path, data):
     with open(path, 'wb') as f:
         pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
 
-def read_db(self, name, warn_after=None):
-    path = db_path(self, name)
-
+def read_obj(path, warn_after=None):
     try:
         last_changed = os.path.getmtime(path)
     except FileNotFoundError:
@@ -68,6 +67,30 @@ def read_db(self, name, warn_after=None):
     # Pickling may throw anything
     except:
         raise GrumbleError()
+
+def db_path(self, name):
+    return dot_path(self.nick + '-' + self.config.host + '.' + name + '.db')
+
+def write_db(self, name, data, **kwargs):
+    write_obj(db_path(self, name), data, **kwargs)
+
+def read_db(self, name, **kwargs):
+    return read_obj(db_path(self, name), **kwargs)
+
+def cache_path(name):
+    return dot_path('cache/' + urlsafe_encode(name))
+
+def write_cache(name, data):
+    write_obj(cache_path(name), data)
+
+def read_cache(name):
+    path = cache_path(name)
+    thirty_days = 30*24*60*60
+
+    try:
+        return read_obj(path, warn_after=thirty_days)
+    except (GrumbleError, ResourceWarning):
+        return None
 
 class DatabaseCursor():
     def __init__(self, path):

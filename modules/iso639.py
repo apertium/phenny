@@ -13,7 +13,6 @@ import os
 import threading
 import re
 import logging
-from tools import GrumbleError, read_db, write_db
 
 logger = logging.getLogger('phenny')
 
@@ -76,7 +75,7 @@ def scrape_wiki_codes():
     data = {}
     base_url = 'https://en.wikipedia.org/wiki/List_of_ISO_639'
     #639-1
-    resp = web.get(base_url + '-1_codes')
+    resp = web.get(base_url + '-1_codes', cache=True)
     h = html.document_fromstring(resp)
     table = h.find_class('wikitable')[0]
     for row in table.findall('tr')[1:]:
@@ -88,7 +87,7 @@ def scrape_wiki_codes():
 
         data[code] = name
     #639-2
-    resp = web.get(base_url + '-2_codes')
+    resp = web.get(base_url + '-2_codes', cache=True)
     h = html.document_fromstring(resp)
     table = h.find_class('wikitable')[0]
     for row in table.findall('tr')[1:]:
@@ -122,7 +121,7 @@ def scrape_wiki_codes_convert():
     data = {}
     base_url = 'https://en.wikipedia.org/wiki/List_of_ISO_639'
     #639-1
-    resp = web.get(base_url + '-1_codes')
+    resp = web.get(base_url + '-1_codes', cache=True)
     h = html.document_fromstring(resp)
     table = h.find_class('wikitable')[0]
     for row in table.findall('tr')[1:]:
@@ -142,11 +141,9 @@ def refresh_database(phenny, raw=None):
         write_ethnologue_codes(phenny)
         phenny.iso_data = scrape_wiki_codes()
         phenny.iso_data.update(phenny.ethno_data)
-        write_db(phenny, 'iso-codes', phenny.iso_data)
         phenny.say('ISO code database successfully written')
 
         phenny.iso_conversion_data = scrape_wiki_codes_convert()
-        write_db(phenny, 'iso-codes-conversion', phenny.iso_conversion_data)
         phenny.say('ISO conversion db successfully written')
     else:
         phenny.say('Only admins can execute that command!')
@@ -163,21 +160,11 @@ def setup(phenny):
     # populate ethnologue codes
     ethno_setup(phenny)
 
-    try:
-        phenny.iso_data = read_db(phenny, 'iso-codes')
-    except GrumbleError:
-        logger.debug('iso database read failed, refreshing it')
-        phenny.iso_data = scrape_wiki_codes()
-        phenny.iso_data.update(phenny.ethno_data)
-        write_db(phenny, 'iso-codes', phenny.iso_data)
+    phenny.iso_data = scrape_wiki_codes()
+    phenny.iso_data.update(phenny.ethno_data)
 
     # Conversion hash
-    try:
-        phenny.iso_conversion_data = read_db(phenny, 'iso-codes-conversion')
-    except GrumbleError:
-        logger.debug('iso conversion db read failed, refreshing it')
-        phenny.iso_conversion_data = scrape_wiki_codes_convert()
-        write_db(phenny, 'iso-codes-conversion', phenny.iso_conversion_data)
+    phenny.iso_conversion_data = scrape_wiki_codes_convert()
 
 
 iso639.name = 'iso639'

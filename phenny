@@ -124,6 +124,8 @@ def main(argv=None):
             'ipv6': False,
             'password': None,
             'githook_autostart': False,
+            'git_channels': {},
+            'git_events': {},
         }
 
         for key, value in defaults.items():

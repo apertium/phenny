@@ -7,6 +7,59 @@ Licensed under the Eiffel Forum License 2.
 http://inamidst.com/phenny/
 """
 
+import os
+import re
+import subprocess
+
+from modules import reload
+
+def check_return(command):
+    try:
+        subprocess.check_call(command)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+def get_output(command):
+    try:
+        return subprocess.check_output(command)
+    except subprocess.CalledProcessError:
+        return None
+
+def check_signature(message, signature):
+    return check_return(['./ssh/verify-msg.sh'] + message + [signature])
+
+def upgrade(phenny, input):
+    """Request remote upgrade using a cryptographic signature"""
+    commit, signature = input.group(1), input.group(2)
+
+    # check cryptographic signature
+
+    if not check_signature(['.upgrade', commit], signature):
+        phenny.reply('Signature is invalid')
+        return
+
+    phenny.reply('Signature is valid')
+    os.system('git fetch --all')
+
+    # ensure signature is not used twice
+
+    current = get_output(['git', 'rev-parse', 'HEAD'])
+    history = get_output(['git', 'rev-list', commit])
+
+    if current not in history:
+        phenny.reply('Specified commit must be newer than current.')
+        return
+
+    # deal with potentially dirty workspace
+
+    if not check_return(['git', 'rebase', '--autostash', commit]):
+        phenny.reply('Failed to rebase & autostash changes')
+        return
+
+    reload.restart(phenny)
+upgrade.rule = r'\.upgrade (\S+) (\S+)'
+
 def join(phenny, input): 
     """Join the specified channel. This is an admin-only command."""
     # Can only be done in privmsg by an admin

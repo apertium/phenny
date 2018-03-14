@@ -42,7 +42,7 @@ class BotTest(unittest.TestCase):
 
         mock_write.assert_has_calls([
             call(('NICK', self.nick)),
-            call(('USER', self.nick, '+iw', self.nick), self.name)
+            call(('USER', self.nick, '+iw', '_'), self.name)
             ])
 
     @patch('irc.Bot.write')
@@ -50,7 +50,7 @@ class BotTest(unittest.TestCase):
         self.bot.buffer = b"PING"
         self.bot.found_terminator()
 
-        mock_write.assert_called_once_with(('PONG', ''))
+        mock_write.assert_called_once_with(('PONG', ''), None)
 
     @patch('irc.Bot.push')
     def test_msg(self, mock_push):
@@ -80,6 +80,6 @@ class BotTest(unittest.TestCase):
     @patch('irc.Bot.write')
     def test_notice(self, mock_write):
         notice = "This is a notice!"
-        self.bot.notice('jqh', notice)
+        self.bot.proto.notice('jqh', notice)
 
         mock_write.assert_called_once_with(('NOTICE', 'jqh'), notice)

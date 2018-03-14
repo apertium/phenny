@@ -13,9 +13,7 @@ def join(phenny, input):
     if input.sender.startswith('#'): return
     if input.admin: 
         channel, key = input.group(1), input.group(2)
-        if not key: 
-            phenny.write(['JOIN'], channel)
-        else: phenny.write(['JOIN', channel, key])
+        phenny.proto.join(channel, key)
 join.rule = r'\.join (#\S+)(?: *(\S+))?'
 join.priority = 'low'
 join.example = '.join #example or .join #example key'
@@ -24,7 +22,7 @@ def autojoin(phenny, input):
     """Join the specified channel when invited by an admin."""
     if input.admin: 
         channel = input.group(1)
-        phenny.write(['JOIN'], channel)
+        phenny.proto.join(channel)
 autojoin.event = 'INVITE'
 autojoin.rule = r'(.*)'
 
@@ -33,7 +31,7 @@ def part(phenny, input):
     # Can only be done in privmsg by an admin
     if input.sender.startswith('#'): return
     if input.admin: 
-        phenny.write(['PART'], input.group(2))
+        phenny.proto.part(input.group(2))
 part.rule = (['part'], r'(#\S+)')
 part.priority = 'low'
 part.example = '.part #example'
@@ -43,7 +41,7 @@ def quit(phenny, input):
     # Can only be done in privmsg by the owner
     if input.sender.startswith('#'): return
     if input.owner: 
-        phenny.write(['QUIT'])
+        phenny.proto.quit()
         __import__('os')._exit(0)
 quit.commands = ['quit']
 quit.priority = 'low'

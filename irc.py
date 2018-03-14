@@ -9,7 +9,9 @@ http://inamidst.com/phenny/
 
 import asynchat
 import asyncore
+import functools
 import logging
+import proto
 import re
 import socket
 import ssl
@@ -17,7 +19,7 @@ import sys
 import time
 import traceback
 import threading
-from tools import break_up, max_message_length
+from tools import break_up, decorate, max_message_length
 
 logger = logging.getLogger('phenny')
 
@@ -58,6 +60,10 @@ class Bot(asynchat.async_chat):
 
         self.sending = threading.RLock()
 
+        proto_func = lambda attr: functools.partial(proto.commands[attr], self)
+        proto_map = {attr: proto_func(attr) for attr in proto.commands}
+        self.proto = decorate(object(), proto_map)
+
     def initiate_send(self):
         self.sending.acquire()
         asynchat.async_chat.initiate_send(self)
@@ -77,11 +83,9 @@ class Bot(asynchat.async_chat):
 
         def safe(input): 
             if type(input) == str:
-                input = input.replace('\r\n', '\n')
                 input = re.sub(' ?(\r|\n)+', ' ', input)
                 return input.encode('utf-8')
             else:
-                input = input.replace(b'\r\n', b'\n')
                 input = re.sub(b' ?(\r|\n)+', b' ', input)
                 return input
 
@@ -147,10 +151,10 @@ class Bot(asynchat.async_chat):
                 logger.error('ERROR: Couldn\'t authorize with SASL, password should be set in default.py!')
 
         if not self.sasl_success and self.password:
-            self.write(('PASS', self.password))
+            self.proto.pass_(self.password)
 
-        self.write(('NICK', self.nick))
-        self.write(('USER', self.user, '+iw', self.nick), self.name)
+        self.proto.nick(self.nick)
+        self.proto.user(self.user, '+iw', self.name)
 
     def handle_close(self): 
         self.close()
@@ -183,7 +187,7 @@ class Bot(asynchat.async_chat):
         self.dispatch(origin, tuple([text] + args))
 
         if args[0] == 'PING': 
-            self.write(('PONG', text))
+            self.proto.pong(text)
 
     def dispatch(self, origin, args): 
         pass
@@ -229,7 +233,7 @@ class Bot(asynchat.async_chat):
                 self.sending.release()
                 return
 
-        self.write((b'PRIVMSG', recipient), text)
+        self.proto.privmsg(recipient, text)
         self.stack.append((time.time(), text))
         self.stack = self.stack[-10:]
 
@@ -238,9 +242,6 @@ class Bot(asynchat.async_chat):
     def action(self, recipient, text):
         text = "\x01ACTION {0}\x01".format(text)
         return self.msg(recipient, text)
-
-    def notice(self, dest, text): 
-        self.write(('NOTICE', dest), text)
 
     def error(self, origin): 
         try: 

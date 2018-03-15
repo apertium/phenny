@@ -69,7 +69,7 @@ def read_obj(path, warn_after=None):
         raise GrumbleError()
 
 def db_path(self, name):
-    return dot_path(self.nick + '-' + self.config.host + '.' + name + '.db')
+    return dot_path('%s-%s.%s.db' % (self.nick, self.config.host, name))
 
 def write_db(self, name, data, **kwargs):
     write_obj(db_path(self, name), data, **kwargs)

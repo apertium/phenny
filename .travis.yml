@@ -3,9 +3,9 @@ language: python
 sudo: false
 
 cache:
-  pip: true
-  directories:
-  - ~/.phenny/cache
+    pip: true
+    directories:
+    - ~/.phenny/cache
 
 python:
     - "3.5"

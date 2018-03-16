@@ -209,7 +209,7 @@ def rephrase_errors(fn, *args, **kw):
     try:
         return fn(*args, **kw)
     except ConnectionError as e:
-        raise GrumbleError("Connection issue: %s" % str(e))
+        raise GrumbleError("Can't connect to %s" % e.request.url)
     except HTTPError as e:
         raise GrumbleError("HTTP protocol issue: %s" % str(e))
     except Timeout:

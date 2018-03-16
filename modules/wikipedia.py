@@ -7,105 +7,40 @@ Licensed under the Eiffel Forum License 2.
 http://inamidst.com/phenny/
 """
 
-import re, urllib.parse, wiki
-from lxml import etree
-import lxml.html
-import lxml.html.clean
-import web
-from tools import truncate
+import re
 
-wikiapi = 'https://%s.wikipedia.org/w/api.php?action=query&list=search&srsearch={0}&limit=1&prop=snippet&format=json'
+from tools import truncate
+import wiki
+
+wikiapi = 'https://%s.wikipedia.org/w/api.php?format=json&action=query&list=search&srsearch={0}&prop=snippet&limit=1'
 wikiuri = 'https://%s.wikipedia.org/wiki/{0}'
-wikisearch = 'https://%s.wikipedia.org/wiki/Special:Search?' \
-                          + 'search={0}&fulltext=Search'
+wikisearch = 'https://%s.wikipedia.org/wiki/Special:Search?search={0}&fulltext=Search'
 
 langs = ['ar', 'bg', 'ca', 'cs', 'da', 'de', 'en', 'es', 'eo', 'eu', 'fa', 'fr', 'ko', 'hi', 'hr', 'id', 'it', 'he', 'lt', 'hu', 'ms', 'nl', 'ja', 'no', 'pl', 'pt', 'kk', 'ro', 'ru', 'sk', 'sl', 'sr', 'fi', 'sv', 'tr', 'uk', 'vi', 'vo', 'war', 'zh']
 
 
-def format_term(term):
-    term = web.unquote(term)
-    term = web.quote(term)
-    term = term[0].upper() + term[1:]
-    term = term.replace(' ', '_')
-    return term
-
-def format_term_display(term):
-   term = web.unquote(term)
-   term = term[0].upper() + term[1:]
-   term = term.replace(' ', '_')
-   return term
-
-def format_subsection(section):
-   section = section.replace(' ', '_')
-   section = urllib.parse.quote_plus(section)
-   section = section.replace('%', '.')
-   section = section.replace(".3A", ":")
-   return section
-
-def parse_wiki_page(url, term, section = None):
-    try:
-        web_url = web.quote(url).replace("%3A", ":", 1)
-        html = str(web.get(web_url))
-    except:
-        return "A wiki page does not exist for that term."
-    page = lxml.html.fromstring(html)
-    if section is not None:
-        text = page.find(".//span[@id='%s']" % section)
-
-        if text is None:
-            return "That subsection does not exist."
-        text = text.getparent().getnext()
-
-        content_tags = ["p", "ul", "ol"]
-        #a div tag may come before the text
-        while text.tag is not None and text.tag not in content_tags:
-            text = text.getnext()
-        url += "#" + format_term_display(section)
-    else:
-        #Get first paragraph
-        text = page.get_element_by_id('mw-content-text').find('.//p')
-
-    sentences = [x.strip() for x in text.text_content().split(".")]
-    sentence = '"' + sentences[0] + '"'
-
-    return truncate(sentence, '%s - ' + url)
-
-def wikipedia(phenny, input, origterm, lang, to_user = None):
-    origterm = origterm.strip()
-    lang = lang.strip()
-
+def wikipedia(phenny, origterm, lang, to_user=None):
     if not origterm:
         return phenny.say('Perhaps you meant ".wik Zen"?')
 
-    section = None
+    origterm = origterm.strip()
+    lang = lang.strip()
 
-    if "#" in origterm:
-        origterm, section = origterm.split("#")[:2]
-        section = format_subsection(section)
-    term = format_term(origterm)
+    term, section = wiki.parse_term(origterm)
 
     w = wiki.Wiki(wikiapi % lang, wikiuri % lang, wikisearch % lang)
+    url = w.search(term)
 
-    try:
-        result = w.search(term)
-    except web.ConnectionError:
-        error = "Can't connect to en.wikipedia.org ({0})".format(wikiuri.format(term))
-        return phenny.say(error)
-
-    if result is not None:
-        #Disregarding [0], the snippet
-        url = result.split("|")[-1]
-
-        if to_user:
-            phenny.say(to_user + ', ' + parse_wiki_page(url, term, section))
-        else:
-            phenny.say(parse_wiki_page(url, term, section))
-    else:
+    if not url:
         phenny.say('Can\'t find anything in Wikipedia for "{0}".'.format(origterm))
+        return
 
+    snippet, url = wiki.extract_snippet(url, section)
 
-def point_to(phenny, input, origterm, lang, nick):
-    wikipedia(phenny, input, origterm, lang, to_user=nick)
+    if to_user:
+        phenny.say(truncate(snippet, to_user + ', "%s" - ' + url))
+    else:
+        phenny.say(truncate(snippet, '"%s" - ' + url))
 
 
 def wik(phenny, input):
@@ -125,10 +60,10 @@ def wik(phenny, input):
         to_nick = matched_point.groups()[0]
         origterm2 = matched_point.groups()[1]
 
-        point_to(phenny, input, origterm2, lang, to_nick)
+        wikipedia(phenny, origterm2, lang, to_user=to_nick)
         return
 
-    wikipedia(phenny, input, origterm, lang)
+    wikipedia(phenny, origterm, lang)
 
 wik.rule = r'\.(wik|wiki|wikipedia)(\.[a-z]{2,3})?\s(.*)'
 wik.priority = 'low'
@@ -140,7 +75,7 @@ def wik2(phenny, input):
     nick, _, __, lang, origterm = input.groups()
     if not lang: lang = "en"
 
-    point_to(phenny, input, origterm, lang, nick)
+    wikipedia(phenny, origterm, lang, to_user=nick)
 
 wik2.rule = r'(\S*)(:|,)\s\.(wik|wiki|wikipedia)(\.[a-z]{2,3})?\s(.*)'
 wik2.priority = 'high'
@@ -151,7 +86,7 @@ def wik3(phenny, input):
     _, lang, origterm, __, nick = input.groups()
     if not lang: lang = "en"
 
-    point_to(phenny, input, origterm, lang, nick)
+    wikipedia(phenny, origterm, lang, to_user=nick)
 
 wik3.rule = r'\.(wik|wiki|wikipedia)(\.[a-z]{2,3})?\s(.*)\s(->|→)\s(\S*)'
 wik3.priority = 'high'

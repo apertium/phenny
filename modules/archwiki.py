@@ -10,8 +10,7 @@ modified from Wikipedia module
 author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
 
-import re
-import web
+from tools import truncate
 import wiki
 
 wikiapi = 'https://wiki.archlinux.org/api.php?action=query&list=search&srsearch={0}&limit=1&format=json'
@@ -20,26 +19,23 @@ wikisearch = 'https://wiki.archlinux.org/index.php/Special:Search?' \
                           + 'search={0}&fulltext=Search'
 
 def awik(phenny, input): 
-    origterm = input.groups()[0]
-    if not origterm: 
+    origterm = input.group(1)
+
+    if not origterm:
         return phenny.say('Perhaps you meant ".awik dwm"?')
 
-    term = web.unquote(origterm)
-    term = term[0].upper() + term[1:]
-    term = term.replace(' ', '_')
+    term, section = wiki.parse_term(origterm)
 
     w = wiki.Wiki(wikiapi, wikiuri, wikisearch)
+    url = w.search(term)
 
-    try:
-        result = w.search(term)
-    except web.ConnectionError:
-        error = "Can't connect to wiki.archlinux.org ({0})".format(wikiuri.format(term))
-        return phenny.say(error)
+    if not url:
+        phenny.say('Can\'t find anything in the ArchWiki for "{0}".'.format(term))
+        return
 
-    if result is not None: 
-        phenny.say(result)
-    else:
-        phenny.say('Can\'t find anything in the ArchWiki for "{0}".'.format(origterm))
+    snippet, url = wiki.extract_snippet(url, section)
+
+    phenny.say(truncate(snippet, '"%s" - ' + url))
 
 awik.commands = ['awik']
 awik.priority = 'high'

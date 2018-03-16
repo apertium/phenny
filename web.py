@@ -13,7 +13,7 @@ import unittest
 import inspect
 import socket
 from time import time
-from requests.exceptions import ConnectionError, ContentDecodingError, HTTPError, Timeout
+from requests.exceptions import ConnectionError, HTTPError, Timeout
 from html.entities import name2codepoint
 from urllib.parse import quote, unquote
 from tools import read_cache, write_cache
@@ -56,7 +56,7 @@ def catch_timeout(fn):
     def wrapper(*args, **kw):
         try:
             return fn(*args, **kw)
-        except (ConnectionError, ContentDecodingError, HTTPError, ServerFault, Timeout):
+        except (ConnectionError, HTTPError, ServerFault, Timeout):
             raise unittest.SkipTest("The server is apparently down. Skipping test.")
 
     wrapper.__name__ = fn.__name__

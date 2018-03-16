@@ -134,7 +134,7 @@ def gettitle(phenny, input, uri):
     if re.match(r'https?://([a-z]{2,3}).wikipedia.org/wiki/(.*)', uri):
         match = re.match(r'https?://([a-z]{2,3}).wikipedia.org/wiki/(.*)', uri)
         lang, page = match.group(1), match.group(2)
-        return wikipedia.wikipedia(phenny, input, page, lang)
+        return wikipedia.wikipedia(phenny, page, lang)
 
     parts = uri.split(".")
     start = parts[0]

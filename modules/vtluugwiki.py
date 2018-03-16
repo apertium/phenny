@@ -10,8 +10,7 @@ modified from Wikipedia module
 author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
 
-import re
-import web
+from tools import truncate
 import wiki
 
 wikiapi = 'https://vtluug.org/w/api.php?action=query&list=search&srsearch={0}&limit=1&prop=snippet&format=json'
@@ -23,25 +22,23 @@ def vtluug(phenny, input):
     """.vtluug <term> - Look up something on the VTLUUG wiki."""
 
     origterm = input.group(1)
-    if not origterm: 
+
+    if not origterm:
         return phenny.say('Perhaps you meant ".vtluug VT-Wireless"?')
 
-    term = web.unquote(origterm)
-    term = term[0].upper() + term[1:]
-    term = term.replace(' ', '_')
+    term, section = wiki.parse_term(origterm)
 
     w = wiki.Wiki(wikiapi, wikiuri, wikisearch)
+    url = w.search(term)
 
-    try:
-        result = w.search(term)
-    except web.ConnectionError:
-        error = "Can't connect to vtluug.org ({0})".format(wikiuri.format(term))
-        return phenny.say(error)
+    if not url:
+        phenny.say('Can\'t find anything in the VTLUUG Wiki for "{0}".'.format(term))
+        return
 
-    if result is not None: 
-        phenny.say(result)
-    else:
-        phenny.say('Can\'t find anything in the VTLUUG Wiki for "{0}".'.format(origterm))
+    snippet, url = wiki.extract_snippet(url, section)
+
+    phenny.say(truncate(snippet, '"%s" - ' + url))
+
 vtluug.commands = ['vtluug']
 vtluug.priority = 'high'
 

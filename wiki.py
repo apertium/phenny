@@ -1,6 +1,5 @@
 import html
 import json
-from json.decoder import JSONDecodeError
 import lxml.html
 import re
 from requests.exceptions import ContentDecodingError
@@ -82,7 +81,7 @@ class Wiki(object):
 
         try:
             result = json.loads(web.get(url))
-        except JSONDecodeError as e:
+        except ValueError as e:
             raise ContentDecodingError(str(e))
 
         if 'error' in result:

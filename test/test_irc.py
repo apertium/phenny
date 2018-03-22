@@ -2,7 +2,9 @@
 Tests for phenny's irc.py
 """
 
+import asyncore
 import unittest
+import sys
 from mock import call, patch, Mock
 import irc
 
@@ -26,6 +28,17 @@ class OriginTest(unittest.TestCase):
         self.assertEqual(origin.host, 'bar.example.com')
         self.assertEqual(origin.sender, '#phenny')
 
+
+if sys.version_info < (3, 5):
+    # https://bugs.python.org/issue13103
+    def async_getattr_hotfix(self, attr):
+        if attr == 'socket':
+            raise AttributeError
+
+        return async_getattr_backup(self, attr)
+
+    async_getattr_backup = asyncore.dispatcher.__getattr__
+    asyncore.dispatcher.__getattr__ = async_getattr_hotfix
 
 class BotTest(unittest.TestCase):
     @patch('threading.RLock')

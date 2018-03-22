@@ -5,6 +5,7 @@ import web
 from web import ServerFault
 from requests.exceptions import ContentDecodingError
 from json.decoder import JSONDecodeError
+from tools import html_clean_text
 
 
 r_tr = re.compile(r'(?ims)<tr[^>]*>.*?</tr>')
@@ -20,8 +21,6 @@ abbrs = ['etc', 'ca', 'cf', 'Co', 'Ltd', 'Inc', 'Mt', 'Mr', 'Mrs',
          'syn', 'transl', 'sess', 'fl', 'Op', 'Dec', 'Brig', 'Gen'] \
    + list('ABCDEFGHIJKLMNOPQRSTUVWXYZ') \
    + list('abcdefghijklmnopqrstuvwxyz')
-t_sentence = r'^.{5,}?(?<!\b%s)(?:\.(?=[\[ ][A-Z0-9]|\Z)|\Z)'
-r_sentence = re.compile(t_sentence % r')(?<!\b'.join(abbrs))
 
 
 def clean_text(dirty):
@@ -56,5 +55,5 @@ class Wiki(object):
         result = result[0]
         term = result['title']
         term = term.replace(' ', '_')
-        snippet = clean_text(result['snippet'])
+        snippet = html_clean_text(result['snippet'])
         return "{0}|{1}".format(snippet, self.url.format(term))

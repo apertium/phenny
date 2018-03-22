@@ -7,17 +7,16 @@ Licensed under the Eiffel Forum License 2.
 http://inamidst.com/phenny/
 """
 
-import re, urllib.parse, wiki
-from lxml import etree
-import lxml.html
-import lxml.html.clean
+import json
+import re
+import wiki
 import web
-from tools import truncate
+from urllib.parse import quote_plus as url_encode
+from tools import query_string
 
-wikiapi = 'https://%s.wikipedia.org/w/api.php?action=query&list=search&srsearch={0}&limit=1&prop=snippet&format=json'
+wikiapi = 'https://%s.wikipedia.org/w/api.php?action=query&format=json&prop=snippet&list=search&srsearch={0}&limit=1'
 wikiuri = 'https://%s.wikipedia.org/wiki/{0}'
-wikisearch = 'https://%s.wikipedia.org/wiki/Special:Search?' \
-                          + 'search={0}&fulltext=Search'
+wikisearch = 'https://%s.wikipedia.org/wiki/Special:Search?search={0}&fulltext=Search'
 
 langs = ['ar', 'bg', 'ca', 'cs', 'da', 'de', 'en', 'es', 'eo', 'eu', 'fa', 'fr', 'ko', 'hi', 'hr', 'id', 'it', 'he', 'lt', 'hu', 'ms', 'nl', 'ja', 'no', 'pl', 'pt', 'kk', 'ro', 'ru', 'sk', 'sl', 'sr', 'fi', 'sv', 'tr', 'uk', 'vi', 'vo', 'war', 'zh']
 
@@ -29,46 +28,32 @@ def format_term(term):
     term = term.replace(' ', '_')
     return term
 
-def format_term_display(term):
-   term = web.unquote(term)
-   term = term[0].upper() + term[1:]
-   term = term.replace(' ', '_')
-   return term
-
 def format_subsection(section):
-   section = section.replace(' ', '_')
-   section = urllib.parse.quote_plus(section)
-   section = section.replace('%', '.')
-   section = section.replace(".3A", ":")
-   return section
+    section = section.replace(' ', '_')
+    section = url_encode(section)
+    section = section.replace('%', '.')
+    section = section.replace(".3A", ":")
+    return section
 
-def parse_wiki_page(url, term, section = None):
-    try:
-        web_url = web.quote(url).replace("%3A", ":", 1)
-        html = str(web.get(web_url))
-    except:
-        return "A wiki page does not exist for that term."
-    page = lxml.html.fromstring(html)
-    if section is not None:
-        text = page.find(".//span[@id='%s']" % section)
+def parse_wiki_page(url, term, section=None):
+    params = {
+        'action': 'query',
+        'format': 'json',
+        'redirects': '',
+        'prop': 'extracts',
+        'explaintext': '',
+        'exsentences': '3',
+        'titles': term
+    }
 
-        if text is None:
-            return "That subsection does not exist."
-        text = text.getparent().getnext()
+    if section:
+        params['section'] = section
+        url += '#' + url_encode(section)
 
-        content_tags = ["p", "ul", "ol"]
-        #a div tag may come before the text
-        while text.tag is not None and text.tag not in content_tags:
-            text = text.getnext()
-        url += "#" + format_term_display(section)
-    else:
-        #Get first paragraph
-        text = page.get_element_by_id('mw-content-text').find('.//p')
-
-    sentences = [x.strip() for x in text.text_content().split(".")]
-    sentence = '"' + sentences[0] + '"'
-
-    return truncate(sentence, '%s - ' + url)
+    endpoint = 'https://en.wikipedia.org/w/api.php' + query_string(params)
+    data = json.loads(web.get(endpoint))
+    pageData = next(iter(data['query']['pages'].values()))
+    return pageData['extract'] + ' - ' + url
 
 def wikipedia(phenny, input, origterm, lang, to_user = None):
     origterm = origterm.strip()
@@ -97,9 +82,9 @@ def wikipedia(phenny, input, origterm, lang, to_user = None):
         url = result.split("|")[-1]
 
         if to_user:
-            phenny.say(to_user + ', ' + parse_wiki_page(url, term, section))
+            phenny.say(to_user + ', ' + parse_wiki_page(url, origterm, section))
         else:
-            phenny.say(parse_wiki_page(url, term, section))
+            phenny.say(parse_wiki_page(url, origterm, section))
     else:
         phenny.say('Can\'t find anything in Wikipedia for "{0}".'.format(origterm))
 

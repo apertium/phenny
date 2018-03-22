@@ -10,7 +10,7 @@ http://inamidst.com/phenny/
 import re
 import web
 import requests
-from tools import truncate
+from tools import html_clean_text, truncate
 from modules import more
 from web import catch_timeout, is_up, REQUEST_TIMEOUT
 
@@ -65,7 +65,7 @@ def search(phenny, input):
     except:
         return phenny.say('Sorry, no result.')
     # Removes html tags, if exist
-    answer = re.sub('<.+?>', '', answer)
+    answer = html_clean_text(answer)
     phenny.say(truncate(answer, '%s - ' + answer_url))
 search.commands = ['search']
 

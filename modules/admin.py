@@ -33,6 +33,22 @@ def upgrade(phenny, input):
     """Request remote upgrade using a cryptographic signature"""
     commit, signature = input.group(1), input.group(2)
 
+    # check if we have a cryptographic public key
+
+    if not os.path.isfile(os.path.expanduser('~/.phenny/id_rsa.pub')):
+        phenny.reply('This instance has no cryptographic public key.')
+        return
+
+    # limit input space
+
+    if not re.fullmatch('[0-9a-f]{40}', commit):
+        phenny.reply('Invalid format: commit hash')
+        return
+
+    if not re.fullmatch('[A-Za-z0-9+/=]{172}', signature):
+        phenny.reply('Invalid format: signature')
+        return
+
     # check cryptographic signature
 
     if not check_signature(['.upgrade', commit], signature):

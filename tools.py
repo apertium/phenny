@@ -22,6 +22,9 @@ from time import time
 logger = logging.getLogger('phenny')
 
 
+# e.g. make read/write from disk no-ops
+debug = False
+
 # maximum message length (see msg() in irc.py)
 # overriden if max_message_length exists in the config
 max_message_length = 430
@@ -44,10 +47,16 @@ def dot_path(filename):
     return path
 
 def write_obj(path, data):
+    if debug:
+        return
+
     with open(path, 'wb') as f:
         pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
 
 def read_obj(path, warn_after=None):
+    if debug:
+        raise GrumbleError()
+
     try:
         last_changed = os.path.getmtime(path)
     except FileNotFoundError as e:

@@ -5,7 +5,11 @@ Author - mandarj
 """
 
 import sqlite3
+from time import time
 from tools import break_up, calling_module, DatabaseCursor, db_path, max_message_length
+
+last_notified = {}
+notify_interval = 60
 
 def setup(self):
     self.more_db = db_path(self, 'more')
@@ -23,6 +27,19 @@ def setup(self):
     cursor.close()
     connection.close()
 
+def notify(phenny, target):
+    target = target.casefold()
+    count = count_more(phenny, target)
+    now = time()
+
+    if count and (last_notified.get(target, 0) - now > notify_interval):
+        if target.startswith('#'):
+            phenny.msg(target, "There are %s queued messages. Type '.more' to view." % (count))
+        else:
+            phenny.msg(target, "%s: You have %s queued messages. Type '.more' to view." % (target, count))
+
+        last_notified[target] = now
+
 def add_messages(phenny, target, messages, tag=None):
     if not type(messages) is list:
         messages = [messages]
@@ -35,14 +52,10 @@ def add_messages(phenny, target, messages, tag=None):
     if not tag:
         tag = calling_module()
 
-    if len(messages) <= 2:
-        for message in messages:
-            phenny.msg(target, message)
+    if not count_more(phenny, target, tag):
+        phenny.msg(target, '[%s] %s' % (tag, messages.pop(0)))
 
-        return
-
-    phenny.msg(target, messages.pop(0))
-    phenny.msg(target, 'Please type ".more" to view remaining messages.')
+    notify(phenny, target)
 
     target = target.casefold()
 
@@ -51,8 +64,7 @@ def add_messages(phenny, target, messages, tag=None):
         cursor.executemany("INSERT INTO more (target, message, tag) VALUES (?, ?, ?)", values)
 
 def joinAlert(phenny, input):
-    if count_more(phenny, input.nick):
-        phenny.reply('You have queued messages. Type ".more", and I\'ll read them out.')
+    notify(phenny, input.nick)
 joinAlert.event = 'JOIN'
 joinAlert.rule = r'.*'
 
@@ -123,6 +135,8 @@ def show_more(phenny, target, count, tag=None):
                 phenny.say(message + " (" + str(remaining) + " remaining)")
         else:
             phenny.say(message)
+
+    last_notified[target] = time()
 
 def delete_all(phenny, target=None):
 

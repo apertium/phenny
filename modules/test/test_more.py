@@ -46,6 +46,10 @@ class TestMore(unittest.TestCase):
 
     def create_messages(self, target, num, tag='test'):
         more.add_messages(self.phenny, target, self.messages[:num], tag=tag)
+        message = self.messages[0]
+        if not target.startswith('#'):
+            message = target + ": " + message
+        assert_call(self.phenny.msg, target, "[%s] %s" % (tag, message))
 
     def fetch(self, admin, owner, count, tag):
         self.input.admin = admin

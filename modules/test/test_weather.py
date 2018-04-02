@@ -16,39 +16,35 @@ class TestWeather(unittest.TestCase):
 
     @catch_timeout
     def test_locations(self):
-        def check_places(*args):
-            def validate(actual_name, actual_lat, actual_lon):
-                names = [n.strip() for n in actual_name.split(',')]
-                for arg in args:
-                    self.assertIn(arg, names)
-            return validate
+        def check_location(result, expected):
+            self.assertAlmostEqual(result[0], expected[0], places=1)
+            self.assertAlmostEqual(result[1], expected[1], places=1)
 
         locations = [
-            # commented because the names keep changing, see apertium/phenny #305
-#            ('92121', check_places("San Diego", "California")),
-#            ('94110', check_places("SF", "California")),
-#            ('94041', check_places("Mountain View", "California")),
-#            ('27959', check_places("Dare County", "North Carolina")),
-#            ('48067', check_places("Royal Oak", "Michigan")),
-#            ('23606', check_places("Newport News", "Virginia")),
-#            ('23113', check_places("Robious", "Virginia")),
-#            ('27517', check_places("Chapel Hill", "North Carolina")),
-#            ('15213', check_places("Allegheny County", "Pennsylvania")),
-#            ('90210', check_places("LA", "California")),
-#            ('33109', check_places("Fisher Island", "Florida")),
-#            ('80201', check_places("Denver", "Colorado")),
+            ('92121', (32.9, -117.2)),
+            ('94110', (37.8, -122.4)),
+            ('94041', (37.4, -122.1)),
+            ('27959', (36.0, -75.6)),
+            ('48067', (42.5, -83.1)),
+            ('23606', (37.1, -76.5)),
+            ('23113', (37.5, -77.6)),
+            ('27517', (35.9, -79.0)),
+            ('15213', (40.4, -80.0)),
+            ('90210', (34.1, -118.4)),
+            ('33109', (25.8, -80.1)),
+            ('80201', (22.6, 120.3)),
 
-            ("Berlin", check_places("Berlin", "Deutschland")),
-            ("Paris", check_places("Paris", "Île-de-France")),
-            ("Vilnius", check_places("Vilnius", "Lietuva")),
+            ("Berlin", (52.5, 13.4)),
+            ("Paris", (48.9, 2.4)),
+            ("Vilnius", (54.7, 25.3)),
 
-            ('Blacksburg, VA', check_places("Blacksburg", "Virginia")),
-            ('Granger, IN', check_places("Granger", "Indiana")),
+            ('Blacksburg, VA', (37.2, -80.4)),
+            ('Granger, IN', (41.8, -86.1)),
         ]
 
-        for loc, validator in locations:
-            names, lat, lon = weather.location(loc)
-            validator(names, lat, lon)
+        for query, expected in locations:
+            result = weather.location(query)
+            check_location(result, expected)
 
     @catch_timeout
     def test_code_94110(self):

@@ -27,13 +27,13 @@ def location(q):
     results = web.get(uri)
     data = json.loads(results)
 
-    if len(data) < 1:
-        return '?', None, None
+    if not data:
+        return None, None
 
-    display_name = data[0]['display_name']
-    lat = float(data[0]['lat'])
-    lon = float(data[0]['lon'])
-    return display_name, lat, lon
+    latitude = float(data[0]['lat'])
+    longitude = float(data[0]['lon'])
+
+    return latitude, longitude
 
 
 def local(icao, hour, minute):
@@ -60,7 +60,7 @@ def code(phenny, search):
     if search.upper() in [loc[0] for loc in data]:
         return search.upper()
     else:
-        display_name, latitude, longitude = location(search)
+        latitude, longitude = location(search)
         if not latitude or not longitude:
             return False
         sumOfSquares = (99999999999999999999999999999, 'ICAO')

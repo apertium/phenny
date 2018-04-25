@@ -69,12 +69,13 @@ awik2.priority = 'high'
 
 
 def awik3(phenny, input):
-    _, lang, origterm, __, nick = input.groups()
+    _, lang, origterm, nick = input.groups()
     apertium_wiki(phenny, origterm, nick)
 
 
-awik3.rule = r'\.(awik)(\.[a-z]{2,3})?\s(.*)\s(->|→)\s(\S*)'
+awik3.rule = r'\.(awik)(\.[a-z]{2,3})?\s(.*)'
 awik3.example = '.awik Linguistics -> svineet'
+awik3.point = True
 
 
 def logs(phenny, input):

@@ -129,21 +129,23 @@ randquote.priority = 'low'
 
 
 def randquote2(phenny, input):
-    _, topic, __, nick = input.groups()
+    _, topic, nick = input.groups()
 
     randquote_fetcher(phenny, topic, nick)
 
-randquote2.rule = r'\.(randquote)\s(.*)\s(->|→)\s(\S*)'
+randquote2.rule = r'\.(randquote)\s(.*)'
 randquote2.example = '.randquote Linguistics -> svineet'
+randquote2.point = True
 
 
 def randquote3(phenny, input):
-    _, __, nick = input.groups()
+    _, nick = input.groups()
 
     randquote_fetcher(phenny, "", nick)
 
-randquote3.rule = r'\.(randquote)\s(->|→)\s(\S*)'
+randquote3.rule = r'\.(randquote)'
 randquote3.example = '.randquote -> svineet'
+randquote3.point = True
 
 
 def randquote4(phenny, input):

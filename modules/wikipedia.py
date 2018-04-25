@@ -85,14 +85,15 @@ wik2.example = 'svineet: .wik Linguistics'
 
 
 def wik3(phenny, input):
-    _, lang, origterm, __, nick = input.groups()
+    _, lang, origterm, nick = input.groups()
     if not lang: lang = "en"
 
     wikipedia(phenny, origterm, lang, to_user=nick)
 
-wik3.rule = r'\.(wik|wiki|wikipedia)(\.[a-z]{2,3})?\s(.*)\s(->|→)\s(\S*)'
+wik3.rule = r'\.(wik|wiki|wikipedia)(\.[a-z]{2,3})?\s(.*)'
 wik3.priority = 'high'
 wik3.example = '.wik Linguistics -> svineet'
+wik3.point = True
 
 
 def pointing(phenny, input):

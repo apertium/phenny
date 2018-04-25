@@ -134,21 +134,34 @@ class Phenny(irc.Bot):
 
             self.doc[func.name] = (func.__doc__, example)
 
-        self.commands[func.priority].setdefault(regexp, []).append(func)
+        commands = self.commands[func.priority]
+        keys = []
+
+        if func.point:
+            keys.append(regexp + '()')
+            keys.append(regexp + '\s(?:->|→)\s(\S*)')
+        else:
+            keys.append(regexp)
+
+        for key in keys:
+            key = re.compile(key)
+            commands.setdefault(key, []).append(func)
 
     def bind_command(self, module, name, func):
         logger.debug("Binding module '{:}' command '{:}'".format(module, name))
 
-        if not hasattr(func, 'priority'):
-            func.priority = 'medium'
+        defaults = {
+            'priority': 'medium',
+            'thread': True,
+            'point': False,
+            'event': 'PRIVMSG',
+        }
 
-        if not hasattr(func, 'thread'):
-            func.thread = True
+        for key, value in defaults.items():
+            if not hasattr(func, key):
+                setattr(func, key, value)
 
-        if not hasattr(func, 'event'):
-            func.event = 'PRIVMSG'
-        else:
-            func.event = func.event.upper()
+        func.event = func.event.upper()
 
         def sub(pattern, self=self): 
             # These replacements have significant order
@@ -158,7 +171,7 @@ class Phenny(irc.Bot):
         if hasattr(func, 'rule'):
             if isinstance(func.rule, str):
                 pattern = sub(func.rule)
-                regexp = re.compile(pattern)
+                regexp = pattern
                 self.bind(module, name, func, regexp)
 
             if isinstance(func.rule, tuple):
@@ -166,7 +179,7 @@ class Phenny(irc.Bot):
                 if len(func.rule) == 2 and isinstance(func.rule[0], str):
                     prefix, pattern = func.rule
                     prefix = sub(prefix)
-                    regexp = re.compile(prefix + pattern)
+                    regexp = prefix + pattern
                     self.bind(module, name, func, regexp)
 
                 # 2) e.g. (['p', 'q'], '(.*)')
@@ -174,7 +187,7 @@ class Phenny(irc.Bot):
                     prefix = self.config.prefix
                     commands, pattern = func.rule
                     command = r'(?:%s)(?: +(%s))?' % ('|'.join(commands), pattern)
-                    regexp = re.compile(prefix + command)
+                    regexp = prefix + command
                     self.bind(module, name, func, regexp)
 
                 # 3) e.g. ('$nick', ['p', 'q'], '(.*)')
@@ -182,13 +195,13 @@ class Phenny(irc.Bot):
                     prefix, commands, pattern = func.rule
                     prefix = sub(prefix)
                     command = r'(?:%s) +' % '|'.join(commands)
-                    regexp = re.compile(prefix + command + pattern)
+                    regexp = prefix + command + pattern
                     self.bind(module, name, func, regexp)
 
         if hasattr(func, 'commands'):
             template = r'(?:%s)(?: +(.+))?'
             pattern = template % '|'.join(func.commands)
-            regexp = re.compile(self.config.prefix + pattern)
+            regexp = self.config.prefix + pattern
             self.bind(module, name, func, regexp)
 
     def bind_commands(self):

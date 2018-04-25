@@ -63,13 +63,14 @@ urbandict.example = '.urb troll or nick: .urb troll or .urb troll -> nick'+\
 
 
 def urbandict2(phenny, input):
-    _, word, __, nick = input.groups()
+    _, word, nick = input.groups()
 
     get_definition(phenny, word, to_user=nick)
 
 
-urbandict2.rule = r'\.(urb)\s(.*)\s(->|→)\s(\S*)'
+urbandict2.rule = r'\.(urb)\s(.*)'
 urbandict2.example = '.urb seppuku -> svineet'
+urbandict2.point = True
 
 
 def urbandict3(phenny, input):

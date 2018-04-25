@@ -199,19 +199,21 @@ f_time2.rule = r'(\S*)(:|,)\s\.(time)\s(.*)'
 
 
 def f_time3(phenny, input):
-    _, __, nick = input.groups()
+    _, nick = input.groups()
 
     give_time(phenny, "", input.nick, to_user=nick)
 
-f_time3.rule = r'\.(time)\s(->|→)\s(\S*)'
+f_time3.rule = r'\.(time)'
+f_time3.point = True
 
 
 def f_time4(phenny, input):
-    _, tz, __, nick = input.groups()
+    _, tz, nick = input.groups()
 
     give_time(phenny, tz, input.nick, to_user=nick)
 
-f_time4.rule = r'\.(time)\s(.*)\s(->|→)\s(\S*)'
+f_time4.rule = r'\.(time)\s(.*)'
+f_time4.point = True
 
 
 def f_time5(phenny, input):
@@ -463,11 +465,12 @@ tz.priority = 'high'
 
 
 def time_zone2(phenny, input):
-    _, input_txt, __, nick = input.groups()
+    _, input_txt, nick = input.groups()
 
     time_zone_convert(phenny, input_txt, to_user=nick)
 
-time_zone2.rule = r'\.(tz)\s(.*)\s(->|→)\s(\S*)'
+time_zone2.rule = r'\.(tz)\s(.*)'
+time_zone2.point = True
 
 
 def time_zone3(phenny, input):

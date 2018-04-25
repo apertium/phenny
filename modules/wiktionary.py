@@ -209,11 +209,12 @@ w2.example = 'svineet: .w Seppuku'
 
 
 def w3(phenny, input):
-    _, lang, word, __, nick = input.groups()
+    _, lang, word, nick = input.groups()
     wikitionary_lookup(phenny, word, to_user=nick)
 
-w3.rule = r'\.(w)(\.[a-z]{2,3})?\s(.*)\s(->|→)\s(\S*)'
+w3.rule = r'\.(w)(\.[a-z]{2,3})?\s(.*)'
 w3.example = '.w Seppuku -> svineet'
+w3.point = True
 
 
 def ety(phenny, input):

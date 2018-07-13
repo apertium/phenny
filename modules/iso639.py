@@ -77,7 +77,7 @@ def scrape_wiki_codes():
     resp = web.get(base_url + '-1_codes', cache=True)
     h = html.document_fromstring(resp)
     table = h.find_class('wikitable')[0]
-    for row in table.findall('tr')[1:]:
+    for row in table.find('tbody').findall('tr')[1:]:
         name = etree.tostring(row.findall('td')[2]).decode('utf-8')
         name = etree.fromstring(name[name.find('<a'):name.find('</a>')+4]).text
 
@@ -89,7 +89,7 @@ def scrape_wiki_codes():
     resp = web.get(base_url + '-2_codes', cache=True)
     h = html.document_fromstring(resp)
     table = h.find_class('wikitable')[0]
-    for row in table.findall('tr')[1:]:
+    for row in table.find('tbody').findall('tr')[1:]:
         name = etree.tostring(row.findall('td')[4]).decode('utf-8')
 
         if '<a' in name:
@@ -123,7 +123,7 @@ def scrape_wiki_codes_convert():
     resp = web.get(base_url + '-1_codes', cache=True)
     h = html.document_fromstring(resp)
     table = h.find_class('wikitable')[0]
-    for row in table.findall('tr')[1:]:
+    for row in table.find('tbody').findall('tr')[1:]:
         iso3code = row.findall('td')[7].text
         code = etree.tostring(row.findall('td')[4]).decode('utf-8')
         code = etree.fromstring(code[code.find('<a'):code.find('</a>')+4]).text

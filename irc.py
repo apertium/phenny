@@ -237,7 +237,7 @@ class Bot(asynchat.async_chat):
         text = "\x01ACTION {0}\x01".format(text)
         return self.msg(recipient, text)
 
-    def error(self, origin): 
+    def error(self, msg):
         try: 
             trace = traceback.format_exc()
             logger.error(str(trace))
@@ -251,8 +251,9 @@ class Bot(asynchat.async_chat):
                     break
             else: report.append('source unknown')
 
-            self.msg(origin.sender, report[0] + ' (' + report[1] + ')')
-        except: self.msg(origin.sender, "Got an error.")
+            msg(report[0] + ' (' + report[1] + ')')
+        except:
+            msg("Got an error.")
 
 
 class TestBot(Bot): 

@@ -224,13 +224,17 @@ class Phenny(irc.Bot):
 
         return CommandInput(text, origin, bytes, match, args)
 
-    def call(self, func, origin, phenny, input): 
+    def call(self, func, origin, phenny, input):
+        def report(text):
+            for admin in phenny.admins:
+                self.msg(admin, text)
+
         try:
             rephrase_errors(func, phenny, input)
         except GrumbleError as e:
-            self.msg(origin.sender, str(e))
+            report(str(e))
         except Exception as e: 
-            self.error(origin)
+            self.error(report)
 
     def limit(self, origin, func): 
         if origin.sender and origin.sender.startswith('#'): 

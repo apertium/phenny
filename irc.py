@@ -186,7 +186,10 @@ class Bot(asynchat.async_chat):
     def dispatch(self, origin, args): 
         pass
 
-    def msg(self, recipient, text): 
+    def msg(self, recipient, text, target=None):
+        if target:
+            text = target + ': ' + text
+
         self.sending.acquire()
 
         # Cf. http://swhack.com/logs/2006-03-01#T19-43-25

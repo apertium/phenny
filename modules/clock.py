@@ -103,45 +103,22 @@ def give_time(phenny, tz, input_nick, to_user=None):
             msgs.append(tz_offset[0] + ': ' + time.strftime("%a, %d %b %Y %H:%M:%S", timenow))
 
         msg = '; '.join(msgs)
-
-        if to_user:
-            phenny.say(to_user + ', ' + msg)
-        else:
-            phenny.reply(msg)
+        phenny.reply(msg, target=to_user)
 
         if len(tz_offsets) > 3:
             msg = 'Found ' + str(len(tz_offsets)) + ' more matching timezones.'
-
-            if to_user:
-                phenny.say(to_user + ', ' + msg)
-            else:
-                phenny.reply(msg)
+            phenny.reply(msg, target=to_user)
 
         return
 
     if (TZ == 'UTC') or (TZ == 'Z'):
         msg = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
-
-        if to_user:
-            phenny.say(to_user+', '+msg)
-        else:
-            phenny.reply(msg)
     elif r_local.match(tz): # thanks to Mark Shoulsdon (clsn)
         locale.setlocale(locale.LC_TIME, (tz[1:-1], 'UTF-8'))
         msg = time.strftime("%A, %d %B %Y %H:%M:%SZ", time.gmtime())
-
-        if to_user:
-            phenny.say(to_user+', '+msg)
-        else:
-            phenny.reply(msg)
     elif tz and tz[0] in ('+', '-') and 4 <= len(tz) <= 6:
         timenow = time.gmtime(time.time() + (int(tz[:3]) * 3600))
         msg = time.strftime("%a, %d %b %Y %H:%M:%S " + tz_complete, timenow)
-
-        if to_user:
-            phenny.say(to_user+', '+msg)
-        else:
-            phenny.reply(msg)
     else:
         try:
             t = float(tz)
@@ -151,23 +128,16 @@ def give_time(phenny, tz, input_nick, to_user=None):
             if r_tz.match(tz) and os.path.isfile('/usr/share/zoneinfo/' + tz):
                 cmd, PIPE = 'TZ=%s date' % tz, subprocess.PIPE
                 proc = subprocess.Popen(cmd, shell=True, stdout=PIPE)
-
-                if to_user:
-                    phenny.say(to_user+', '+proc.communicate()[0])
-                else:
-                    phenny.reply(proc.communicate()[0])
+                msg = proc.communicate()[0]
             else:
-                # error = "Sorry, I don't know about the '%s' timezone. Suggest the city on http://www.citytimezones.info" % tz
                 error = "Sorry, I don't know about the '%s' timezone." % tz
                 phenny.reply(error)
+                return
         else:
             timenow = time.gmtime(time.time() + (t * 3600))
             msg = time.strftime("%a, %d %b %Y %H:%M:%S " + tz_complete, timenow)
 
-            if to_user:
-                phenny.say(to_user+', '+msg)
-            else:
-                phenny.reply(msg)
+    phenny.reply(msg, target=to_user)
 
 def f_time(phenny, input):
     """.time [timezone] - Show current time in defined timezone. Defaults to GMT. (supports pointing)"""
@@ -427,15 +397,10 @@ def time_zone_convert(phenny, input_txt, to_user=None):
         elif dest_time_hours < 0:
             dest_time_hours = dest_time_hours + 24
 
-        if to_user:
-            phenny.say(to_user + ', ' +
-                       format(dest_time_hours, '02d') +
-                       format(dest_time_mins, '02d') +
-                       regex_match.groups()[2].upper())
-        else:
-            phenny.reply(format(dest_time_hours, '02d') +
-                         format(dest_time_mins, '02d') +
-                         regex_match.groups()[2].upper())
+        phenny.reply(format(dest_time_hours, '02d') +
+                     format(dest_time_mins, '02d') +
+                     regex_match.groups()[2].upper(),
+                     target=to_user)
 
 def tz(phenny, input):
     """Usage: .tz <time><from timezone> in <destination> - Convert time to destination zone. (supports pointing)"""

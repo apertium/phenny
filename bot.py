@@ -214,8 +214,8 @@ class Phenny(irc.Bot):
     def wrapped(self, origin, text, match):
         sender = origin.sender or text
         delegate = {
-            'reply': lambda msg: self.msg(sender, origin.nick + ': ' + msg),
-            'say': lambda msg: self.msg(sender, msg),
+            'reply': lambda msg, target=origin.nick: self.msg(sender, msg, target=target),
+            'say': lambda msg, target=None: self.msg(sender, msg, target=target),
             'do': lambda msg: self.action(sender, msg),
         }
 

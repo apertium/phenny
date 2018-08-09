@@ -27,10 +27,7 @@ def get_definition(phenny, word, to_user=None):
     url = WEB_URL.format(web.quote(word))
 
     response = "{0} - {1}".format(result['definition'].strip()[:256], url)
-    if to_user:
-        phenny.say(to_user+', '+response)
-    else:
-        phenny.say(response)
+    phenny.say(response, target=to_user)
 
 
 def urbandict(phenny, input):

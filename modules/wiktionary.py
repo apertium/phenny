@@ -155,10 +155,7 @@ def wikitionary_lookup(phenny, word, to_user=None, suggests=True):
 
         if len(result) > 300:
             result = result[:295] + '[...]'
-        if to_user:
-            phenny.say(to_user+", "+result)
-        else:
-            phenny.say(result)
+        phenny.say(result, target=to_user)
     elif suggests:
         apiResponse = json.loads(web.get(wikisearchapi.format(word)))
         if 'suggestion' in apiResponse['query']['searchinfo']:

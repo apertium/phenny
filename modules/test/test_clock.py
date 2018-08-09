@@ -29,7 +29,7 @@ class TestClock(unittest.TestCase):
         self.input.group.return_value = 'EDT'
         clock.f_time(self.phenny, self.input)
         self.phenny.reply.assert_called_once_with(
-            "Eastern Daylight Time: Sat, 02 Jun 2012 18:04:11")
+            "Eastern Daylight Time: Sat, 02 Jun 2012 18:04:11", target=None)
 
     @catch_timeout
     def test_time_multi(self, mock_time):
@@ -41,7 +41,7 @@ class TestClock(unittest.TestCase):
             "ASEAN Common Time: Sun, 03 Jun 2012 04:34:11",
             "ACT: Sun, 03 Jun 2012 08:04:11"
         ]
-        self.phenny.reply.assert_called_once_with('; '.join(msgs))
+        self.phenny.reply.assert_called_once_with('; '.join(msgs), target=None)
 
     @catch_timeout
     def test_time_none(self, mock_time):

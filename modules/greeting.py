@@ -2,7 +2,12 @@
 import math
 import os
 import sqlite3
+import time
+from threading import Lock
 from tools import db_path
+
+lock = Lock()
+users = set()
 
 def setup(self):
     self.logger_db = db_path(self, 'logger')
@@ -23,6 +28,16 @@ def setup(self):
     c.close()
 
 def greeting(phenny, input):
+    with lock: users.add(input.nick)
+
+    try:
+        time.sleep(phenny.config.greet_delay)
+    except KeyError:
+        pass
+
+    if input.nick not in users:
+        return
+
     if "[m]" in input.nick:
         hint = "Consider removing [m] from your IRC nick! See http://wiki.apertium.org/wiki/IRC/Matrix#Remove_.5Bm.5D_from_your_IRC_nick for details."
         phenny.msg(input.nick, input.nick + ": " + hint)
@@ -76,7 +91,33 @@ greeting.conndb = None
 greeting.event = "JOIN"
 greeting.priority = 'low'
 greeting.rule = r'(.*)'
-greeting.thread = False
+greeting.thread = True
+
+def quitting(phenny, input):
+    with lock: users.discard(input.nick)
+
+quitting.event = "QUIT"
+quitting.rule = r'(.*)'
+
+def parting(phenny, input):
+    with lock: users.discard(input.nick)
+
+parting.event = "PART"
+parting.rule = r'(.*)'
+
+def kicked(phenny, input):
+    with lock: users.discard(input.group())
+
+kicked.event = "KICK"
+kicked.rule = r'(.*)'
+
+def nickchange(phenny, input):
+    with lock:
+        users.discard(input.nick)
+        users.add(input.group())
+
+nickchange.event = "NICK"
+nickchange.rule = r'(.*)'
 
 def greeting_add(phenny, input):
     if input.admin:

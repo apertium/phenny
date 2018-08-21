@@ -75,7 +75,6 @@ information.priority = 'low'
 
 
 def randquote_fetcher(phenny, topic, to_user):
-
     # create opener
     opener = urllib.request.build_opener()
     opener.addheaders = [
@@ -84,10 +83,10 @@ def randquote_fetcher(phenny, topic, to_user):
     ]
 
     try:
-        if topic == "" or topic==None:
-            req = opener.open("http://quotes.firespeaker.org/random.php")
-        else:
-            req = opener.open("http://quotes.firespeaker.org/random.php?topic=%s" % (web.quote(topic)))
+        url = "http://quotes.firespeaker.org/random.php"
+        if topic:
+            url += "?topic=%s" % web.quote(topic)
+        req = opener.open(url)
         data = req.read().decode('utf-8')
         data = json.loads(data)
     except (HTTPError, IOError, ValueError) as e:
@@ -114,38 +113,15 @@ def randquote_fetcher(phenny, topic, to_user):
 def randquote(phenny, input):
     """.randquote (<topic>) - Get a random quote from quotes.firespeaker.org (about topic). (supports pointing)"""
     topic = input.group(1)
+    to_nick = input.group(2)
 
-    if topic:
-        if "->" in topic: return
-        if "→" in topic: return
-
-    randquote_fetcher(phenny, topic, input.nick)
+    randquote_fetcher(phenny, topic, to_nick or input.nick)
 
 randquote.name = 'randquote'
 randquote.commands = ['randquote']
-randquote.example = '.randquote (linguistics) or .randquote (Linguistics) -> svineet'+\
-                    ' or svineet: .randquote (linguistics)'
+randquote.example = '.randquote (linguistics)'
 randquote.priority = 'low'
-
-
-def randquote2(phenny, input):
-    _, topic, nick = input.groups()
-
-    randquote_fetcher(phenny, topic, nick)
-
-randquote2.rule = r'\.(randquote)\s(.*)'
-randquote2.example = '.randquote Linguistics -> svineet'
-randquote2.point = True
-
-
-def randquote3(phenny, input):
-    _, nick = input.groups()
-
-    randquote_fetcher(phenny, "", nick)
-
-randquote3.rule = r'\.(randquote)'
-randquote3.example = '.randquote -> svineet'
-randquote3.point = True
+randquote.point = True
 
 
 def randquote4(phenny, input):

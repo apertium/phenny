@@ -40,9 +40,6 @@ def get_offsets(phenny, key):
     return offsets
 
 def give_time(phenny, tz, input_nick, to_user=None):
-    if "->" in tz: return
-    if "→" in tz: return
-
     tz_complete = tz.upper()
 
     math_add = 0
@@ -142,22 +139,14 @@ def give_time(phenny, tz, input_nick, to_user=None):
 def f_time(phenny, input):
     """.time [timezone] - Show current time in defined timezone. Defaults to GMT. (supports pointing)"""
     tz = input.group(1) or 'GMT'
-
-    match_point_cmd = r'point\s(\S*)\s(.*)'
-    matched_point = re.compile(match_point_cmd).match(tz)
-    if matched_point:
-        to_nick = matched_point.groups()[0]
-        tz2 = matched_point.groups()[1]
-
-        give_time(phenny, tz2, input.nick, to_user=to_nick)
-        return
+    nick = input.group(2)
 
     give_time(phenny, tz, input.nick)
 
 f_time.name = 'time'
 f_time.commands = ['time']
-f_time.example = '.time UTC or .time point nick GMT or nick: .time GMT or '+\
-                 '.time GMT -> nick'
+f_time.example = '.time UTC'
+f_time.point = True
 
 
 def f_time2(phenny, input):
@@ -169,29 +158,11 @@ f_time2.rule = r'(\S*)(:|,)\s\.(time)\s(.*)'
 
 
 def f_time3(phenny, input):
-    _, nick = input.groups()
-
-    give_time(phenny, "", input.nick, to_user=nick)
-
-f_time3.rule = r'\.(time)'
-f_time3.point = True
-
-
-def f_time4(phenny, input):
-    _, tz, nick = input.groups()
-
-    give_time(phenny, tz, input.nick, to_user=nick)
-
-f_time4.rule = r'\.(time)\s(.*)'
-f_time4.point = True
-
-
-def f_time5(phenny, input):
     nick, _, __ = input.groups()
 
     give_time(phenny, "", input.nick, to_user=nick)
 
-f_time5.rule = r'(\S*)(:|,)\s\.(time)$'
+f_time3.rule = r'(\S*)(:|,)\s\.(time)$'
 
 
 def scrape_wiki_time_zone_abbreviations():
@@ -410,32 +381,14 @@ def tz(phenny, input):
         phenny.reply(tz.__doc__.strip())
         return
 
-    if "->" in input_txt: return
-    if "→" in input_txt: return
+    to_nick = input.group(2)
 
-    match_point_cmd = r'point\s(\S*)\s(.*)'
-    matched_point = re.compile(match_point_cmd).match(input_txt)
-    if matched_point:
-        to_nick = matched_point.groups()[0]
-        input_txt2 = matched_point.groups()[1]
-
-        time_zone_convert(phenny, input_txt2, to_user=to_nick)
-        return
-
-    time_zone_convert(phenny, input_txt)
+    time_zone_convert(phenny, input_txt, to_user=to_nick)
 
 
 tz.commands = ['tz']
 tz.priority = 'high'
-
-
-def time_zone2(phenny, input):
-    _, input_txt, nick = input.groups()
-
-    time_zone_convert(phenny, input_txt, to_user=nick)
-
-time_zone2.rule = r'\.(tz)\s(.*)'
-time_zone2.point = True
+tz.point = True
 
 
 def time_zone3(phenny, input):

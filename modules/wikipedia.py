@@ -47,8 +47,6 @@ def wikipedia(phenny, origterm, lang, to_user=None):
 
 def wik(phenny, input):
     """Search for something on Wikipedia (supports pointing)"""
-    if "->" in input.group(3): return
-    if "→" in input.group(3): return
 
     origterm = input.group(3)
     if input.group(2):
@@ -56,21 +54,14 @@ def wik(phenny, input):
     else:
         lang = "en"
 
-    match_point_cmd = r'point\s(\S*)\s(.*)'
-    matched_point = re.compile(match_point_cmd).match(origterm)
-    if matched_point:
-        to_nick = matched_point.groups()[0]
-        origterm2 = matched_point.groups()[1]
+    to_nick = input.group(4)
 
-        wikipedia(phenny, origterm2, lang, to_user=to_nick)
-        return
-
-    wikipedia(phenny, origterm, lang)
+    wikipedia(phenny, origterm, lang, to_user=to_nick)
 
 wik.rule = r'\.(wik|wiki|wikipedia)(\.[a-z]{2,3})?\s(.*)'
 wik.priority = 'low'
-wik.example = '.wik Human or nick: .wik Human or .wik Human -> nick'+\
-            ' or .wik point nick Human'
+wik.example = '.wik Human'
+wik.point = True
 
 
 def wik2(phenny, input):
@@ -82,18 +73,6 @@ def wik2(phenny, input):
 wik2.rule = r'(\S*)(:|,)\s\.(wik|wiki|wikipedia)(\.[a-z]{2,3})?\s(.*)'
 wik2.priority = 'high'
 wik2.example = 'svineet: .wik Linguistics'
-
-
-def wik3(phenny, input):
-    _, lang, origterm, nick = input.groups()
-    if not lang: lang = "en"
-
-    wikipedia(phenny, origterm, lang, to_user=nick)
-
-wik3.rule = r'\.(wik|wiki|wikipedia)(\.[a-z]{2,3})?\s(.*)'
-wik3.priority = 'high'
-wik3.example = '.wik Linguistics -> svineet'
-wik3.point = True
 
 
 def pointing(phenny, input):

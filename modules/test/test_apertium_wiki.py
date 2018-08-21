@@ -23,7 +23,7 @@ class TestApertiumWiki(unittest.TestCase):
             self.text = self.term
             url_text = wiki.format_term(self.term)
 
-        self.input.group = lambda x: [None, None, self.text][x]
+        self.input.group = lambda x: [None, None, self.text, None][x]
         self.url = 'http://wiki.apertium.org/wiki/%s' % url_text
 
     def check_snippet(self, output):

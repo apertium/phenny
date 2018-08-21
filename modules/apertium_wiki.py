@@ -36,19 +36,10 @@ def awik(phenny, input):
     """Search for something on Apertium wiki or
     point another user to a page on Apertium wiki (supports pointing)"""
     origterm = input.group(2)
-
-    if "->" in origterm or "→" in origterm:
-        return
+    to_nick = input.group(3)
 
     if not origterm:
         return phenny.say('Perhaps you meant ".wik Zen"?')
-
-    match_point_cmd = r'point\s(\S*)\s(.*)'
-    matched_point = re.compile(match_point_cmd).match(origterm)
-    to_nick = None
-    if matched_point:
-        to_nick = matched_point.groups()[0]
-        origterm = matched_point.groups()[1]
 
     apertium_wiki(phenny, origterm, to_nick=to_nick)
 
@@ -56,6 +47,7 @@ def awik(phenny, input):
 awik.rule = r'\.(awik)\s(.*)'
 awik.example = '.awik Begiak or .awik point nick Begiak or .awik Begiak -> nick' ' or nick: .awik Begiak'
 awik.priority = 'high'
+awik.point = True
 
 
 def awik2(phenny, input):
@@ -66,16 +58,6 @@ def awik2(phenny, input):
 awik2.rule = r'(\S*)(:|,)\s\.(awik)(\.[a-z]{2,3})?\s(.*)'
 awik2.example = 'svineet: .awik Begiak'
 awik2.priority = 'high'
-
-
-def awik3(phenny, input):
-    _, lang, origterm, nick = input.groups()
-    apertium_wiki(phenny, origterm, nick)
-
-
-awik3.rule = r'\.(awik)(\.[a-z]{2,3})?\s(.*)'
-awik3.example = '.awik Linguistics -> svineet'
-awik3.point = True
 
 
 def logs(phenny, input):

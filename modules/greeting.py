@@ -48,11 +48,7 @@ def greeting(phenny, input):
     greetingmessage = greetingmessage.replace("%name", input.nick)
     greetingmessage = greetingmessage.replace("%channel", input.sender)
 
-    # Greeting Message
-    try:
-        nick = input.nick
-    except UnboundLocalError:
-        pass
+    nick = input.nick
 
     c = greeting.conndb.cursor()
     c.execute("SELECT * FROM special_nicks WHERE nick = ?", (nick.casefold(),))
@@ -80,10 +76,7 @@ def greeting(phenny, input):
     greeting.conn.commit()
 
     def delayed():
-        try:
-            time.sleep(phenny.config.greet_delay)
-        except AttributeError:
-            pass
+        time.sleep(phenny.config.greet_delay)
 
         if input.nick not in users:
             return
@@ -91,8 +84,12 @@ def greeting(phenny, input):
         for message in messages[:1]:
             phenny.say(message)
 
-    t = Thread(target=delayed)
-    t.start()
+    if phenny.config.greet_delay > 0:
+        t = Thread(target=delayed)
+        t.start()
+    else:
+        for message in messages[:1]:
+            phenny.say(message)
 
 greeting.conn = None
 greeting.conndb = None

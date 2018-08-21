@@ -21,6 +21,7 @@ class TestGreeting(unittest.TestCase):
         self.input.sender = '#test'
 
         self.phenny.config.greetings = {}
+        self.phenny.config.greet_delay = 0
 
     def test_greeting_binary(self):
         self.input.nick = 'Testsworth'

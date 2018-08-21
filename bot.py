@@ -221,13 +221,13 @@ class Phenny(irc.Bot):
 
         return decorate(self, delegate)
 
-    def input(self, origin, text, bytes, match, args):
+    def input(self, origin, text, match, args):
         class CommandInput(str): 
-            def __new__(cls, text, origin, bytes, match, args):
+            def __new__(cls, text, origin,  match, args):
                 s = str.__new__(cls, text)
                 s.sender = decode(origin.sender)
                 s.nick = decode(origin.nick)
-                s.bytes = bytes
+                s.bytes = text
                 s.group = match.group
                 s.groups = match.groups
                 s.args = args
@@ -235,11 +235,11 @@ class Phenny(irc.Bot):
                 s.admin = (s.nick in self.config.admins) or s.owner
                 return s
 
-        return CommandInput(text, origin, bytes, match, args)
+        return CommandInput(text, origin, match, args)
 
     def call(self, func, origin, phenny, input):
         def report(text):
-            for admin in phenny.admins:
+            for admin in self.config.admins:
                 self.msg(admin, text)
 
         try:
@@ -257,10 +257,8 @@ class Phenny(irc.Bot):
                     return True
         return False
 
-    def dispatch(self, origin, args): 
-        bytes, event = args[0], args[1]
-        text = decode(bytes)
-        event = decode(event)
+    def dispatch(self, origin, args, text):
+        event = args[0]
 
         if origin.nick in self.config.ignore:
              return
@@ -278,7 +276,7 @@ class Phenny(irc.Bot):
                     if self.limit(origin, func): continue
 
                     phenny = self.wrapped(origin, text, match)
-                    input = self.input(origin, text, bytes, match, args)
+                    input = self.input(origin, text, match, args)
 
                     if func.thread:
                         targs = (func, origin, phenny, input)

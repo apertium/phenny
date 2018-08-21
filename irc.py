@@ -168,22 +168,28 @@ class Bot(asynchat.async_chat):
         except UnicodeDecodeError:
             line = line.decode('iso-8859-1')
 
-        if line.startswith(':'): 
+        if line.startswith(':'):
             source, line = line[1:].split(' ', 1)
-        else: source = None
+        else:
+            source = None
 
-        if ' :' in line: 
-            argstr, text = line.split(' :', 1)
-        else: argstr, text = line, ''
-        args = argstr.split()
+        if ' :' in line:
+            middle, trailing = line.split(' :', 1)
+            middle = middle.split()
+            args = tuple(middle + [trailing])
+            text = trailing
+        else:
+            middle, trailing = line.split(), None
+            args = tuple(middle)
+            text = ''
 
         origin = Origin(self, source, args)
-        self.dispatch(origin, tuple([text] + args))
+        self.dispatch(origin, args, text)
 
-        if args[0] == 'PING': 
-            self.proto.pong(text)
+        if args[0] == 'PING':
+            self.proto.pong(args[-1])
 
-    def dispatch(self, origin, args): 
+    def dispatch(self, origin, args, text):
         pass
 
     def msg(self, recipient, text, target=None):

@@ -34,7 +34,7 @@ class BotTest(unittest.TestCase):
         text = "Are you ready for phenny?"
         match = Mock()
         args = ('#phenny', )
-        cmdinput = self.bot.input(origin, text, text, match, args)
+        cmdinput = self.bot.input(origin, text, match, args)
 
         self.assertEqual(cmdinput.sender, origin.sender)
         self.assertEqual(cmdinput.nick, origin.nick)
@@ -55,7 +55,7 @@ class BotTest(unittest.TestCase):
         match = Mock()
         event = "PRIVMSG"
         args = ('#phenny', )
-        cmdinput = self.bot.input(origin, text, text, match, args)
+        cmdinput = self.bot.input(origin, text, match, args)
 
         self.assertEqual(cmdinput.owner, True)
 
@@ -69,6 +69,6 @@ class BotTest(unittest.TestCase):
         match = Mock()
         event = "PRIVMSG"
         args = ('#phenny', )
-        cmdinput = self.bot.input(origin, text, text, match, args)
+        cmdinput = self.bot.input(origin, text, match, args)
 
         self.assertEqual(cmdinput.admin, True)

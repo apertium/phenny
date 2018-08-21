@@ -60,10 +60,10 @@ class BotTest(unittest.TestCase):
 
     @patch('irc.Bot.write')
     def test_ping(self, mock_write):
-        self.bot.buffer = b"PING"
+        self.bot.buffer = b"PING example.org"
         self.bot.found_terminator()
 
-        mock_write.assert_called_once_with(('PONG', ''), None)
+        mock_write.assert_called_once_with(('PONG', 'example.org'), None)
 
     @patch('irc.Bot.push')
     def test_msg(self, mock_push):

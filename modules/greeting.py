@@ -32,7 +32,7 @@ def greeting(phenny, input):
 
     try:
         time.sleep(phenny.config.greet_delay)
-    except KeyError:
+    except AttributeError:
         pass
 
     if input.nick not in users:
@@ -106,7 +106,7 @@ parting.event = "PART"
 parting.rule = r'(.*)'
 
 def kicked(phenny, input):
-    with lock: users.discard(input.group())
+    with lock: users.discard(input.args[2])
 
 kicked.event = "KICK"
 kicked.rule = r'(.*)'
@@ -114,7 +114,7 @@ kicked.rule = r'(.*)'
 def nickchange(phenny, input):
     with lock:
         users.discard(input.nick)
-        users.add(input.group())
+        users.add(input.args[1])
 
 nickchange.event = "NICK"
 nickchange.rule = r'(.*)'

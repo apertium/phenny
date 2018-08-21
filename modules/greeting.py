@@ -3,7 +3,7 @@ import math
 import os
 import sqlite3
 import time
-from threading import Lock
+from threading import Lock, Thread
 from tools import db_path
 
 lock = Lock()
@@ -30,17 +30,11 @@ def setup(self):
 def greeting(phenny, input):
     with lock: users.add(input.nick)
 
-    try:
-        time.sleep(phenny.config.greet_delay)
-    except AttributeError:
-        pass
-
-    if input.nick not in users:
-        return
-
     if "[m]" in input.nick:
         hint = "Consider removing [m] from your IRC nick! See http://wiki.apertium.org/wiki/IRC/Matrix#Remove_.5Bm.5D_from_your_IRC_nick for details."
         phenny.msg(input.nick, input.nick + ": " + hint)
+
+    messages = []
 
     if not greeting.conn:
         greeting.conn = sqlite3.connect(phenny.logger_db)
@@ -63,8 +57,7 @@ def greeting(phenny, input):
     c = greeting.conndb.cursor()
     c.execute("SELECT * FROM special_nicks WHERE nick = ?", (nick.casefold(),))
     try:
-        phenny.say(input.nick + ": " + str(c.fetchone()[0]))
-        return
+        messages.append(input.nick + ": " + str(c.fetchone()[0]))
     except TypeError:
         pass
     c.close()
@@ -81,17 +74,32 @@ def greeting(phenny, input):
             phenny.greeting_count[caseless_nick] += 1
 
             if math.log2(phenny.greeting_count[caseless_nick]) % 1 == 0:
-                phenny.say(greetingmessage)
+                messages.append(greetingmessage)
 
     c.close()
     greeting.conn.commit()
+
+    def delayed():
+        try:
+            time.sleep(phenny.config.greet_delay)
+        except AttributeError:
+            pass
+
+        if input.nick not in users:
+            return
+
+        for message in messages[:1]:
+            phenny.say(message)
+
+    t = Thread(target=delayed)
+    t.start()
 
 greeting.conn = None
 greeting.conndb = None
 greeting.event = "JOIN"
 greeting.priority = 'low'
 greeting.rule = r'(.*)'
-greeting.thread = True
+greeting.thread = False
 
 def quitting(phenny, input):
     with lock: users.discard(input.nick)

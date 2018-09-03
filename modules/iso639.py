@@ -72,11 +72,16 @@ def iso639(phenny, input):
 
 def scrape_wiki_codes():
     data = {}
+
     base_url = 'https://en.wikipedia.org/wiki/List_of_ISO_639'
-    #639-1
-    resp = web.get(base_url + '-1_codes', cache=True)
-    h = html.document_fromstring(resp)
-    table = h.find_class('wikitable')[0]
+    scrape_wiki_codes_1(data)
+    scrape_wiki_codes_2(data)
+
+    return data
+
+@web.with_scraped_page('https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes')
+def scrape_wiki_codes_1(doc, data):
+    table = doc.find_class('wikitable')[0]
     for row in table.find('tbody').findall('tr')[1:]:
         name = etree.tostring(row.findall('td')[2]).decode('utf-8')
         name = etree.fromstring(name[name.find('<a'):name.find('</a>')+4]).text
@@ -85,10 +90,10 @@ def scrape_wiki_codes():
         code = etree.fromstring(code[code.find('<a'):code.find('</a>')+4]).text
 
         data[code] = name
-    #639-2
-    resp = web.get(base_url + '-2_codes', cache=True)
-    h = html.document_fromstring(resp)
-    table = h.find_class('wikitable')[0]
+
+@web.with_scraped_page('https://en.wikipedia.org/wiki/List_of_ISO_639-2_codes')
+def scrape_wiki_codes_2(doc, data):
+    table = doc.find_class('wikitable')[0]
     for row in table.find('tbody').findall('tr')[1:]:
         name = etree.tostring(row.findall('td')[4]).decode('utf-8')
 
@@ -114,15 +119,11 @@ def scrape_wiki_codes():
                     code = i.replace('*', '')
                     break
         data[code] = name
-    return data
 
-def scrape_wiki_codes_convert():
+@web.with_scraped_page('https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes')
+def scrape_wiki_codes_convert(doc):
     data = {}
-    base_url = 'https://en.wikipedia.org/wiki/List_of_ISO_639'
-    #639-1
-    resp = web.get(base_url + '-1_codes', cache=True)
-    h = html.document_fromstring(resp)
-    table = h.find_class('wikitable')[0]
+    table = doc.find_class('wikitable')[0]
     for row in table.find('tbody').findall('tr')[1:]:
         iso3code = row.findall('td')[7].text
         code = etree.tostring(row.findall('td')[4]).decode('utf-8')

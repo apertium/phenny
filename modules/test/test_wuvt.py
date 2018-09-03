@@ -9,7 +9,6 @@ from modules import wuvt
 from web import catch_timeout
 
 
-@catch_timeout
 class TestWuvt(unittest.TestCase):
 
     def setUp(self):

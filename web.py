@@ -5,6 +5,7 @@ Author: Sean B. Palmer, inamidst.com
 About: http://inamidst.com/phenny/
 """
 
+import functools
 import re
 import urllib
 import requests
@@ -53,14 +54,30 @@ def is_up(url):
     return up_down[url][0]
 
 def catch_timeout(fn):
+    @functools.wraps(fn)
     def wrapper(*args, **kw):
         try:
             return fn(*args, **kw)
         except (ConnectionError, HTTPError, ServerFault, Timeout):
             raise unittest.SkipTest("The server is apparently down. Skipping test.")
 
-    wrapper.__name__ = fn.__name__
     return wrapper
+
+def with_scraped_page(url, **kw):
+    def decorator(fn):
+        @functools.wraps(fn)
+        def wrapper(*args, **kw):
+            try:
+                doc = lhtml.document_fromstring(get(url, cache=True, **kw))
+                return fn(doc, *args, **kw)
+            except Exception:
+                write_cache(url, None)
+                doc = lhtml.document_fromstring(get(url, cache=True, **kw))
+                return fn(doc, *args, **kw)
+
+        return wrapper
+
+    return decorator
 
 def get(url, cache=False, headers={}, verify=True, timeout=REQUEST_TIMEOUT, **kwargs):
     if not url.startswith('http'):

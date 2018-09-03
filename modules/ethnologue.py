@@ -21,14 +21,16 @@ def shorten_num(n):
 
 def scrape_ethnologue_codes(phenny):
     data = {}
-    base_url = 'https://www.ethnologue.com/browse/codes/'
-    for letter in ascii_lowercase:
-        resp = web.get(base_url + letter, cache=True)
-        h = html.document_fromstring(resp)
-        for e in h.find_class('views-field-field-iso-639-3'):
+
+    def scrape_ethnologue_code(doc):
+        for e in doc.find_class('views-field-field-iso-639-3'):
             code = e.find('div/a').text
             name = e.find('div/a').attrib['title']
             data[code] = name
+
+    base_url = 'https://www.ethnologue.com/browse/codes/'
+    for letter in ascii_lowercase:
+        web.with_scraped_page(base_url + letter)(scrape_ethnologue_code)()
     phenny.ethno_data = data
 
 def write_ethnologue_codes(phenny, raw=None):

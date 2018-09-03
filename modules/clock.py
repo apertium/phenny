@@ -19,7 +19,6 @@ import os
 import threading
 import logging
 import subprocess
-from lxml import html
 from decimal import Decimal as dec
 
 logger = logging.getLogger('phenny')
@@ -165,11 +164,10 @@ def f_time3(phenny, input):
 f_time3.rule = r'(\S*)(:|,)\s\.(time)$'
 
 
-def scrape_wiki_time_zone_abbreviations():
+@web.with_scraped_page('https://en.wikipedia.org/wiki/List_of_time_zone_abbreviations')
+def scrape_wiki_time_zone_abbreviations(doc):
     data = {}
 
-    url = 'https://en.wikipedia.org/wiki/List_of_time_zone_abbreviations'
-    doc = html.document_fromstring(web.get(url, cache=True))
     table = doc.find_class('wikitable')[0]
     rows = table.find('tbody').findall('tr')
 
@@ -208,12 +206,10 @@ def scrape_wiki_time_zone_abbreviations():
 
     return data
 
-
-def scrape_wiki_tz_database_time_zones():
+@web.with_scraped_page('https://en.wikipedia.org/wiki/List_of_tz_database_time_zones')
+def scrape_wiki_tz_database_time_zones(doc):
     data = {}
 
-    url = 'https://en.wikipedia.org/wiki/List_of_tz_database_time_zones'
-    doc = html.document_fromstring(web.get(url, cache=True))
     table = doc.find_class('wikitable')[0]
     rows = table.find('tbody').findall('tr')
 

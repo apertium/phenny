@@ -39,7 +39,10 @@ class TestGreeting(unittest.TestCase):
                 greetingmessage = greetingmessage.replace("%name", self.input.nick)
                 greetingmessage = greetingmessage.replace("%channel", self.input.sender)
 
-                self.phenny.msg.assert_called_once_with(self.input.nick, greetingmessage)
+                if i == 0:
+                    self.phenny.msg.assert_called_with(self.input.nick, greetingmessage)
+                else:
+                    self.phenny.msg.assert_called_once_with(self.input.nick, greetingmessage)
             else:
                 self.phenny.msg.assert_not_called()
 

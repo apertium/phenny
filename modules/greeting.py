@@ -64,6 +64,11 @@ def greeting(phenny, input):
             if nick != phenny.config.nick.casefold():
                 if nick not in phenny.greeting_count:
                     phenny.greeting_count[nick] = 0
+
+                    help_text = "You will need to register your nick with NickServ. Type /msg NickServ HELP for information on getting started with this."
+                    phenny.msg(input.nick, help_text)
+                    phenny.proto.notice(input.nick, help_text)
+
                 phenny.greeting_count[nick] += 1
 
                 if math.log2(phenny.greeting_count[nick]) % 1 == 0:

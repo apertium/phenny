@@ -3,8 +3,11 @@ import time
 from tools import DatabaseCursor, db_path
 
 def setup(self):
+    # volatile data: nick -> last_time
+    # entries exist for as long as nick is active
     self.gci_data = {}
 
+    # persistent data: nick -> full_name, all_time
     self.gci_db = db_path(self, 'gci')
 
     connection = sqlite3.connect(self.gci_db)
@@ -21,88 +24,102 @@ def setup(self):
     connection.close()
 
 def teardown(self):
-    with DatabaseCursor(self.gci_db) as cursor:
-        cursor.execute("SELECT nick FROM gci_data")
+    # save active nicks to disc
 
-        rows = cursor.fetchall()
+    for nick in self.gci_data:
+        inactivity(self, nick)
 
-    for row in rows:
-        nick = row[0]
-        stop(self, nick)
+def select(phenny, nick):
+    sqlite_data = {
+        'nick': nick
+    }
+
+    with DatabaseCursor(phenny.gci_db) as cursor:
+        cursor.execute("SELECT full_name, all_time FROM gci_data WHERE nick=:nick", sqlite_data)
+        return cursor.fetchone()
+
+def insert(phenny, nick, full_name, all_time=0):
+    values = (nick, full_name, all_time)
+
+    with DatabaseCursor(phenny.gci_db) as cursor:
+        cursor.execute("INSERT INTO gci_data (nick, full_name, all_time) VALUES (?, ?, ?)", values)
+
+def update(phenny, nick, all_time):
+    sqlite_data = {
+        'nick': nick,
+        'all_time': all_time,
+    }
+
+    with DatabaseCursor(phenny.gci_db) as cursor:
+        cursor.execute("UPDATE gci_data set all_time=:all_time where nick=:nick", sqlite_data)
+
+def delete(phenny, nick):
+    sqlite_data = {
+        'nick': nick
+    }
+
+    with DatabaseCursor(phenny.gci_db) as cursor:
+        cursor.execute("DELETE FROM gci_data WHERE nick=:nick", sqlite_data)
 
 def commutate(phenny, nick):
-    nick = nick.casefold()
+    # all_time (persistent) += now_time - last_time (volatile)
+    # last_time = now_time
 
     now_time = time.time()
     last_time = phenny.gci_data[nick]['last_time']
     new_time = now_time - last_time
 
-    sqlite_data = {
-        'nick': nick,
-    }
+    full_name, all_time = select(phenny, nick)
+    all_time += new_time
 
-    with DatabaseCursor(phenny.gci_db) as cursor:
-        cursor.execute("SELECT full_name, all_time FROM gci_data WHERE nick=:nick", sqlite_data)
-        full_name, all_time = cursor.fetchone()
-
-        all_time += new_time
-        sqlite_data.update({
-            'all_time': all_time,
-        })
-
-        cursor.execute('update gci_data set all_time=:all_time where nick=:nick', sqlite_data)
-
+    update(phenny, nick, all_time)
     phenny.gci_data[nick]["last_time"] = now_time
+
+    # notify if all_time crossed 4 hours
 
     if all_time - new_time <= 4*60*60 <= all_time:
         phenny.msg("#apertium", full_name + " stayed on the IRC channel for four hours.")
 
-def start(phenny, nick):
-    nick = nick.casefold()
-
+def activity(phenny, nick):
     if nick in phenny.gci_data:
+        # nick was already active, nothing to do
         return
 
-    sqlite_data = {
-        'nick': nick,
-    }
-
-    with DatabaseCursor(phenny.gci_db) as cursor:
-        cursor.execute("SELECT COUNT(*) FROM gci_data WHERE nick=:nick", sqlite_data)
-
-        if not cursor.fetchone()[0]:
-            return
+    if not select(phenny, nick):
+        # nick is not linked, don't care
+        return
 
     phenny.gci_data[nick] = {
         "last_time": time.time(),
     }
 
-def stop(phenny, nick):
-    nick = nick.casefold()
-
+def inactivity(phenny, nick):
     if nick not in phenny.gci_data:
+        # nick was not active, hiccup
         return
 
     commutate(phenny, nick)
-
     del phenny.gci_data[nick]
 
 def joining(phenny, input):
-    start(phenny, input.nick)
+    nick = input.nick.casefold()
+    activity(phenny, nick)
 
 joining.event = "JOIN"
 joining.rule = r'(.*)'
 
 def messaging(phenny, input):
-    start(phenny, input.nick)
+    nick = input.nick.casefold()
+    activity(phenny, nick)
 
     if not phenny.gci_data:
+        # no one active (yet), nothing to do
         return
 
-    oldest_time = min([data["last_time"] for (nick, data) in phenny.gci_data.items()])
-    now_time = time.time()
+    last_update = time.time() - min(data["last_time"] for (nick, data) in phenny.gci_data.items())
 
-    if now_time - oldest_time < 5*60:
+    if last_update < 5*60:
+        # already updated in last 5 minutes
         return
 
     for nick in phenny.gci_data:
@@ -116,37 +133,72 @@ def linking(phenny, input):
 
     if not full_name:
         phenny.reply("Syntax: .gci <full_name>")
+        return
 
-    values = (nick, full_name, 0)
+    insert(phenny, nick, full_name)
+    activity(phenny, nick)
 
-    with DatabaseCursor(phenny.gci_db) as cursor:
-        cursor.execute("INSERT INTO gci_data (nick, full_name, all_time) VALUES (?, ?, ?)", values)
+linking.rule = r'\.gci(?:\s+(.+))'
 
-    start(phenny, nick)
+def checking(phenny, input):
+    nick = input.group(1).casefold()
 
-linking.rule = r'\.gci(?:\s+(.*))'
+    if not nick:
+        phenny.reply("Syntax: .gci_check <nick>")
+        return
+
+    if nick in phenny.gci_data:
+        commutate(phenny, nick)
+
+    row = select(phenny, nick)
+
+    if not row:
+        phenny.reply("This nick isn't linked")
+        return
+
+    full_name, all_time = row
+    phenny.reply("nick: %s, full name: %s, all time: %s / 14400 seconds" % (nick, full_name, int(all_time)))
+
+checking.rule = r'\.gci_check(?:\s+(.+))'
 
 def quitting(phenny, input):
-    stop(phenny, input.nick)
+    nick = input.nick.casefold()
+    inactivity(phenny, nick)
 
 quitting.event = "QUIT"
 quitting.rule = r'(.*)'
 
 def parting(phenny, input):
-    stop(phenny, input.nick)
+    nick = input.nick.casefold()
+    inactivity(phenny, nick)
 
 parting.event = "PART"
 parting.rule = r'(.*)'
 
 def kicked(phenny, input):
-    stop(phenny, input.args[2])
+    nick = input.args[2].casefold()
+    inactivity(phenny, nick)
 
 kicked.event = "KICK"
 kicked.rule = r'(.*)'
 
 def nickchange(phenny, input):
-    stop(phenny, input.nick)
-    start(phenny, input.args[1])
+    old_nick = input.nick.casefold()
+    new_nick = input.args[1].casefold()
+
+    row = select(old_nick)
+
+    if not row:
+        # nick not linked, don't care
+        return
+
+    full_name, all_time = row
+
+    inactivity(phenny, old_nick)
+    delete(phenny, old_nick)
+
+    insert(phenny, new_nick, full_name, all_time)
+    activity(phenny, new_nick)
 
 nickchange.event = "NICK"
 nickchange.rule = r'(.*)'

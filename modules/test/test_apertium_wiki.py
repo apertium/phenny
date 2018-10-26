@@ -83,6 +83,6 @@ class TestApertiumWiki(unittest.TestCase):
     @catch_timeout
     def test_logs(self):
         day = str(date.today() - timedelta(randint(1, 1000)))
-        status_code = requests.get(endpoints['log']+day+".log").status_code
+        status_code = requests.get(apertium_wiki.endpoints['log']+day+".log").status_code
 
         self.assertEqual(status_code, 200)

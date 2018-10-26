@@ -2,7 +2,7 @@ import unittest
 from mock import MagicMock
 from modules import apertium_wiki
 from web import catch_timeout
-from datetime import today, timedelta
+from datetime import date, timedelta
 from random import randint
 import wiki
 

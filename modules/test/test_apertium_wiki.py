@@ -2,6 +2,8 @@ import unittest
 from mock import MagicMock
 from modules import apertium_wiki
 from web import catch_timeout
+from datetime import today, timedelta
+from random import randint
 import wiki
 
 
@@ -77,3 +79,10 @@ class TestApertiumWiki(unittest.TestCase):
 
         expected = "Can't find anything in the Apertium Wiki for \"%s\"."
         self.assertEqual(out, expected % self.text)
+
+    @catch_timeout
+    def test_logs(self):
+        day = str(date.today() - timedelta(randint(1, 1000)))
+        status_code = requests.get(endpoints['log']+date_q+".log").status_code
+
+        self.assertEqual(status_code, 200)

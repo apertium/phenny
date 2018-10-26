@@ -14,7 +14,7 @@ import requests
 endpoints = {
     'api': 'http://wiki.apertium.org/api.php?action=query&list=search&srlimit=1&format=json&srsearch={0}',
     'url': 'http://wiki.apertium.org/wiki/{0}',
-    'log': 'https://tinodidriksen.com/pisg/freenode/logs/%23/apertium/',
+    'log': 'https://tinodidriksen.com/pisg/freenode/logs/%23apertium/',
 }
 
 def apertium_wiki(phenny, origterm, to_nick=None):

@@ -5,6 +5,7 @@ from web import catch_timeout
 from datetime import date, timedelta
 from random import randint
 import wiki
+import requests
 
 
 class TestApertiumWiki(unittest.TestCase):

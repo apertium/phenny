@@ -17,4 +17,4 @@ class TestBotfun(unittest.TestCase):
 
     def test_bothug(self):
         botfun.bothug(self.phenny, self.input)
-        self.phenny.say.assert_called_once_with("hugs ChanServ")
+        self.phenny.do.assert_called_once_with("hugs ChanServ")

@@ -3,9 +3,7 @@ from mock import MagicMock
 from modules import apertium_wiki
 from web import catch_timeout
 from datetime import date, timedelta
-from random import randint
 import wiki
-import requests
 
 
 class TestApertiumWiki(unittest.TestCase):
@@ -82,8 +80,21 @@ class TestApertiumWiki(unittest.TestCase):
         self.assertEqual(out, expected % self.text)
 
     @catch_timeout
-    def test_logs(self):
-        day = str(date.today() - timedelta(randint(1, 1000)))
-        status_code = requests.get(apertium_wiki.endpoints['log']+day+".log").status_code
+    def test_logs_today(self):
+        pass
 
-        self.assertEqual(status_code, 200)
+    @catch_timeout
+    def test_logs_yesterday(self):
+        pass
+
+    @catch_timeout
+    def test_logs_last_week(self):
+        pass
+
+    @catch_timeout
+    def test_logs_good_date(self):
+        pass
+
+    @catch_timeout
+    def test_logs_bad_date(self):
+        pass

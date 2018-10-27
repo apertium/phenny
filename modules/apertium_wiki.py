@@ -69,7 +69,7 @@ def logs(phenny, input):
     date_query = input.group(1)
 
     if date_query:
-        date_query = date_query.strip().lower()
+        date_query = date_query.replace(" ","").lower()
 
     endpoints['log'] += "%23" + phenny.channels[0][1:] + "/"
 

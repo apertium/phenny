@@ -8,7 +8,7 @@ def setup(self):
     # entries exist for as long as nick is active
     self.gci_data = {}
 
-    # persistent data: nick -> code, mentor_nick, all_time
+    # persistent data: nick -> mentor_nick, code, all_time
     self.gci_db = db_path(self, 'gci_data')
 
     connection = sqlite3.connect(self.gci_db)
@@ -16,8 +16,8 @@ def setup(self):
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS gci_data (
         nick        varchar(255),
-        code        varchar(255),
         mentor_nick varchar(255),
+        code        varchar(255),
         all_time    unsigned big int not null default 0,
         UNIQUE (nick, code) ON CONFLICT REPLACE
     );''')
@@ -42,14 +42,14 @@ def select(phenny, nick):
     }
 
     with DatabaseCursor(phenny.gci_db) as cursor:
-        cursor.execute("SELECT code, mentor_nick, all_time FROM gci_data WHERE nick=:nick", sqlite_data)
+        cursor.execute("SELECT mentor_nick, code, all_time FROM gci_data WHERE nick=:nick", sqlite_data)
         return cursor.fetchone()
 
-def insert(phenny, nick, code, mentor_nick, all_time=0):
-    sqlite_data = (nick, code, mentor_nick, all_time)
+def insert(phenny, nick, mentor_nick, code, all_time=0):
+    sqlite_data = (nick, mentor_nick, code, all_time)
 
     with DatabaseCursor(phenny.gci_db) as cursor:
-        cursor.execute("INSERT INTO gci_data (nick, code, mentor_nick, all_time) VALUES (?, ?, ?, ?)", sqlite_data)
+        cursor.execute("INSERT INTO gci_data (nick, mentor_nick, code, all_time) VALUES (?, ?, ?, ?)", sqlite_data)
 
 def update(phenny, nick, all_time):
     sqlite_data = {
@@ -73,7 +73,7 @@ def commutate(phenny, nick):
     last_time = phenny.gci_data[nick]['last_time']
     new_time = now_time - last_time
 
-    code, mentor_nick, all_time = select(phenny, nick)
+    mentor_nick, code, all_time = select(phenny, nick)
     all_time += now_time - last_time
 
     update(phenny, nick, all_time)

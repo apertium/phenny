@@ -11,7 +11,7 @@ class TestBotsnack(unittest.TestCase):
 
     def test_botsnack(self):
         botsnack.botsnack(self.phenny, self.input)
-        self.assertTrue(self.phenny.say.called)
+        self.assertTrue(self.phenny.say.called or self.phenny.do.called)
 
     def test_botslap(self):
         botsnack.botslap(self.phenny, self.input)
@@ -24,9 +24,9 @@ class TestBotsnack(unittest.TestCase):
     def test_increase(self):
         oldhunger = random.randint(0,100)
         newhunger = botsnack.increase_hunger(oldhunger, 5)
-        self.assertTrue(oldhunger > newhunger)
+        self.assertTrue(oldhunger >= newhunger)
 
     def test_decrease(self):
         oldhunger = random.randint(0, 100)
         newhunger = botsnack.decrease_hunger(oldhunger, 5)
-        self.assertTrue(oldhunger < newhunger)
+        self.assertTrue(oldhunger <= newhunger)

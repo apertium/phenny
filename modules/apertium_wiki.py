@@ -9,13 +9,14 @@ from tools import truncate
 from datetime import date, timedelta
 
 import wiki
-import requests
+import web
 
 endpoints = {
     'api': 'http://wiki.apertium.org/api.php?action=query&list=search&srlimit=1&format=json&srsearch={0}',
     'url': 'http://wiki.apertium.org/wiki/{0}',
-    'log': 'https://tinodidriksen.com/pisg/freenode/logs/%23apertium/',
+    'log': 'https://tinodidriksen.com/pisg/freenode/logs/',
 }
+
 
 def apertium_wiki(phenny, origterm, to_nick=None):
     term, section = wiki.parse_term(origterm)
@@ -65,38 +66,41 @@ awik2.priority = 'high'
 
 def logs(phenny, input):
     """Shows logs URL. """
-    date_q = input.group(1)
-    if date_q:
-        date_q = date_q.strip().lower()
-    if not date_q:
+    date_query = input.group(1)
+
+    if date_query:
+        date_query = date_query.strip().lower()
+
+    endpoints['log'] += "%23" + phenny.channels[0][1:] + "/"
+
+    if not date_query:
         phenny.say("Logs at %s" % endpoints['log'])
-    elif "today" in date_q:
+    elif "today" in date_query:
         today = str(date.today())
-        phenny.say("Log at %s" % endpoints['log']+today+".log")
-    elif "yesterday" in date_q:
+        phenny.say("Log at %s%s.log" % (endpoints['log'], today))
+    elif "yesterday" in date_query:
         yesterday = str(date.today() - timedelta(1))
-        phenny.say("Log at %s" % endpoints['log']+yesterday+".log")
-    elif "last" in date_q:
-        date_q = date_q.replace("last ", "")
-        days = {"sunday": 0, "monday": 1, "tuesday": 2,
-                "wednesday": 3, "thursday": 4, "friday": 5, "saturday": 6}
-        today = date.today()
+        phenny.say("Log at %s%s.log" % (endpoints['log'], yesterday))
+    elif "last" in date_query:
+        days = {"lastsunday": 0, "lastmonday": 1, "lasttuesday": 2,
+                "lastwednesday": 3, "lastthursday": 4, "lastfriday": 5, "lastsaturday": 6}
         last_week = [today + timedelta(days=i)
-                     for i in range(-8 - today.weekday(), today.weekday()-1)]
-        req_day = str(last_week[days[date_q]])
-        phenny.say("Log at %s" % endpoints['log']+req_day+".log")
-    elif date_q.count("/") == 2 and len(date_q.strip()) == 10:
-        date_q = date_q.strip().replace("/", "-")
-        date_q = date_q[-4:] + "-" + date_q[:5]
-        response = requests.get(endpoints['log']+date_q+".log")
-        if response.status_code == "404":
-            phenny.say(
-                "I didn't understand that. Please use a date in the form xx/yy/zzzz, in which x is two digits for month, y is day, etc.")
+                     for i in range(-8 - date.today().weekday(), date.today().weekday()-1)]
+        day = str(last_week[days[date_query]])
+        phenny.say("Log at %s%s.log" % (endpoints['log'], day))
+    elif date_query.count("/") == 2 and len(date_query) == 10:
+        month, day, year = date_query.split("/")
+        month, day, year = int(month), int(day), int(year)
+        if day in range(32) and month in range(13):
+            day_query = str(date(year, month, day))
+            if day_query in web.get("%s%s.log", endpoints['log'], day_query):
+                phenny.say("Log at %s%s.log" % (endpoints['log'], day_query))
+            else:
+                phenny.say("I didn't understand that. Please use a date in the form MM/DD/YYYY.")
         else:
-            phenny.say("Log at %s" % endpoints['log']+date_q+".log")
+            phenny.say("I didn't understand that. Please use a date in the form MM/DD/YYYY.")
     else:
-        phenny.say(
-            "I didn't understand that. Please use a date in the form xx/yy/zzzz, in which x is two digits for month, y is day, etc.")
+        phenny.say("I didn't understand that. Please use a date in the form MM/DD/YYYY.")
 
 
 logs.commands = ['logs', 'log']

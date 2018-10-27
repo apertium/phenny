@@ -3,7 +3,7 @@ from mock import MagicMock
 from modules import noexceptions
 
 
-class TestChoose(unittest.TestCase):
+class TestNoexceptions(unittest.TestCase):
     def setUp(self):
         self.phenny = MagicMock()
         self.input = MagicMock()

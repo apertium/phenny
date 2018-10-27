@@ -7,3 +7,4 @@ humanize
 coverage
 google-api-python-client
 sympy
+python-coveralls

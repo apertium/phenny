@@ -179,7 +179,7 @@ class TestTell(unittest.TestCase):
         self.input.nick = 'Testsworth'
         self.input.groups = lambda: ['testerrrrrrrrrrrrrrrrr', 'eat a cake']
 
-        tell.f_remind(self.phenny, self.input, 'eat')
+        tell.f_remind(self.phenny, self.input, 'ask')
         self.phenny.reply.assert_called_once_with('That nickname is too long.')
 
     def test_fremind2(self):
@@ -188,7 +188,7 @@ class TestTell(unittest.TestCase):
 
         self.input.groups = lambda: ['tests', 'eat a cake']
 
-        tell.f_remind(self.phenny, self.input, 'eat')
+        tell.f_remind(self.phenny, self.input, 'ask')
         self.phenny.say.assert_called_once_with('You can eat yourself that.')
 
     def test_fremind3(self):
@@ -196,7 +196,7 @@ class TestTell(unittest.TestCase):
         tell.nick_aliases = []
         self.input.groups = lambda: ['tests', 'eat a cake']
 
-        tell.f_remind(self.phenny, self.input, 'eat')
+        tell.f_remind(self.phenny, self.input, 'ask')
         responses = ["I'll pass that on when tests is around.", "yeah, yeah", "yeah, sure, whatever"]
         out = self.phenny.reply.call_args[0][0]
         self.assertTrue(out in responses)
@@ -206,5 +206,31 @@ class TestTell(unittest.TestCase):
 
         self.input.groups = lambda: ['me', 'eat a cake']
 
-        tell.f_remind(self.phenny, self.input, 'eat')
+        tell.f_remind(self.phenny, self.input, 'ask')
         self.phenny.say.assert_called_once_with("Hey, I'm not as stupid as Monty you know!")
+
+    def test_ftell(self):
+        self.input.nick = 'Testsworth'
+        tell.nick_aliases = []
+        self.input.groups = lambda: ['tests', 'eat a cake']
+
+        tell.f_tell(self.phenny, self.input)
+        responses = ["I'll pass that on when tests is around.", "yeah, yeah", "yeah, sure, whatever"]
+        out = self.phenny.reply.call_args[0][0]
+        self.assertTrue(out in responses)
+
+    def test_fask(self):
+        self.input.nick = 'Testsworth'
+        tell.nick_aliases = []
+        self.input.groups = lambda: ['tests', 'eat a cake']
+
+        tell.f_tell(self.phenny, self.input)
+        responses = ["I'll pass that on when tests is around.", "yeah, yeah", "yeah, sure, whatever"]
+        out = self.phenny.reply.call_args[0][0]
+        self.assertTrue(out in responses)
+
+    def test_formatreminder(self):
+        dt = str(datetime.datetime.utcnow())
+        r = ["tests", "ask", dt, "to eat cake"]
+        ret = tell.formatReminder(r, "Testsworth", None)
+        self.assertTrue(ret == "Testsworth: %s <tests> ask Testsworth to eat cake" % dt)

@@ -90,7 +90,7 @@ class TestApertiumWiki(unittest.TestCase):
         endpoint = apertium_wiki.channel(self.phenny, self.input)
         if string_check:
             out_check = str(date.today()) in out
-            web_check = str(date.today()) in web.get(endpoint)
+            web_check = str(date.today()) in get(endpoint)
         self.assertTrue(string_check and out_check and web_check)
 
 
@@ -104,7 +104,7 @@ class TestApertiumWiki(unittest.TestCase):
         endpoint = apertium_wiki.channel(self.phenny, self.input)
         if string_check:
             out_check = str(date.today() - timedelta(1)) in out
-            web_check = str(date.today() - timedelta(1)) in web.get(endpoint)
+            web_check = str(date.today() - timedelta(1)) in get(endpoint)
         self.assertTrue(string_check and out_check and web_check)
 
     @catch_timeout
@@ -118,7 +118,7 @@ class TestApertiumWiki(unittest.TestCase):
         if string_check:
             last_mon = str(date.today()-timedelta(-7-date.today().weekday()))
             out_check = last_mon in out
-            web_check = last_mon in web.get(endpoint)
+            web_check = last_mon in get(endpoint)
         self.assertTrue(string_check and out_check and web_check)
 
     @catch_timeout
@@ -132,7 +132,7 @@ class TestApertiumWiki(unittest.TestCase):
         if string_check:
             day_query = str(date(2018, 23, 10))
             out_check = day_query in out
-            web_check = day_query in web.get(endpoint)
+            web_check = day_query in get(endpoint)
         self.assertTrue(string_check and out_check and web_check)
 
     @catch_timeout
@@ -146,5 +146,5 @@ class TestApertiumWiki(unittest.TestCase):
         if string_check:
             day_query = str(date(9999, 99, 99))
             out_check = day_query in out
-            web_check = day_query in web.get(endpoint)
+            web_check = day_query in get(endpoint)
         self.assertFalse(string_check and out_check and web_check)

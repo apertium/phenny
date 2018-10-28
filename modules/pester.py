@@ -104,8 +104,8 @@ def pesters(phenny, input):
     '''Usage: ".pesters snooze <person pestering you>" to 'snooze' a pester; ".pesters dismiss <person you are pestering>" to stop pestering someone.'''
     pesters.conn = sqlite3.connect(phenny.pester_db)
     c = pesters.conn.cursor()
-    inputnick = input.nick.casefold();
-    pesterernick = input.group(2).casefold();
+    inputnick = input.nick.casefold()
+    pesterernick = input.group(2).casefold()
 
     if input.group(1) == 'snooze':
         current_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")

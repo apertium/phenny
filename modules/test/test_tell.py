@@ -45,6 +45,7 @@ class TestTell(unittest.TestCase):
 
     def test_aliasGroupFor(self):
         self.input.nick = 'Testsworth'
+        tell.nick_aliases = []
 
         aliases = ['tester', 'testing', 'testmaster']
 
@@ -58,6 +59,7 @@ class TestTell(unittest.TestCase):
 
     def test_aliasGroupFor2(self):
         self.input.nick = 'Testsworth'
+        tell.nick_aliases = []
         aliases = ['Testsworth']
 
         aligroup = tell.aliasGroupFor('Testsworth')
@@ -65,6 +67,7 @@ class TestTell(unittest.TestCase):
 
     def test_aliasPairMerge(self):
         self.input.nick = 'Testsworth'
+        tell.nick_aliases = []
         aliases = ['tester', 'testing', 'testmaster']
         for alias in aliases:
             self.create_alias(alias, self.input)
@@ -107,7 +110,7 @@ class TestTell(unittest.TestCase):
 
     def test_alias4(self):
         self.input.nick = 'Testsworth'
-        tell.nick_pairs = []
+        tell.nick_aliases = []
         tell.nick_pairs.append(['tests', 'Testsworth'])
 
         self.input.group = lambda x: ['', 'add', 'tests'][x]
@@ -117,7 +120,7 @@ class TestTell(unittest.TestCase):
 
     def test_alias5(self):
         self.input.nick = 'Testsworth'
-        tell.nick_pairs = []
+        tell.nick_aliases = []
         tell.nick_pairs.append(['Testsworth', 'tests'])
 
         self.input.group = lambda x: ['', 'add', 'tests'][x]
@@ -127,7 +130,8 @@ class TestTell(unittest.TestCase):
 
     def test_alias6(self):
         self.input.nick = 'Testsworth'
-        tell.nick_pairs = []
+        tell.nick_aliases = []
+
         self.input.group = lambda x: ['', 'add', 'tests'][x]
 
         tell.alias(self.phenny, self.input)

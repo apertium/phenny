@@ -19,3 +19,4 @@ class TestApertiumchill(unittest.TestCase):
         apertiumchill.chill(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
         self.assertTrue(out.find("WARNING: CHILL LEVEL IS DANGEROUSLY LOW. RECOMMEND") != -1)
+        

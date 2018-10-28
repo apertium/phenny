@@ -69,39 +69,46 @@ def logs(phenny, input):
     date_query = input.group(1)
 
     if date_query:
-        date_query = date_query.strip().lower()
+        date_query = date_query.lower().strip()
 
     endpoints['log'] += "%23" + phenny.channels[0][1:] + "/"
 
     if not date_query:
-        phenny.say("Logs at %s" % endpoints['log'])
+        # .logs
+        phenny.say("Log at {0}.log".format(endpoints['log']))
     elif "today" in date_query:
-        today = str(date.today())
-        phenny.say("Log at %s%s.log" % (endpoints['log'], today))
+        # .logs today
+        phenny.say("Log at {0}{1}.log".format(endpoints['log'], date.today()))
     elif "yesterday" in date_query:
-        yesterday = str(date.today() - timedelta(1))
-        phenny.say("Log at %s%s.log" % (endpoints['log'], yesterday))
+        # .logs yesterday
+        yesterday = date.today() - timedelta(1)
+        phenny.say("Log at {0}{1}.log".format(endpoints['log'], yesterday))
     elif "last" in date_query:
-        days = {"lastsunday": 0, "lastmonday": 1, "lasttuesday": 2,
-                "lastwednesday": 3, "lastthursday": 4, "lastfriday": 5, "lastsaturday": 6}
-        last_week = [today + timedelta(days=i)
-                     for i in range(-8 - date.today().weekday(), date.today().weekday()-1)]
-        day = str(last_week[days[date_query]])
-        phenny.say("Log at %s%s.log" % (endpoints['log'], day))
+        # .logs last <day of week>
+        days = {"sun": 0, "mon": 1, "tue": 2,
+                "wed": 3, "thurs": 4, "fri": 5, "sat": 6}
+        last_week = [today + timedelta(days=i) for i in range(-8 - date.today().weekday(), date.today().weekday()-1)]
+        n = [i for i in days.keys() if i in date_query][0]
+        phenny.say("Log at {0}{1}.log".format(endpoints['log'], last_week[days[n]]))
     elif date_query.count("/") == 2 and len(date_query) == 10:
-        month, day, year = date_query.split("/")
-        month, day, year = int(month), int(day), int(year)
-        if day in range(32) and month in range(13):
-            day_query = str(date(year, month, day))
-            if day_query in web.get("%s%s.log", endpoints['log'], day_query):
-                phenny.say("Log at %s%s.log" % (endpoints['log'], day_query))
+        # .logs MM/DD/YYYY
+        try:
+            month, day, year = date_query.split("/")
+            month, day, year = int(month), int(day), int(year)
+            day_query = date(year, month, day)
+            if day in range(32) and month in range(13):
+                if day_query in web.get("{0}{1}.log".format(endpoints['log'], day_query)):
+                    phenny.say("Log at {0}{1}.log".format(endpoints['log'], day_query))
+                else:
+                    raise ValueError
             else:
-                phenny.say("I didn't understand that. Please use a date in the form MM/DD/YYYY.")
-        else:
+                raise ValueError
+        except ValueError:
             phenny.say("I didn't understand that. Please use a date in the form MM/DD/YYYY.")
-    else:
-        phenny.say("I didn't understand that. Please use a date in the form MM/DD/YYYY.")
 
+
+def channel(phenny, input):
+    return endpoints['log'] + "%23" + phenny.channels[0][1:] + "/"
 
 logs.commands = ['logs', 'log']
 logs.priority = 'low'

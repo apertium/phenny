@@ -82,65 +82,69 @@ class TestApertiumWiki(unittest.TestCase):
 
     @catch_timeout
     def test_logs_today(self):
-        logs_input = re.match(".logs", ".logs today")
-        apertium_wiki.logs(self.phenny, logs_input)
+        self.input.group = lambda x: [None, 'today'][x]
+        apertium_wiki.logs(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
         string_check = "Log at " in out
+
+        endpoint = apertium_wiki.channel(self.phenny, self.input)
         if string_check:
             out_check = str(date.today()) in out
-            web_check = str(date.today()) in web.get(apertium_wiki.endpoints['log'])
-        self.assertTrue(string_check*out_check*web_check)
+            web_check = str(date.today()) in web.get(endpoint)
+        self.assertTrue(string_check and out_check and web_check)
 
 
     @catch_timeout
     def test_logs_yesterday(self):
-        logs_input = re.match(".logs", ".logs yesterday")
-        apertium_wiki.logs(self.phenny, logs_input)
+        self.input.group = lambda x: [None, 'yesterday'][x]
+        apertium_wiki.logs(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
         string_check = "Log at " in out
+
+        endpoint = apertium_wiki.channel(self.phenny, self.input)
         if string_check:
             out_check = str(date.today() - timedelta(1)) in out
-            web_check = str(date.today() - timedelta(1)) in web.get(apertium_wiki.endpoints['log'])
-        self.assertTrue(string_check*web_check)
+            web_check = str(date.today() - timedelta(1)) in web.get(endpoint)
+        self.assertTrue(string_check and out_check and web_check)
 
     @catch_timeout
     def test_logs_last_week(self):
-        logs_input = re.match(".logs", ".logs last monday")
-        apertium_wiki.logs(self.phenny, logs_input)
+        self.input.group = lambda x: [None, 'last monday'][x]
+        apertium_wiki.logs(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
         string_check = "Log at " in out
+
+        endpoint = apertium_wiki.channel(self.phenny, self.input)
         if string_check:
             last_mon = str(date.today()-timedelta(-7-date.today().weekday()))
             out_check = last_mon in out
-            web_check = last_mon in web.get(apertium_wiki.endpoints['log'])
-        self.assertTrue(string_check*out_check*web_check)
+            web_check = last_mon in web.get(endpoint)
+        self.assertTrue(string_check and out_check and web_check)
 
     @catch_timeout
     def test_logs_good_date(self):
-        logs_input = re.match(".logs", ".logs 10/23/18")
-        apertium_wiki.logs(self.phenny, logs_input)
+        self.input.group = lambda x: [None, '10/23/2018'][x]
+        apertium_wiki.logs(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
         string_check = "Log at " in out
+
+        endpoint = apertium_wiki.channel(self.phenny, self.input)
         if string_check:
-            url = logs_input[7:]
-            month, day, year = date_query.split("/")
-            month, day, year = int(month), int(day), int(year)
-            day_query = str(date(year, month, day))
+            day_query = str(date(2018, 23, 10))
             out_check = day_query in out
-            web_check = day_query in web.get(apertium_wiki.endpoints['log'])
-        self.assertTrue(string_check*out_check*web_check)
+            web_check = day_query in web.get(endpoint)
+        self.assertTrue(string_check and out_check and web_check)
 
     @catch_timeout
     def test_logs_bad_date(self):
-        logs_input = re.match(".logs", ".logs 99/99/9999")
-        apertium_wiki.logs(self.phenny, logs_input)
+        self.input.group = lambda x: [None, '99/99/9999'][x]
+        apertium_wiki.logs(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
         string_check = "Log at " in out
+
+        endpoint = apertium_wiki.channel(self.phenny, self.input)
         if string_check:
-            url = logs_input[7:]
-            month, day, year = date_query.split("/")
-            month, day, year = int(month), int(day), int(year)
-            day_query = str(date(year, month, day))
+            day_query = str(date(9999, 99, 99))
             out_check = day_query in out
-            web_check = day_query in web.get(apertium_wiki.endpoints['log'])
-        self.assertFalse(string_check*out_check*web_check)
+            web_check = day_query in web.get(endpoint)
+        self.assertFalse(string_check and out_check and web_check)

@@ -16,5 +16,4 @@ class TestPester(unittest.TestCase):
 
         pester.start_pester(self.phenny, self.input)
 
-        msg = "tester: I will start pestering testuser to study"
-        self.phenny.say.assert_called_once_with(msg)
+        self.phenny.say.assert_called_once_with("tester: I will start pestering testuser to study")

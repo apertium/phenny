@@ -1,5 +1,4 @@
 import unittest
-import random
 from mock import MagicMock
 from modules import botsnack
 
@@ -22,11 +21,11 @@ class TestBotsnack(unittest.TestCase):
         self.assertTrue(out in messages)
 
     def test_increase(self):
-        oldhunger = random.randint(0,100)
+        oldhunger = 12
         newhunger = botsnack.increase_hunger(oldhunger, 5)
         self.assertTrue(oldhunger >= newhunger)
 
     def test_decrease(self):
-        oldhunger = random.randint(0, 100)
+        oldhunger = 12
         newhunger = botsnack.decrease_hunger(oldhunger, 5)
         self.assertTrue(oldhunger <= newhunger)

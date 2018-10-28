@@ -193,10 +193,18 @@ class TestTell(unittest.TestCase):
 
     def test_fremind3(self):
         self.input.nick = 'Testsworth'
-
+        tell.nick_aliases = []
         self.input.groups = lambda: ['tests', 'eat a cake']
 
         tell.f_remind(self.phenny, self.input, 'eat')
         responses = ["I'll pass that on when tests is around.", "yeah, yeah", "yeah, sure, whatever"]
         out = self.phenny.reply.call_args[0][0]
         self.assertTrue(out in responses)
+
+    def test_fremind4(self):
+        self.input.nick = 'Testsworth'
+
+        self.input.groups = lambda: ['me', 'eat a cake']
+
+        tell.f_remind(self.phenny, self.input, 'eat')
+        self.phenny.say.assert_called_once_with("Hey, I'm not as stupid as Monty you know!")

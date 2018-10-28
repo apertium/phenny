@@ -21,7 +21,7 @@ class TestTell(unittest.TestCase):
     def create_alias(self, alias, input):
         self.input.group = lambda x: ['', 'add', alias][x]
         tell.alias(self.phenny, input)
-        tell.aliasPairMerge(self.phenny, self.input.nick, alias)
+        tell.aliasPairMerge(self.phenny, input.nick, alias)
 
     def create_reminder(self, teller):
         timenow = datetime.datetime.utcnow().strftime('%d %b %Y %H:%MZ')
@@ -77,7 +77,7 @@ class TestTell(unittest.TestCase):
         tell.aliasPairMerge(self.phenny, 'Testsworth', 'Happy')
 
         aliases.insert(0,'Testsworth')
-        aliases2.append('Happy')
+        aliases2.insert(0,'Happy')
         joined = aliases + aliases2
 
         self.assertTrue(joined in tell.nick_aliases)
@@ -169,3 +169,4 @@ class TestTell(unittest.TestCase):
 
         tell.alias(self.phenny, self.input)
         self.phenny.reply.assert_called_once_with("Usage: .alias add <nick>, .alias list <nick>?, .alias remove")
+

@@ -7,14 +7,24 @@ Licensed under the Eiffel Forum License 2.
 http://inamidst.com/phenny/
 """
 
+import glob
 import logging
 import os
+from os.path import dirname, basename, isfile
 import signal
 import sys
 import threading
 import time
 
 logger = logging.getLogger('phenny')
+
+
+def all_modules(file):
+    modules = glob.glob(dirname(file) + '/*.py')
+    return [basename(f)[:-3] for f in modules if isfile(f) and not f.endswith('__init__.py')]
+
+__all__ = all_modules(__file__)
+
 
 class Watcher(object): 
     # Cf. http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/496735

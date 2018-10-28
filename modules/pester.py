@@ -21,7 +21,7 @@ def start_pester(phenny, input):
     '''Start pestering someone. Usage: <bot_nick>: pester <someone> <to do something>'''
     start_pester.conn = sqlite3.connect(phenny.pester_db)
     c = start_pester.conn.cursor()
-    inputnick = input.nick.casefold();
+    inputnick = input.nick.casefold()
     pesternick = input.group(1).casefold()
 
     c.execute('''SELECT * FROM to_pester WHERE pesteree=? AND pesterer=?''', [pesternick, inputnick])

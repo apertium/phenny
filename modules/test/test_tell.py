@@ -189,7 +189,7 @@ class TestTell(unittest.TestCase):
         self.input.groups = lambda: ['tests', 'eat a cake']
 
         tell.f_remind(self.phenny, self.input, 'ask')
-        self.phenny.say.assert_called_once_with('You can eat yourself that.')
+        self.phenny.say.assert_called_once_with('You can ask yourself that.')
 
     def test_fremind3(self):
         self.input.nick = 'Testsworth'

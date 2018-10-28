@@ -131,6 +131,7 @@ class TestTell(unittest.TestCase):
     def test_alias6(self):
         self.input.nick = 'Testsworth'
         tell.nick_aliases = []
+        tell.nick_pairs = []
 
         self.input.group = lambda x: ['', 'add', 'tests'][x]
 

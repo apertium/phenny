@@ -101,7 +101,7 @@ class TestTell(unittest.TestCase):
 
     def test_alias_alreadypaired(self):
         self.input.nick = 'Testsworth'
-        tell.nick_aliases.append(['Testsworth', 'tests'])
+        tell.nick_aliases = [['Testsworth', 'tests']]
 
         self.input.group = lambda x: ['alias', 'add', 'tests'][x]
 
@@ -156,7 +156,7 @@ class TestTell(unittest.TestCase):
 
     def test_alias_remove(self):
         self.input.nick = 'Testsworth'
-        tell.nick_aliases.append(["Testsworth", "tests"])
+        tell.nick_aliases = [["Testsworth", "tests"]]
         self.input.group = lambda x: ['alias', 'remove'][x]
 
         tell.alias(self.phenny, self.input)

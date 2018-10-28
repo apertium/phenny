@@ -14,9 +14,9 @@ class TestBotsnack(unittest.TestCase):
 
     def test_botslap(self):
         botsnack.botslap(self.phenny, self.input)
-        messages = ["hides in corner", "eats own hat", "apologises", "stares at feet", "points at zfe",
+        messages = {"hides in corner", "eats own hat", "apologises", "stares at feet", "points at zfe",
                     "didn't do anything", "doesn't deserve this", "hates you guys", "did it on purpose",
-                    "is an inconsistent sketchy little bot", "scurries off"]
+                    "is an inconsistent sketchy little bot", "scurries off"}
         out = self.phenny.do.call_args[0][0]
         self.assertTrue(out in messages)
 

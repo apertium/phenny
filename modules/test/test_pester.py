@@ -15,5 +15,4 @@ class TestPester(unittest.TestCase):
         self.input.group = lambda x: ['', 'testuser', 'to study'][x]
 
         pester.start_pester(self.phenny, self.input)
-
         self.phenny.say.assert_called_once_with("tester: I will start pestering testuser to study")

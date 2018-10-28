@@ -90,14 +90,14 @@ class TestTell(unittest.TestCase):
         self.input.group = lambda x: ['alias', 'add', None][x]
 
         tell.alias(self.phenny, self.input)
-        self.phenny.reply.assert_called_once_with("Usage: .alias add <nick>")
+        self.phenny.reply.assert_called_once_with('Usage: .alias add <nick>')
 
     def test_alias_addself(self):
         self.input.nick = 'Testsworth'
         self.input.group = lambda x: ['alias', 'add', 'Testsworth'][x]
 
         tell.alias(self.phenny, self.input)
-        self.phenny.reply.assert_called_once_with("I don't think that will be necessary.")
+        self.phenny.reply.assert_called_once_with('I don\'t think that will be necessary.')
 
     def test_alias_alreadypaired(self):
         self.input.nick = 'Testsworth'
@@ -106,7 +106,7 @@ class TestTell(unittest.TestCase):
         self.input.group = lambda x: ['alias', 'add', 'tests'][x]
 
         tell.alias(self.phenny, self.input)
-        self.phenny.reply.assert_called_once_with("You and tests are already paired.")
+        self.phenny.reply.assert_called_once_with('You and tests are already paired.')
 
     def test_alias_confirmreq(self):
         self.input.nick = 'Testsworth'
@@ -116,7 +116,7 @@ class TestTell(unittest.TestCase):
         self.input.group = lambda x: ['alias', 'add', 'tests'][x]
 
         tell.alias(self.phenny, self.input)
-        self.phenny.reply.assert_called_once_with("Confirmed alias request with tests. Your current aliases are: Testsworth, tests.")
+        self.phenny.reply.assert_called_once_with('Confirmed alias request with tests. Your current aliases are: Testsworth, tests.')
 
     def test_alias_alreadysent(self):
         self.input.nick = 'Testsworth'
@@ -126,7 +126,7 @@ class TestTell(unittest.TestCase):
         self.input.group = lambda x: ['alias', 'add', 'tests'][x]
 
         tell.alias(self.phenny, self.input)
-        self.phenny.reply.assert_called_once_with("Alias request already exists. Switch your nick to tests and call \".alias add Testsworth\" to confirm.")
+        self.phenny.reply.assert_called_once_with('Alias request already exists. Switch your nick to tests and call \".alias add Testsworth\" to confirm.')
 
     def test_alias_valid(self):
         self.input.nick = 'Testsworth'
@@ -136,44 +136,44 @@ class TestTell(unittest.TestCase):
         self.input.group = lambda x: ['alias', 'add', 'tests'][x]
 
         tell.alias(self.phenny, self.input)
-        self.phenny.reply.assert_called_once_with("Alias request created. Switch your nick to tests and call \".alias add Testsworth\" to confirm.")
+        self.phenny.reply.assert_called_once_with('Alias request created. Switch your nick to tests and call \".alias add Testsworth\" to confirm.')
 
     def test_alias_listothers(self):
         self.input.nick = 'Testsworth'
-        tell.nick_aliases.append(["happy", "joyous"])
+        tell.nick_aliases.append(['happy', 'joyous'])
         self.input.group = lambda x: ['alias', 'list', 'happy'][x]
 
         tell.alias(self.phenny, self.input)
-        self.phenny.reply.assert_called_once_with("happy's current aliases are: happy, joyous.")
+        self.phenny.reply.assert_called_once_with('happy\'s current aliases are: happy, joyous.')
 
     def test_alias_listself(self):
         self.input.nick = 'Testsworth'
-        tell.nick_aliases.append(["Testsworth", "tests"])
+        tell.nick_aliases.append(['Testsworth', 'tests'])
         self.input.group = lambda x: ['alias', 'list', None][x]
 
         tell.alias(self.phenny, self.input)
-        self.phenny.reply.assert_called_once_with("Your current aliases are: Testsworth, tests.")
+        self.phenny.reply.assert_called_once_with('Your current aliases are: Testsworth, tests.')
 
     def test_alias_remove(self):
         self.input.nick = 'Testsworth'
-        tell.nick_aliases = [["Testsworth", "tests"]]
+        tell.nick_aliases = [['Testsworth', 'tests']]
         self.input.group = lambda x: ['alias', 'remove'][x]
 
         tell.alias(self.phenny, self.input)
         self.assertTrue(tell.aliasGroupFor('Testsworth') == ['Testsworth'])
-        self.phenny.reply.assert_called_once_with("You have removed Testsworth from its alias group")
+        self.phenny.reply.assert_called_once_with('You have removed Testsworth from its alias group')
 
     def test_alias_wrongcommand(self):
         self.input.group = lambda x: ['alias', 'eat'][x]
 
         tell.alias(self.phenny, self.input)
-        self.phenny.reply.assert_called_once_with("Usage: .alias add <nick>, .alias list <nick>?, .alias remove")
+        self.phenny.reply.assert_called_once_with('Usage: .alias add <nick>, .alias list <nick>?, .alias remove')
 
     def test_alias_noinput(self):
         self.input.group = lambda x: ['alias', None][x]
 
         tell.alias(self.phenny, self.input)
-        self.phenny.reply.assert_called_once_with("Usage: .alias add <nick>, .alias list <nick>?, .alias remove")
+        self.phenny.reply.assert_called_once_with('Usage: .alias add <nick>, .alias list <nick>?, .alias remove')
 
     def test_fremind_toolong(self):
         self.input.nick = 'Testsworth'
@@ -197,17 +197,16 @@ class TestTell(unittest.TestCase):
         self.input.groups = lambda: ['tests', 'eat a cake']
 
         tell.f_remind(self.phenny, self.input, 'ask')
-        responses = ["I'll pass that on when tests is around.", "yeah, yeah", "yeah, sure, whatever"]
+        responses = {'I\'ll pass that on when tests is around.', 'yeah, yeah', 'yeah, sure, whatever'}
         out = self.phenny.reply.call_args[0][0]
         self.assertTrue(out in responses)
 
     def test_fremind_edgecase(self):
         self.input.nick = 'Testsworth'
-
         self.input.groups = lambda: ['me', 'eat a cake']
 
         tell.f_remind(self.phenny, self.input, 'ask')
-        self.phenny.say.assert_called_once_with("Hey, I'm not as stupid as Monty you know!")
+        self.phenny.say.assert_called_once_with('Hey, I\'m not as stupid as Monty you know!')
 
     def test_ftell(self):
         self.input.nick = 'Testsworth'
@@ -215,7 +214,7 @@ class TestTell(unittest.TestCase):
         self.input.groups = lambda: ['tests', 'eat a cake']
 
         tell.f_tell(self.phenny, self.input)
-        responses = ["I'll pass that on when tests is around.", "yeah, yeah", "yeah, sure, whatever"]
+        responses = {'I\'ll pass that on when tests is around.', 'yeah, yeah', 'yeah, sure, whatever'}
         out = self.phenny.reply.call_args[0][0]
         self.assertTrue(out in responses)
 
@@ -225,12 +224,14 @@ class TestTell(unittest.TestCase):
         self.input.groups = lambda: ['tests', 'eat a cake']
 
         tell.f_tell(self.phenny, self.input)
-        responses = ["I'll pass that on when tests is around.", "yeah, yeah", "yeah, sure, whatever"]
+        responses = {'I\'ll pass that on when tests is around.', 'yeah, yeah', 'yeah, sure, whatever'}
         out = self.phenny.reply.call_args[0][0]
         self.assertTrue(out in responses)
 
     def test_formatreminder(self):
-        dt = str(datetime.datetime.utcnow())
-        r = ["tests", "ask", dt, "to eat cake"]
-        ret = tell.formatReminder(r, "Testsworth", None)
-        self.assertTrue(ret == "Testsworth: %s <tests> ask Testsworth to eat cake" % dt)
+        dt = datetime.datetime.utcnow().strftime('%d %b %Y %H:%MZ')
+        ret = tell.formatReminder(['tests', 'ask', dt, 'to eat cake'], 'Testsworth', None)
+
+        dt = dt[len(datetime.datetime.utcnow().strftime('%d %b')) + 1:]
+        dt = dt.replace(datetime.datetime.utcnow().strftime('%Y '), '')
+        self.assertTrue(ret == 'Testsworth: %s <tests> ask Testsworth to eat cake' % dt)

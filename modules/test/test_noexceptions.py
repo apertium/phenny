@@ -38,13 +38,13 @@ class TestNoexceptions(unittest.TestCase):
         self.phenny.say.assert_called_once_with('Testuser: this is my particles face :(((((')
 
     def test_nightnight(self):
-        message = ['nn, Testuser!', 'night, Testuser!', 'жашкы жат, Testuser!', 'later, Testuser!', 'sweet dreams, Testuser!', 'o/, Testuser!']
+        message = {'nn, Testuser!', 'night, Testuser!', 'жашкы жат, Testuser!', 'later, Testuser!', 'sweet dreams, Testuser!', 'o/, Testuser!'}
         noexceptions.nightnight(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
         self.assertTrue(out in message)
 
     def test_uderp(self):
-        message = ['\o/ UD \o/, Testuser!', '（。々°） #u_dep, Testuser!', 'ᕕ(ᐛ)ᕗ #u_dep, Testuser!', 'universal derpendencies!, Testuser!', 'treegrams ftw!, Testuser!']
+        message = {'\o/ UD \o/, Testuser!', '（。々°） #u_dep, Testuser!', 'ᕕ(ᐛ)ᕗ #u_dep, Testuser!', 'universal derpendencies!, Testuser!', 'treegrams ftw!, Testuser!'}
         noexceptions.uderp(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
         self.assertTrue(out in message)

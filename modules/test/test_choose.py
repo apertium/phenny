@@ -22,7 +22,7 @@ class TestChoose(unittest.TestCase):
 
     def test_choose_multiple(self):
         self.input.group = lambda x: ['.choose', 'dog cat hamster goldfish turtle'][x]
-        possibilities = ["dog", "cat", "hamster", "goldfish", "turtle"]
+        possibilities = {'dog', 'cat', 'hamster', 'goldfish', 'turtle'}
         choose.choose(self.phenny, self.input)
         out = self.phenny.reply.call_args[0][0]
         self.assertTrue(out in possibilities)
@@ -30,9 +30,9 @@ class TestChoose(unittest.TestCase):
     def test_choose_single(self):
         self.input.group = lambda x: ['.choose', 'haha'][x]
         choose.choose(self.phenny, self.input)
-        self.phenny.reply.assert_called_once_with("haha")
+        self.phenny.reply.assert_called_once_with('haha')
 
     def test_choose_invalid(self):
         self.input.group = lambda x: ['.choose', ''][x]
         choose.choose(self.phenny, self.input)
-        self.phenny.say.assert_called_once_with(".choose <red> <blue> - for when you just can't decide")
+        self.phenny.say.assert_called_once_with('.choose <red> <blue> - for when you just can\'t decide')

@@ -21,6 +21,9 @@ script:
 
 before_cache: ./clean-cache.sh
 
+after_sucess:
+    - coveralls
+
 notifications:
     irc:
         channels:

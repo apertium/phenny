@@ -95,7 +95,6 @@ def logs(phenny, input):
         # .logs MM/DD/YYYY
         try:
             day_query = dt.datetime.strftime(dt.datetime.strptime(date_query, "%m/%d/%Y"), "%Y-%d-%m")
-            print(day_query)
             if "***" in web.get("{0}{1}.log".format(endpoints['log'], day_query)):
                 phenny.say("Log at {0}{1}.log".format(endpoints['log'], day_query))
         except:

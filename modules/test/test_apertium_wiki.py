@@ -118,12 +118,11 @@ class TestApertiumWiki(unittest.TestCase):
         apertium_wiki.logs(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
         string_check = "Log at " in out
-        print(out)
         if string_check:
             url = out[7:]
             day_query = str(date(2018, 10, 23))
             out_check = day_query in out
-        self.assertTrue(True)
+        self.assertTrue(string_check and out_check)
 
     def test_logs_bad_date(self):
         self.input.group = lambda x: [None, '99/99/9999'][x]

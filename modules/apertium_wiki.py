@@ -72,7 +72,7 @@ def logs(phenny, input):
     if date_query:
         date_query = date_query.lower().strip()
 
-    endpoints['log'] = endpoints['logs'] + "%23" + phenny.channels[0][1:] + "/"
+    endpoints['log'] = "{0}%23{1}/".format(endpoints['logs'], phenny.channels[0][1:])
 
     if not date_query:
         # .logs
@@ -88,13 +88,14 @@ def logs(phenny, input):
         # .logs last <day of week>
         days = {"sun": 0, "mon": 1, "tue": 2,
                 "wed": 3, "thurs": 4, "fri": 5, "sat": 6}
-        last_week = [str(dt.date.today() + dt.timedelta(days=i)) for i in range(-8 - dt.date.today().weekday(), dt.date.today().weekday()-1)]
-        n = [days[i] for i in days.keys() if i in date_query][0]
-        phenny.say("Log at {0}{1}.log".format(endpoints['log'], last_week[n]))
+        last_week = [dt.date.today() + dt.timedelta(days=i) for i in range(-8 - dt.date.today().weekday(), dt.date.today().weekday()-1)]
+        n = (days[i] for i in days.keys() if i in date_query)
+        phenny.say("Log at {0}{1}.log".format(endpoints['log'], last_week[next(n)]))
     elif date_query.count("/") == 2 and len(date_query) == 10:
         # .logs MM/DD/YYYY
         try:
-            day_query = str(dt.datetime.strptime(date_query, "%m/%d/%Y"))[:10]
+            day_query = dt.datetime.strftime(dt.datetime.strptime(date_query, "%m/%d/%Y"), "%Y-%d-%m")
+            print(day_query)
             if "***" in web.get("{0}{1}.log".format(endpoints['log'], day_query)):
                 phenny.say("Log at {0}{1}.log".format(endpoints['log'], day_query))
         except:

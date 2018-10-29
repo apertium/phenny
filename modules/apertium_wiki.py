@@ -93,11 +93,11 @@ def logs(phenny, input):
     elif date_query.count("/") == 2 and len(date_query) == 10:
         # .logs MM/DD/YYYY
         try:
-            day_query = dt.datetime.strftime(dt.datetime.strptime(date_query, "%m/%d/%Y"), "%Y-%m-%d")
+            day_query = dt.datetime.strftime(dt.datetime.strptime(date_query, "%m/%d/%Y"), "%Y-%m-%d")  # raises ValueError if not correct format
             if "***" in web.get("{0}{1}.log".format(endpoints['log'], day_query)):
                 phenny.say("Log at {0}{1}.log".format(endpoints['log'], day_query))
             else:
-                raise ValueError
+                raise ValueError  # case in which date does not have log
         except ValueError:
             phenny.say("I didn't understand that. Please use a date in the form MM/DD/YYYY.")
 

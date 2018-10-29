@@ -4,7 +4,6 @@ from modules import apertium_wiki
 from web import catch_timeout, get
 from datetime import date, timedelta
 import wiki
-import re
 
 
 class TestApertiumWiki(unittest.TestCase):
@@ -85,6 +84,7 @@ class TestApertiumWiki(unittest.TestCase):
         apertium_wiki.logs(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
         string_check = "Log at " in out
+
         if string_check:
             url = out[7:]
             out_check = str(date.today()) in out
@@ -118,6 +118,7 @@ class TestApertiumWiki(unittest.TestCase):
         apertium_wiki.logs(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
         string_check = "Log at " in out
+
         if string_check:
             url = out[7:]
             day_query = str(date(2018, 10, 23))

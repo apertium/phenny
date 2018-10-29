@@ -6,7 +6,8 @@ apertium_wiki.py - Phenny Wikipedia Module
 import re
 
 from tools import truncate
-from datetime import date, timedelta, datetime.strptime
+from datetime import date, timedelta
+from datetime.datetime import strptime
 
 import wiki
 import web
@@ -93,7 +94,7 @@ def logs(phenny, input):
     elif date_query.count("/") == 2 and len(date_query) == 10:
         # .logs MM/DD/YYYY
         try:
-            day_query = datetime.strptime(date_query, "%m/%d/%Y")[:10]
+            day_query = strptime(date_query, "%m/%d/%Y")[:10]
             if day in range(32) and month in range(13):
                 if "***" in web.get("{0}{1}.log".format(endpoints['log'], day_query)):
                     phenny.say("Log at {0}{1}.log".format(endpoints['log'], day_query))

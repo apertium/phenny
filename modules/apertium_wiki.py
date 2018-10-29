@@ -3,7 +3,6 @@
 apertium_wiki.py - Phenny Wikipedia Module
 """
 
-import re
 
 from tools import truncate
 
@@ -88,7 +87,7 @@ def logs(phenny, input):
         # .logs last <day of week>
         days = {"sun": 0, "mon": 1, "tue": 2,
                 "wed": 3, "thurs": 4, "fri": 5, "sat": 6}
-        last_week = [dt.date.today() + dt.timedelta(days=i) for i in range(-8 - dt.date.today().weekday(), dt.date.today().weekday()-1)]
+        last_week = [dt.date.today() + dt.timedelta(days=i) for i in range(-8 - dt.date.today().weekday(), dt.date.today().weekday() - 1)]
         n = (days[i] for i in days.keys() if i in date_query)
         phenny.say("Log at {0}{1}.log".format(endpoints['log'], last_week[next(n)]))
     elif date_query.count("/") == 2 and len(date_query) == 10:
@@ -97,7 +96,9 @@ def logs(phenny, input):
             day_query = dt.datetime.strftime(dt.datetime.strptime(date_query, "%m/%d/%Y"), "%Y-%m-%d")
             if "***" in web.get("{0}{1}.log".format(endpoints['log'], day_query)):
                 phenny.say("Log at {0}{1}.log".format(endpoints['log'], day_query))
-        except:
+            else:
+                raise ValueError
+        except ValueError:
             phenny.say("I didn't understand that. Please use a date in the form MM/DD/YYYY.")
 
 

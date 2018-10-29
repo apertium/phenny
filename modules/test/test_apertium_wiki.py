@@ -89,8 +89,7 @@ class TestApertiumWiki(unittest.TestCase):
         if string_check:
             url = out[7:]
             out_check = str(date.today()) in out
-            web_check = "***" in get(url)
-        self.assertTrue(string_check and out_check and web_check)
+        self.assertTrue(string_check and out_check)
 
 
     @catch_timeout
@@ -103,8 +102,7 @@ class TestApertiumWiki(unittest.TestCase):
         if string_check:
             url = out[7:]
             out_check = str(date.today() - timedelta(1)) in out
-            web_check = "***" in get(url)
-        self.assertTrue(string_check and out_check and web_check)
+        self.assertTrue(string_check and out_check)
 
     @catch_timeout
     def test_logs_last_week(self):
@@ -117,8 +115,7 @@ class TestApertiumWiki(unittest.TestCase):
             url = out[7:]
             last_mon = str(date.today()-timedelta(7-date.today().weekday()))
             out_check = last_mon in out
-            web_check = "***" in get(url)
-            self.assertTrue(string_check and out_check and web_check)
+            self.assertTrue(string_check and out_check)
 
     @catch_timeout
     def test_logs_good_date(self):
@@ -130,8 +127,7 @@ class TestApertiumWiki(unittest.TestCase):
             url = out[7:]
             day_query = str(date(2018, 10, 23))
             out_check = day_query in out
-            web_check = "***" in get(url)
-        self.assertTrue(string_check and out_check and web_check)
+        self.assertTrue(string_check and out_check)
 
     @catch_timeout
     def test_logs_bad_date(self):
@@ -144,5 +140,4 @@ class TestApertiumWiki(unittest.TestCase):
             url = out[7:]
             day_query = str(date(9999, 99, 99))
             out_check = day_query in out
-            web_check = "***" in get(url)
-        self.assertFalse(string_check and out_check and web_check)
+        self.assertFalse(string_check and out_check)

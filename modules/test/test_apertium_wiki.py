@@ -14,8 +14,8 @@ class TestApertiumWiki(unittest.TestCase):
     def setUp(self):
         self.phenny = MagicMock()
         self.input = MagicMock()
-
-        self.term = None
+        self.phenny.channels = ["#apertium"]
+        self.term = None    
         self.section = None
 
     def prepare(self):
@@ -87,7 +87,6 @@ class TestApertiumWiki(unittest.TestCase):
         self.input.group = lambda x: [None, 'today'][x]
         apertium_wiki.logs(self.phenny, self.input)
         out = str(self.phenny.say.call_args[0][0])
-        print(out)
         string_check = "Log at " in out
 
         if string_check:

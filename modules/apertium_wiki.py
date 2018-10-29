@@ -14,7 +14,7 @@ import web
 endpoints = {
     'api': 'http://wiki.apertium.org/api.php?action=query&list=search&srlimit=1&format=json&srsearch={0}',
     'url': 'http://wiki.apertium.org/wiki/{0}',
-    'log': 'https://tinodidriksen.com/pisg/freenode/logs/',
+    'logs': 'https://tinodidriksen.com/pisg/freenode/logs/',
 }
 
 
@@ -71,7 +71,7 @@ def logs(phenny, input):
     if date_query:
         date_query = date_query.lower().strip()
 
-    endpoints['log'] += "%23" + phenny.channels[0][1:] + "/"
+    endpoints['log'] = endpoints['logs'] + "%23" + phenny.channels[0][1:] + "/"
 
     if not date_query:
         # .logs

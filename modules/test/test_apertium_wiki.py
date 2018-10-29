@@ -6,8 +6,6 @@ from datetime import date, timedelta
 import wiki
 import re
 
-endpoints = "https://tinodidriksen.com/pisg/freenode/logs/%23apertium/"
-
 
 class TestApertiumWiki(unittest.TestCase):
 
@@ -86,9 +84,8 @@ class TestApertiumWiki(unittest.TestCase):
     def test_logs_today(self):
         self.input.group = lambda x: [None, 'today'][x]
         apertium_wiki.logs(self.phenny, self.input)
-        out = str(self.phenny.say.call_args[0][0])
+        out = self.phenny.say.call_args[0][0]
         string_check = "Log at " in out
-
         if string_check:
             url = out[7:]
             out_check = str(date.today()) in out
@@ -118,10 +115,10 @@ class TestApertiumWiki(unittest.TestCase):
 
         if string_check:
             url = out[7:]
-            last_mon = str(date.today()-timedelta(-7-date.today().weekday()))
+            last_mon = str(date.today()-timedelta(7-date.today().weekday()))
             out_check = last_mon in out
             web_check = "***" in get(url)
-        self.assertTrue(string_check and out_check and web_check)
+            self.assertTrue(string_check and out_check and web_check)
 
     @catch_timeout
     def test_logs_good_date(self):
@@ -129,10 +126,9 @@ class TestApertiumWiki(unittest.TestCase):
         apertium_wiki.logs(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
         string_check = "Log at " in out
-
         if string_check:
             url = out[7:]
-            day_query = str(date(2018, 23, 10))
+            day_query = str(date(2018, 10, 23))
             out_check = day_query in out
             web_check = "***" in get(url)
         self.assertTrue(string_check and out_check and web_check)

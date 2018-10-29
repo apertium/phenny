@@ -109,7 +109,7 @@ class TestApertiumWiki(unittest.TestCase):
 
         if string_check:
             url = out[7:]
-            last_mon = str(date.today()-timedelta(7-date.today().weekday()))
+            last_mon = str(date.today() - timedelta(7 - date.today().weekday()))
             out_check = last_mon in out
             self.assertTrue(string_check and out_check)
 

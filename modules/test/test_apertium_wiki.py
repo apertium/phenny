@@ -6,6 +6,8 @@ from datetime import date, timedelta
 import wiki
 import re
 
+endpoints = "https://tinodidriksen.com/pisg/freenode/logs/%23apertium/"
+
 
 class TestApertiumWiki(unittest.TestCase):
 
@@ -84,7 +86,8 @@ class TestApertiumWiki(unittest.TestCase):
     def test_logs_today(self):
         self.input.group = lambda x: [None, 'today'][x]
         apertium_wiki.logs(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
+        out = str(self.phenny.say.call_args[0][0])
+        print(out)
         string_check = "Log at " in out
 
         if string_check:
@@ -130,7 +133,7 @@ class TestApertiumWiki(unittest.TestCase):
 
         if string_check:
             url = out[7:]
-            day_query = str(date(2018, 23, 10)) 
+            day_query = str(date(2018, 23, 10))
             out_check = day_query in out
             web_check = "***" in get(url)
         self.assertTrue(string_check and out_check and web_check)

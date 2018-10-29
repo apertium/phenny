@@ -87,9 +87,9 @@ def logs(phenny, input):
         # .logs last <day of week>
         days = {"sun": 0, "mon": 1, "tue": 2,
                 "wed": 3, "thurs": 4, "fri": 5, "sat": 6}
-        last_week = [date.today() + timedelta(days=i) for i in range(-8 - date.today().weekday(), date.today().weekday()-1)]
-        n = [i for i in days.keys() if i in date_query][0]
-        phenny.say("Log at {0}{1}.log".format(endpoints['log'], last_week[days[n]]))
+        last_week = [str(date.today() + timedelta(days=i)) for i in range(-8 - date.today().weekday(), date.today().weekday()-1)]
+        n = [days[i] for i in days.keys() if i in date_query][0]
+        phenny.say("Log at {0}{1}.log".format(endpoints['log'], last_week[n]))
     elif date_query.count("/") == 2 and len(date_query) == 10:
         # .logs MM/DD/YYYY
         try:
@@ -97,7 +97,7 @@ def logs(phenny, input):
             month, day, year = int(month), int(day), int(year)
             day_query = date(year, month, day)
             if day in range(32) and month in range(13):
-                if str(day_query) in web.get("{0}{1}.log".format(endpoints['log'], day_query)):
+                if "***" in web.get("{0}{1}.log".format(endpoints['log'], day_query)):
                     phenny.say("Log at {0}{1}.log".format(endpoints['log'], day_query))
                 else:
                     raise ValueError

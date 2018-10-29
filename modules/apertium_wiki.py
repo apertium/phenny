@@ -6,8 +6,8 @@ apertium_wiki.py - Phenny Wikipedia Module
 import re
 
 from tools import truncate
-from datetime import date, timedelta
-from datetime.datetime import strptime
+
+import datetime as dt
 
 import wiki
 import web
@@ -79,30 +79,25 @@ def logs(phenny, input):
         phenny.say("Log at {0}.log".format(endpoints['log']))
     elif "today" in date_query:
         # .logs today
-        phenny.say("Log at {0}{1}.log".format(endpoints['log'], date.today()))
+        phenny.say("Log at {0}{1}.log".format(endpoints['log'], dt.date.today()))
     elif "yesterday" in date_query:
         # .logs yesterday
-        yesterday = date.today() - timedelta(1)
+        yesterday = dt.date.today() - dt.timedelta(1)
         phenny.say("Log at {0}{1}.log".format(endpoints['log'], yesterday))
     elif "last" in date_query:
         # .logs last <day of week>
         days = {"sun": 0, "mon": 1, "tue": 2,
                 "wed": 3, "thurs": 4, "fri": 5, "sat": 6}
-        last_week = [str(date.today() + timedelta(days=i)) for i in range(-8 - date.today().weekday(), date.today().weekday()-1)]
+        last_week = [str(dt.date.today() + dt.timedelta(days=i)) for i in range(-8 - dt.date.today().weekday(), dt.date.today().weekday()-1)]
         n = [days[i] for i in days.keys() if i in date_query][0]
         phenny.say("Log at {0}{1}.log".format(endpoints['log'], last_week[n]))
     elif date_query.count("/") == 2 and len(date_query) == 10:
         # .logs MM/DD/YYYY
         try:
-            day_query = strptime(date_query, "%m/%d/%Y")[:10]
-            if day in range(32) and month in range(13):
-                if "***" in web.get("{0}{1}.log".format(endpoints['log'], day_query)):
-                    phenny.say("Log at {0}{1}.log".format(endpoints['log'], day_query))
-                else:
-                    raise ValueError
-            else:
-                raise ValueError
-        except ValueError:
+            day_query = str(dt.datetime.strptime(date_query, "%m/%d/%Y"))[:10]
+            if "***" in web.get("{0}{1}.log".format(endpoints['log'], day_query)):
+                phenny.say("Log at {0}{1}.log".format(endpoints['log'], day_query))
+        except:
             phenny.say("I didn't understand that. Please use a date in the form MM/DD/YYYY.")
 
 

@@ -87,10 +87,10 @@ class TestApertiumWiki(unittest.TestCase):
         out = self.phenny.say.call_args[0][0]
         string_check = "Log at " in out
 
-        endpoint = apertium_wiki.channel(self.phenny, self.input)
         if string_check:
+            url = out[7:]
             out_check = str(date.today()) in out
-            web_check = str(date.today()) in get(endpoint)
+            web_check = "***" in get(url)
         self.assertTrue(string_check and out_check and web_check)
 
 
@@ -101,10 +101,10 @@ class TestApertiumWiki(unittest.TestCase):
         out = self.phenny.say.call_args[0][0]
         string_check = "Log at " in out
 
-        endpoint = apertium_wiki.channel(self.phenny, self.input)
         if string_check:
+            url = out[7:]
             out_check = str(date.today() - timedelta(1)) in out
-            web_check = str(date.today() - timedelta(1)) in get(endpoint)
+            web_check = "***" in get(url)
         self.assertTrue(string_check and out_check and web_check)
 
     @catch_timeout
@@ -114,11 +114,11 @@ class TestApertiumWiki(unittest.TestCase):
         out = self.phenny.say.call_args[0][0]
         string_check = "Log at " in out
 
-        endpoint = apertium_wiki.channel(self.phenny, self.input)
         if string_check:
+            url = out[7:]
             last_mon = str(date.today()-timedelta(-7-date.today().weekday()))
             out_check = last_mon in out
-            web_check = last_mon in get(endpoint)
+            web_check = "***" in get(url)
         self.assertTrue(string_check and out_check and web_check)
 
     @catch_timeout
@@ -128,11 +128,11 @@ class TestApertiumWiki(unittest.TestCase):
         out = self.phenny.say.call_args[0][0]
         string_check = "Log at " in out
 
-        endpoint = apertium_wiki.channel(self.phenny, self.input)
         if string_check:
-            day_query = str(date(2018, 23, 10))
+            url = out[7:]
+            day_query = str(date(2018, 23, 10)) 
             out_check = day_query in out
-            web_check = day_query in get(endpoint)
+            web_check = "***" in get(url)
         self.assertTrue(string_check and out_check and web_check)
 
     @catch_timeout
@@ -142,9 +142,9 @@ class TestApertiumWiki(unittest.TestCase):
         out = self.phenny.say.call_args[0][0]
         string_check = "Log at " in out
 
-        endpoint = apertium_wiki.channel(self.phenny, self.input)
         if string_check:
+            url = out[7:]
             day_query = str(date(9999, 99, 99))
             out_check = day_query in out
-            web_check = day_query in get(endpoint)
+            web_check = "***" in get(url)
         self.assertFalse(string_check and out_check and web_check)

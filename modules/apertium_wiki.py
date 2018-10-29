@@ -107,8 +107,6 @@ def logs(phenny, input):
             phenny.say("I didn't understand that. Please use a date in the form MM/DD/YYYY.")
 
 
-def channel(phenny, input):
-    return endpoints['log'] + "%23" + phenny.channels[0][1:] + "/"
 
 logs.commands = ['logs', 'log']
 logs.priority = 'low'

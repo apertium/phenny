@@ -19,7 +19,7 @@ class TestSasl(unittest.TestCase):
                 sasl.irc_cap(self.phenny, self.input)
  
     def test_irc_authenticated(self):
-        d = {'Test':'TestPassword', None:None}
+        d = {'Test':'TestPassword'}
         for val in d:
             self.phenny.config.nick = val
             self.phenny.config.password = d[val]

@@ -17,7 +17,7 @@ class TestSasl(unittest.TestCase):
                 self.input.args[0] = b
                 self.input.args[3] = val
                 sasl.irc_cap(self.phenny, self.input)
-                assert irc_cap_end()
+                assert sasl.irc_cap_end()
  
     def test_irc_authenticated(self):
         d = {'Test':'TestPassword'}
@@ -25,4 +25,4 @@ class TestSasl(unittest.TestCase):
             self.phenny.config.nick = val
             self.phenny.config.password = d[val]
             sasl.irc_authenticated(self.phenny, self.input)
-            assert irc_cap_end()
+            assert sasl.irc_cap_end()

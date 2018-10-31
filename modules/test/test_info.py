@@ -14,12 +14,7 @@ class TestInfo(unittest.TestCase):
         self.phenny = MagicMock()
         self.input = MagicMock()
 
-    def resetPhenny(self):
-        self.phenny = MagicMock()
-        self.input = MagicMock()
-
     def test_help_invalid(self):
-        self.resetPhenny()
         self.input.group = lambda x: [None, 'notacommand'][x]
         self.input.sender = "user"
         info.help(self.phenny, self.input)
@@ -27,7 +22,6 @@ class TestInfo(unittest.TestCase):
         self.assertTrue("Sorry, I don't know that command." in out)
 
     def test_help_channel(self):
-        self.resetPhenny()
         self.input.group = lambda x: [None, ''][x]
         self.input.sender = "#channel"
         info.help(self.phenny, self.input)
@@ -35,10 +29,14 @@ class TestInfo(unittest.TestCase):
         self.assertTrue("to me in private" in out)
 
     def test_help_pm(self):
-        self.resetPhenny()
         self.input.sender = "username"
         self.input.channels = []
         self.input.group = lambda x: [None, False][x]
         info.help(self.phenny, self.input)
+        out = self.phenny.say.call_count
+        self.assertTrue(out == 3)
+
+    def test_stats(self):
+        info.stats(self.phenny, self.input)
         out = self.phenny.say.call_count
         self.assertTrue(out == 3)

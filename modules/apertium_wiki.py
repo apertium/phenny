@@ -65,7 +65,7 @@ awik2.priority = 'high'
 
 
 def logs(phenny, input):
-    """Shows logs URL. """
+    """ Shows logs URL. """
     date_query = input.group(1)
 
     if date_query:

@@ -29,7 +29,7 @@ def help(phenny, input):
     elif command:
         command = command.lower()
         if command in phenny.doc:
-            phenny.say(phenny.doc[command][0])
+            phenny.say(phenny.doc[command][0].strip())
             if phenny.doc[command][1]: 
                 phenny.say('e.g. ' + phenny.doc[command][1])
         elif any(func.name == command.name for command in commands):

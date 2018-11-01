@@ -491,8 +491,8 @@ def to_commit(phenny, input):
     headers = { "Accept": "application/vnd.github.cloak-preview" }
 
     sha = input.group(1)
-    json = web.get(api % sha, headers=headers)
-    data = json.loads(json)
+    commit_json = web.get(api % sha, headers=headers)
+    data = json.loads(commit_json)
 
     item = data["items"][0]
     html_url = item["html_url"]

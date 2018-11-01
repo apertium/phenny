@@ -96,3 +96,13 @@ class TestClock(unittest.TestCase):
         m = re.match('^.* - ntp1.npl.co.uk$',
                 out, flags=re.UNICODE)
         self.assertTrue(m)
+
+    def test_time_zone_convert_no_input(self, mock_time):
+        clock.time_zone_convert(self.phenny, None)
+        out = self.phenny.reply.call_args[0][0]
+        self.assertTrue("Usage: .tz" in out)
+
+    def test_time_zone_convert_invalid(self, mock_time):
+        clock.time_zone_convert(self.phenny, "invalid")
+        out = self.phenny.reply.call_args[0][0]
+        self.assertTrue("Usage: .tz" in out)

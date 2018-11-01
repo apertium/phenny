@@ -20,6 +20,8 @@ from urllib.parse import quote, unquote
 from tools import read_cache, write_cache
 
 
+requests.packages.urllib3.disable_warnings()
+
 REQUEST_TIMEOUT = 10 # seconds
 socket.setdefaulttimeout(REQUEST_TIMEOUT)
 

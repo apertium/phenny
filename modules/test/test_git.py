@@ -106,9 +106,3 @@ class TestGit(unittest.TestCase):
         real_url = "https://github.com/apertium/lttoolbox/commit/93dd6c960b6e55d70db6f6704b1304e0e4101d49"
         self.assertTrue(real_url in out)
 
-    def test_retrieve_commit(self):
-        self.phenny.config.git_repositories = ["lttoolbox"]
-        self.input.group = lambda x: [None, "lttoolbox 93dd6c9"][x]
-        git.retrieve_commit(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
-        self.assertTrue("Add a middle step to int before the final unsigned" in out)

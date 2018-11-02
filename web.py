@@ -18,9 +18,9 @@ from requests.exceptions import ConnectionError, HTTPError, Timeout
 from html.entities import name2codepoint
 from urllib.parse import quote, unquote
 from tools import read_cache, write_cache
+from requests.packages import urllib3
 
-
-requests.packages.urllib3.disable_warnings()
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 REQUEST_TIMEOUT = 10 # seconds
 socket.setdefaulttimeout(REQUEST_TIMEOUT)

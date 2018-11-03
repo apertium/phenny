@@ -43,7 +43,7 @@ class TestCodepoints(unittest.TestCase):
         self.assertTrue("ã" in out)
 
     def test_codepoint_extended(self):
-        codepoint_list = codepoints.codepoint_extended("BBBB")
+        codepoint_list = list(codepoints.codepoint_extended("BBBB"))
         expected = "CJK UNIFIED IDEOGRAPH-2BBBB"
         status = False
         for i in codepoint_list:

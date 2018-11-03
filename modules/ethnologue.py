@@ -35,7 +35,7 @@ def scrape_ethnologue_codes(phenny):
 
 def write_ethnologue_codes(phenny, raw=None):
     if raw is None or raw.admin:
-        scrape_ethnologue_codes()
+        scrape_ethnologue_codes(phenny)
         logger.debug('Ethnologue iso-639 code fetch successful')
         if raw:
             phenny.say('Ethnologue iso-639 code fetch successful')

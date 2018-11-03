@@ -26,7 +26,8 @@ class TestInfo(unittest.TestCase):
         self.input.sender = "#channel"
         info.help(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
-        self.assertTrue("to me in private" in out)
+        help_string = "Hey there, I'm a friendly bot for #apertium. Say \".help\" to me in private for a list of my commands or check out my help page at"
+        self.assertTrue(help_string in out)
 
     def test_help_pm(self):
         self.input.sender = "username"

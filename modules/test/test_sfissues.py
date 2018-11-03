@@ -15,9 +15,8 @@ class TestSFIssues(unittest.TestCase):
         self.input = MagicMock()
 
     def test_bugs(self):
-        self.phenny.config.sf_issues_url = "http://feeds.bbci.co.uk/news/world/rss.xml"
+        self.phenny.config.sf_issues_url = "https://sourceforge.net/p/apertium/news/feed.rss"
         self.input.nick = "bbc"
         sfissues.bugs(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
-        html_story = web.get("http://feeds.bbci.co.uk/news/world/rss.xml").split("<title><![CDATA[")[3].split(']')[0]
-        self.assertTrue(html_story in out)
+        self.assertTrue("Basque-English 0.3.0 Released" in out)

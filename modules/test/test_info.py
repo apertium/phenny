@@ -35,9 +35,9 @@ class TestInfo(unittest.TestCase):
         self.input.group = lambda x: [None, False][x]
         info.help(self.phenny, self.input)
         out = self.phenny.say.call_count
-        self.assertTrue(out == 3)
+        self.assertTrue(out == 3)  # calls for 'hey there..', 'for help with...', 'talk to my owner
 
     def test_stats(self):
         info.stats(self.phenny, self.input)
         out = self.phenny.say.call_count
-        self.assertTrue(out == 3)
+        self.assertTrue(out == 3)  # calls for most-used, power-users, power-chans

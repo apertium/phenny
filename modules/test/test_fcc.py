@@ -14,7 +14,7 @@ class TestFCC(unittest.TestCase):
         self.phenny = MagicMock()
         self.input = MagicMock()
 
-    def test_fcc_none(self):
+    def test_fcc_help(self):
         self.input.group = lambda x: [None, None, None][x]
         fcc_module.fcc(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]

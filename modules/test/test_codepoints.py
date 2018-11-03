@@ -30,8 +30,24 @@ class TestCodepoints(unittest.TestCase):
         out = self.phenny.say.call_args[0][0]
         self.assertTrue("HAMMER AND SICKLE" in out)
 
+    def test_u_space(self):
+        self.input.bytes = "    "
+        codepoints.u(self.phenny, self.input)
+        out = self.phenny.reply.call_args[0][0]
+        self.assertTrue("1 SPACE (U+0020)" in out)
+
     def test_bytes(self):
         self.input.bytes = " \xe3"
         codepoints.bytes(self.phenny, self.input)
         out = self.phenny.reply.call_args[0][0]
         self.assertTrue("ã" in out)
+
+    def test_codepoint_extended(self):
+        codepoint_list = codepoints.codepoint_extended("BBBB")
+        expected = "CJK UNIFIED IDEOGRAPH-2BBBB"
+        status = False
+        for i in codepoint_list:
+            if expected in i:
+                status = True
+                break
+        self.assertTrue(status)

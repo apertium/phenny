@@ -30,3 +30,10 @@ class TestEthnologue(unittest.TestCase):
         out = self.phenny.say.call_args[0][0]
         self.assertTrue("Dutch" in out)
 
+    def test_ethnologue_macrolanguage(self):
+        self.input.group = lambda x: [None, "ara"][x]
+        ethno.write_ethnologue_codes(self.phenny)
+        ethno.ethnologue(self.phenny, self.input)
+        out = self.phenny.say.call_args[0][0]
+        self.assertTrue("macrolanguage" in out)
+

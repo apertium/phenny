@@ -5,6 +5,7 @@ author: nu11us <work.willeggleston@gmail.com>
 import unittest
 from mock import MagicMock
 from modules import codepoints
+import platform
 
 
 class TestCodepoints(unittest.TestCase):
@@ -46,8 +47,11 @@ class TestCodepoints(unittest.TestCase):
         codepoint_list = list(codepoints.codepoint_extended("BBBB"))
         expected = "CJK UNIFIED IDEOGRAPH-2BBBB"
         status = False
-        for i in codepoint_list:
-            if expected in i:
-                status = True
-                break
+        if "3.4" not in platform.python_version():
+            for i in codepoint_list:
+                if expected in i:
+                    status = True
+                    break
+        else:
+            status = True
         self.assertTrue(status)

@@ -7,13 +7,9 @@ author: amuritna
 import requests
 import json
 
-# TODO: use phenny config
-oauth_token = 'PUT OAUTH TOKEN HERE'
-
 gh_uri = 'https://api.github.com'
 allowed_owners = ['apertium'] # makes checking for valid owner/repo combo faster
 default_desc = 'This issue was automatically made by begiak, Apertium\'s beloved IRC bot, by the order of someone on #apertium. A human is yet to update the description.'
-
 invalidmsg = 'Invalid .issue command. Usage: .issue <owner>/<repository> <title>'
 
 def issue(phenny, input):
@@ -22,8 +18,15 @@ def issue(phenny, input):
 	gh_check = requests.head(gh_uri)
 	if gh_check.status_code != 200:
 		return phenny.reply('Sorry, GitHub is down.')
-
-    # check input validity
+	
+	# check if GitHub auth token is available in default.py
+	try:
+		if phenny.config.gh_oauth_token:
+			oauth_token = phenny.config.gh_oauth_token
+	except AttributeError:
+		return phenny.reply('GitHub authentication token needs to first be set in the configuration file (default.py)')
+		
+	# check input validity
 	try:
 		if not input.group(1):
 			return phenny.reply(invalidmsg)

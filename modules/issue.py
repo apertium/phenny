@@ -27,29 +27,35 @@ def issue(phenny, input):
 		return phenny.reply('GitHub authentication token needs to first be set in the configuration file (default.py)')
 		
 	# check input validity
+	isinvalid = 'invalid input'
 	try:
 		if not input.group(1):
-			return phenny.reply(invalidmsg)
+			phenny.reply(invalidmsg)
+			return isinvalid
 
 		content = input.group(1).strip()
 		ghpath = content.split()[0].split('/')
         
 		# check whether likely in an owner/repository combo format
 		if len(ghpath) != 2:
-			return phenny.reply(invalidmsg)
+			phenny.reply(invalidmsg)
+			return isinvalid
 
 		owner = ghpath[0]
 		repo = ghpath[1]
 
 		if owner not in allowed_owners:
-			return phenny.reply('Begiak cannot create an issue there.')
+			phenny.reply('Begiak cannot create an issue there.')
+			return isinvalid
 
 		title = " ".join(content.split()[1:]).strip()
 		if len(title) < 1:
-			return phenny.reply(invalidmsg)
-
+			phenny.reply(invalidmsg)
+			return isinvalid
+		
 	except SyntaxError:
-		return phenny.reply(invalidmsg)
+		phenny.reply(invalidmsg)
+		return isinvalid
 
 	# build and post HTTP request
 	req_target = gh_uri + '/repos/' + owner + '/' + repo + '/issues'
@@ -63,10 +69,11 @@ def issue(phenny, input):
 
 	# return final feedback - successfully created issue? repo not found?
 	if req_issue.status_code == 404:
-		return phenny.reply('It looks like that repository doesn\'t exist...')
+		phenny.reply('It looks like that repository doesn\'t exist...')
+		return 'not found'
 
-	return phenny.reply('Issue created. You can add a description at ' + req_issue.json()["html_url"])
-
+	phenny.reply('Issue created. You can add a description at ' + req_issue.json()["html_url"])
+	return 'success'
 
 issue.commands = ['issue']
 issue.priority = 'medium'
@@ -74,4 +81,3 @@ issue.example = '.issue apertium/phenny Commit messages with multiple authors sh
 
 if __name__ == "__main__":
 	print(__doc__.strip())
-

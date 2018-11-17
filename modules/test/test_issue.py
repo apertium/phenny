@@ -10,7 +10,7 @@ class TestIssue(unittest.TestCase):
     def test_issue(self):
         test = ['.issue', 'octocat/Hello-World Create an illegal issue.']
         self.assertTrue(issue.issue(test) == 'invalid input')
-        test = ['.issue', 'apertium/hypothetical-long-named-repository-apertium-hopefully-would-never-create Create an issue on a nonexistent repo.'][x]
+        test = ['.issue', 'apertium/hypothetical-long-named-repository-apertium-hopefully-would-never-create Create an issue on a nonexistent repo.']
         self.assertTrue(issue.issue(test) == 'not found')
         test = ['.issue', 'boing boing boing someone is hungry']
         self.assertTrue(issue.issue(test) == 'invalid input')

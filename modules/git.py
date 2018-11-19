@@ -208,19 +208,25 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 for key, value in config.git_events.items():
                     if fnmatch(full_name, key):
                         event_types = value
+                        
             else:
                 event_types = None
 
-            if (event_types is not None) and (event not in event_types):
+            substring_not_inside = True
+            for type in event_types:
+                if event in type:
+                    event = type
+                    substring_not_inside = False
+
+            if (event_types is not None) and ((event not in event_types) and substring_not_inside):
                 return [], []
 
             if config.git_channels:
                 full_name = data['repository']['full_name']
-                channels = []
-
                 for key, value in config.git_channels.items():
                     if fnmatch(full_name, key):
                         channels = value
+
 
             if event == 'commit_comment':
                 commit = data['comment']['commit_id'][:7]
@@ -237,6 +243,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                         data['comment']['body'],
                         template.format(repo, user, action, commit, '{}', url)
                     ))
+
             elif event == 'create' or event == 'delete':
                 template = '{:}: {:} * {:} {:} {:}d {:}'
                 ref = data['ref']
@@ -248,8 +255,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 url = data['forkee']['html_url']
                 messages.append(template.format(repo, user, url))
 
-            elif event == 'issue_comment':
-
+            elif 'issue_comment' in event:
                 if 'pull_request' in data['issue']:
                     url = data['issue']['pull_request']['html_url']
                     text = 'pull request'
@@ -260,11 +266,18 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 number = data['issue']['number']
                 action = data['action']
 
-                if action == 'created':
-                    template = '{:}: {:} * comment created on {:} #{:}: {:}'
-                    messages.append(template.format(repo, user, text, number, url))
+                if event == 'issue_comment':
+                    template = '{:}: {:} * comment {:} on {:} #{:}: {:}'
+                    messages.append(template.format(repo, user, action, text, number, url))
 
-            elif event == 'issues':
+                else:
+                    what_we_want_from_event = event[14:]
+                    if action == what_we_want_from_event:
+                        template = '{:}: {:} * comment {:} on {:} #{:}: {:}'
+                        messages.append(template.format(repo, user, action, text, number, url))
+
+
+            elif 'issues' in event:
                 template = '{:}: {:} * issue #{:} "{:}" {:} {:} {:}'
 
                 number = data['issue']['number']
@@ -276,8 +289,16 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 if 'label' in data:
                     opt += 'with ' + data['label']['name']
 
-                if action == "opened" or action == "closed" or action == "reopened":
+                if event == 'issues':
                     messages.append(template.format(repo, user, number, title, action, opt, url))
+
+                else:
+                    what_we_want_from_event = event[7:]
+                    if action == what_we_want_from_event:
+                        template = '{:}: {:} * comment {:} on {:} #{:}: {:}'
+                        messages.append(template.format(repo, user, action, text, number, url))
+
+
 
             elif event == 'member':
                 template = '{:}: {:} * user {:} {:} as collaborator {:}'

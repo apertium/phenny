@@ -242,11 +242,14 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 ref = data['ref']
                 type_ = data['ref_type']
                 messages.append(template.format(repo, user, type_, ref, event))
+
             elif event == 'fork':
                 template = '{:}: {:} forked this repo {:}'
                 url = data['forkee']['html_url']
                 messages.append(template.format(repo, user, url))
+
             elif event == 'issue_comment':
+
                 if 'pull_request' in data['issue']:
                     url = data['issue']['pull_request']['html_url']
                     text = 'pull request'
@@ -257,15 +260,10 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 number = data['issue']['number']
                 action = data['action']
 
-                if action == 'deleted':
-                    template = '{:}: {:} * comment deleted on {:} #{:}: {:}'
+                if action == 'created':
+                    template = '{:}: {:} * comment created on {:} #{:}: {:}'
                     messages.append(template.format(repo, user, text, number, url))
-                else:
-                    template = '{:}: {:} * comment {:} on {:} #{:}: {:} {:}'
-                    messages.append(truncate(
-                        data['comment']['body'],
-                        template.format(repo, user, action, text, number, '{}', url)
-                    ))
+
             elif event == 'issues':
                 template = '{:}: {:} * issue #{:} "{:}" {:} {:} {:}'
 
@@ -275,12 +273,12 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 url = data['issue']['html_url']
                 opt = ''
 
-                if data['issue']['assignee']:
-                    opt += 'assigned to ' + data['issue']['assignee']['login']
-                elif 'label' in data:
+                if 'label' in data:
                     opt += 'with ' + data['label']['name']
 
-                messages.append(template.format(repo, user, number, title, action, opt, url))
+                if action == "opened" or action == "closed" or action == "reopened":
+                    messages.append(template.format(repo, user, number, title, action, opt, url))
+
             elif event == 'member':
                 template = '{:}: {:} * user {:} {:} as collaborator {:}'
                 new_user = data['member']['login']

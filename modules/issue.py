@@ -2,9 +2,11 @@
 issue.py - create a new GitHub issue
 author: amuritna
 """
-# TODO: add tests
-# TODO: use web module
-import requests
+#following code might or might not be uncommented,
+#depending on how your Python setup
+#import sys
+#sys.path.insert(0, '..')
+from web import is_up, post
 import json
 
 gh_uri = 'https://api.github.com'
@@ -15,8 +17,7 @@ invalidmsg = 'Invalid .issue command. Usage: .issue <owner>/<repository> <title>
 def issue(phenny, input):
 	""" .issue <owner>/<repository> <title> - create a new GitHub issue """    
  
-	gh_check = requests.head(gh_uri)
-	if gh_check.status_code != 200:
+	if not is_up(gh_uri):
 		return phenny.reply('Sorry, GitHub is down.')
 	
 	# check if GitHub auth token is available in default.py
@@ -27,7 +28,7 @@ def issue(phenny, input):
 		return phenny.reply('GitHub authentication token needs to first be set in the configuration file (default.py)')
 		
 	# check input validity
-	isinvalid = 'invalid input'
+	isinvalid = 'invalid input' # for unit tests
 	try:
 		if not input.group(1):
 			phenny.reply(invalidmsg)
@@ -59,21 +60,16 @@ def issue(phenny, input):
 
 	# build and post HTTP request
 	req_target = gh_uri + '/repos/' + owner + '/' + repo + '/issues'
-	req_params = {'access_token': oauth_token}
+	req_headers = {'Authorization': 'token ' + oauth_token}
 	req_body = json.dumps({
 		"title": title,
 		"body": default_desc
 	})
 
-	req_issue = requests.post(req_target, params=req_params, data=req_body)
+	req_str = post(req_target, req_body, req_headers)
+	req_json = json.loads(req_str)
 
-	# return final feedback - successfully created issue? repo not found?
-	if req_issue.status_code == 404:
-		phenny.reply('It looks like that repository doesn\'t exist...')
-		return 'not found'
-
-	phenny.reply('Issue created. You can add a description at ' + req_issue.json()["html_url"])
-	return 'success'
+	return phenny.reply('Issue created. You can add a description at ' + req_json["html_url"])
 
 issue.commands = ['issue']
 issue.priority = 'medium'

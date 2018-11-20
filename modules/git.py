@@ -125,6 +125,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 data = json.loads(post_data['payload'][0])
             else:
                 data = json.loads(post_data)
+
         except Exception as error:
             logger.error('Error 400 (no valid payload)')
             logger.error(str(error))
@@ -204,21 +205,19 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             if config.git_events:
                 full_name = data['repository']['full_name']
                 event_types = []
-
                 for key, value in config.git_events.items():
                     if fnmatch(full_name, key):
                         event_types = value
-                        
             else:
                 event_types = None
 
-            substring_not_inside = True
-            for type in event_types:
-                if event in type:
-                    event = type
-                    substring_not_inside = False
+            event_specification_exists = False
+            for variable_type in event_types:
+                if event in variable_type:
+                    event = variable_type
+                    event_specification_exists = True
 
-            if (event_types is not None) and ((event not in event_types) and substring_not_inside):
+            if (event_types is not None) and ((event not in event_types) and (not event_specification_exists)):
                 return [], []
 
             if config.git_channels:
@@ -227,13 +226,11 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                     if fnmatch(full_name, key):
                         channels = value
 
-
             if event == 'commit_comment':
                 commit = data['comment']['commit_id'][:7]
                 url = data['comment']['html_url']
                 url = url[:url.rfind('/') + 7]
                 action = data['action']
-
                 if action == 'deleted':
                     template = '{:}: {:} * comment deleted on commit {:}: {:}'
                     messages.append(template.format(repo, user, commit, url))
@@ -262,43 +259,43 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 else:
                     url = data['issue']['html_url']
                     text = 'issue'
-
                 number = data['issue']['number']
                 action = data['action']
-
                 if event == 'issue_comment':
                     template = '{:}: {:} * comment {:} on {:} #{:}: {:}'
                     messages.append(template.format(repo, user, action, text, number, url))
-
                 else:
-                    what_we_want_from_event = event[14:]
-                    if action == what_we_want_from_event:
+                    """
+                    Since format is in the following: 'issue_comment_x' and we
+                    want to isolate the x, we just remove the first 14 characters,
+                    or issue_comment_, thus the 'event[14:]'
+                    """
+                    specification = event[14:]
+                    if action == specification:
                         template = '{:}: {:} * comment {:} on {:} #{:}: {:}'
                         messages.append(template.format(repo, user, action, text, number, url))
 
-
             elif 'issues' in event:
                 template = '{:}: {:} * issue #{:} "{:}" {:} {:} {:}'
-
                 number = data['issue']['number']
                 title = data['issue']['title']
                 action = data['action']
                 url = data['issue']['html_url']
                 opt = ''
-
                 if 'label' in data:
                     opt += 'with ' + data['label']['name']
-
                 if event == 'issues':
                     messages.append(template.format(repo, user, number, title, action, opt, url))
-
                 else:
-                    what_we_want_from_event = event[7:]
-                    if action == what_we_want_from_event:
+                    """
+                    Since format is in the following: 'issues_x' and we
+                    want to isolate the x, we just remove the first 7 characters,
+                    or issues_, so we just get x, thus the 'event[7:]'
+                    """
+                    specification = event[7:]
+                    if action == specification:
                         template = '{:}: {:} * comment {:} on {:} #{:}: {:}'
                         messages.append(template.format(repo, user, action, text, number, url))
-
-
 
             elif event == 'member':
                 template = '{:}: {:} * user {:} {:} as collaborator {:}'

@@ -125,7 +125,6 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 data = json.loads(post_data['payload'][0])
             else:
                 data = json.loads(post_data)
-
         except Exception as error:
             logger.error('Error 400 (no valid payload)')
             logger.error(str(error))
@@ -211,17 +210,18 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             else:
                 event_types = None
 
-            event_specification_exists = False
-            for variable_type in event_types:
-                if event in variable_type:
-                    event = variable_type
-                    event_specification_exists = True
+            event_in_config = False
+            for event_type in event_types:
+                if event in event_type:
+                    event = event_type
+                    event_in_config = True
 
-            if (event_types is not None) and ((event not in event_types) and (not event_specification_exists)):
+            if (event_types is not None) and ((event not in event_types) and (not event_in_config)):
                 return [], []
 
             if config.git_channels:
                 full_name = data['repository']['full_name']
+                channels = []
                 for key, value in config.git_channels.items():
                     if fnmatch(full_name, key):
                         channels = value
@@ -240,7 +240,6 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                         data['comment']['body'],
                         template.format(repo, user, action, commit, '{}', url)
                     ))
-
             elif event == 'create' or event == 'delete':
                 template = '{:}: {:} * {:} {:} {:}d {:}'
                 ref = data['ref']
@@ -267,11 +266,10 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 else:
                     """
                     Since format is in the following: 'issue_comment_x' and we
-                    want to isolate the x, we just remove the first 14 characters,
-                    or issue_comment_, thus the 'event[14:]'
+                    want to isolate the x, we split at the _ and get the last part'
                     """
-                    specification = event[14:]
-                    if action == specification:
+                    config_action = event.split('_')[-1]
+                    if action == config_action:
                         template = '{:}: {:} * comment {:} on {:} #{:}: {:}'
                         messages.append(template.format(repo, user, action, text, number, url))
 
@@ -289,14 +287,12 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 else:
                     """
                     Since format is in the following: 'issues_x' and we
-                    want to isolate the x, we just remove the first 7 characters,
-                    or issues_, so we just get x, thus the 'event[7:]'
+                    want to isolate the x, we just split at the _ and get the last part'
                     """
-                    specification = event[7:]
-                    if action == specification:
+                    config_action = event.split('_')[-1]
+                    if action == config_action:
                         template = '{:}: {:} * comment {:} on {:} #{:}: {:}'
                         messages.append(template.format(repo, user, action, text, number, url))
-
             elif event == 'member':
                 template = '{:}: {:} * user {:} {:} as collaborator {:}'
                 new_user = data['member']['login']

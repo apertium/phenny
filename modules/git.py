@@ -194,6 +194,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         if 'GitHub' in self.headers['User-Agent']:
             event = self.headers['X-Github-Event']
             user = data['sender']['login']
+
             if 'repository' in data:
                 repo = data['repository']['name']
             elif 'organization' in data:
@@ -208,6 +209,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                         event_types = value
             else:
                 event_types = None
+
             event_in_config = False
             for event_type in event_types:
                 if (event + '_' + data['action'] == event_type) or (event == event_type):

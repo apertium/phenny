@@ -6,11 +6,11 @@ class TestIssue(unittest.TestCase):
     def setUp(self):
         self.phenny = MagicMock()
         self.input = MagicMock()
-        
-    def test_issue(self):
+             
+    def testIllegal(self):
         test = ['.issue', 'octocat/Hello-World Create an illegal issue.']
-        self.assertTrue(issue.issue(test) == 'invalid input')
-        test = ['.issue', 'apertium/hypothetical-long-named-repository-apertium-hopefully-would-never-create Create an issue on a nonexistent repo.']
-        self.assertTrue(issue.issue(test) == 'not found')
+        self.assertTrue(issue.issue(test) == 'Begiak cannot create an issue there.')
+        
+    def testInvalid(self):
         test = ['.issue', 'boing boing boing someone is hungry']
-        self.assertTrue(issue.issue(test) == 'invalid input')
+        self.assertTrue(issue.issue(test) == 'Invalid .issue command. Usage: .issue <owner>/<repository> <title>')

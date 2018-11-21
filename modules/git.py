@@ -204,24 +204,20 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             if config.git_events:
                 full_name = data['repository']['full_name']
                 event_types = []
+
                 for key, value in config.git_events.items():
                     if fnmatch(full_name, key):
                         event_types = value
             else:
                 event_types = None
 
-            event_in_config = False
-            for event_type in event_types:
-                if event in event_type:
-                    event = event_type
-                    event_in_config = True
-
-            if (event_types is not None) and ((event not in event_types) and (not event_in_config)):
+            if (event_types is not None) and (event not in event_types):
                 return [], []
 
             if config.git_channels:
                 full_name = data['repository']['full_name']
                 channels = []
+
                 for key, value in config.git_channels.items():
                     if fnmatch(full_name, key):
                         channels = value
@@ -231,6 +227,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 url = data['comment']['html_url']
                 url = url[:url.rfind('/') + 7]
                 action = data['action']
+
                 if action == 'deleted':
                     template = '{:}: {:} * comment deleted on commit {:}: {:}'
                     messages.append(template.format(repo, user, commit, url))
@@ -245,12 +242,10 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 ref = data['ref']
                 type_ = data['ref_type']
                 messages.append(template.format(repo, user, type_, ref, event))
-
             elif event == 'fork':
                 template = '{:}: {:} forked this repo {:}'
                 url = data['forkee']['html_url']
                 messages.append(template.format(repo, user, url))
-
             elif 'issue_comment' in event:
                 if 'pull_request' in data['issue']:
                     url = data['issue']['pull_request']['html_url']
@@ -275,13 +270,18 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
 
             elif 'issues' in event:
                 template = '{:}: {:} * issue #{:} "{:}" {:} {:} {:}'
+
                 number = data['issue']['number']
                 title = data['issue']['title']
                 action = data['action']
                 url = data['issue']['html_url']
                 opt = ''
-                if 'label' in data:
+
+                if data['issue']['assignee']:
+                    opt += 'assigned to ' + data['issue']['assignee']['login']
+                elif 'label' in data:
                     opt += 'with ' + data['label']['name']
+
                 if event == 'issues':
                     messages.append(template.format(repo, user, number, title, action, opt, url))
                 else:

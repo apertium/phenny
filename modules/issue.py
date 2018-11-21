@@ -48,7 +48,7 @@ def issue(phenny, input):
 		return phenny.reply(invalidmsg)
 
 	# build and post HTTP request
-	req target = ('%uri/repos/%owner/%repo/issues' % (gh_uri, owner, repo))
+	req target = ('%u/repos/%o/%r/issues' % (gh_uri, owner, repo))
 	req_headers = {'Authorization': 'token ' + oauth_token}
 	req_body = json.dumps({
 		"title": title,

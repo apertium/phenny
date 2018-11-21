@@ -109,7 +109,6 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_POST(self):
         '''Handles POST requests for all hooks.'''
-
         receive_time = time.time()
 
         try:
@@ -195,7 +194,6 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         if 'GitHub' in self.headers['User-Agent']:
             event = self.headers['X-Github-Event']
             user = data['sender']['login']
-
             if 'repository' in data:
                 repo = data['repository']['name']
             elif 'organization' in data:
@@ -210,8 +208,11 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                         event_types = value
             else:
                 event_types = None
-
-            if (event_types is not None) and (event not in event_types):
+            event_in_config = False
+            for event_type in event_types:
+                if (event + '_' + data['action'] == event_type) or (event == event_type):
+                     event_in_config = True
+            if (event_types is not None) and ((event not in event_types) and (not event_in_config)):
                 return [], []
 
             if config.git_channels:
@@ -246,29 +247,27 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 template = '{:}: {:} forked this repo {:}'
                 url = data['forkee']['html_url']
                 messages.append(template.format(repo, user, url))
-            elif 'issue_comment' in event:
+            elif event == 'issue_comment':
                 if 'pull_request' in data['issue']:
                     url = data['issue']['pull_request']['html_url']
                     text = 'pull request'
                 else:
                     url = data['issue']['html_url']
                     text = 'issue'
+
                 number = data['issue']['number']
                 action = data['action']
-                if event == 'issue_comment':
-                    template = '{:}: {:} * comment {:} on {:} #{:}: {:}'
-                    messages.append(template.format(repo, user, action, text, number, url))
-                else:
-                    """
-                    Since format is in the following: 'issue_comment_x' and we
-                    want to isolate the x, we split at the _ and get the last part'
-                    """
-                    config_action = event.split('_')[-1]
-                    if action == config_action:
-                        template = '{:}: {:} * comment {:} on {:} #{:}: {:}'
-                        messages.append(template.format(repo, user, action, text, number, url))
 
-            elif 'issues' in event:
+                if action == 'deleted':
+                    template = '{:}: {:} * comment deleted on {:} #{:}: {:}'
+                    messages.append(template.format(repo, user, text, number, url))
+                else:
+                    template = '{:}: {:} * comment {:} on {:} #{:}: {:} {:}'
+                    messages.append(truncate(
+                        data['comment']['body'],
+                        template.format(repo, user, action, text, number, '{}', url)
+                    ))
+            elif event == 'issues':
                 template = '{:}: {:} * issue #{:} "{:}" {:} {:} {:}'
 
                 number = data['issue']['number']
@@ -282,17 +281,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 elif 'label' in data:
                     opt += 'with ' + data['label']['name']
 
-                if event == 'issues':
-                    messages.append(template.format(repo, user, number, title, action, opt, url))
-                else:
-                    """
-                    Since format is in the following: 'issues_x' and we
-                    want to isolate the x, we just split at the _ and get the last part'
-                    """
-                    config_action = event.split('_')[-1]
-                    if action == config_action:
-                        template = '{:}: {:} * comment {:} on {:} #{:}: {:}'
-                        messages.append(template.format(repo, user, action, text, number, url))
+                messages.append(template.format(repo, user, number, title, action, opt, url))
             elif event == 'member':
                 template = '{:}: {:} * user {:} {:} as collaborator {:}'
                 new_user = data['member']['login']

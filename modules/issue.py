@@ -56,8 +56,11 @@ def issue(phenny, input):
 	})
 
 	req_str = post(req_target, req_body, req_headers)
+	
+	if req_str == 404:
+		return phenny.reply('It appears that that repository does not exist.')
+	
 	req_json = json.loads(req_str)
-
 	return phenny.reply('Issue created. You can add a description at ' + req_json['html_url'])
 
 issue.commands = ['issue']

@@ -132,8 +132,7 @@ def post(uri, data, headers={}, verify=True, **kwargs):
         return
     headers.update(default_headers)
     r = requests.post(uri, data=data, headers=headers, verify=verify, **kwargs)
-    if r.status_code == 404:
-        return 404
+    r.raise_for_status()
     return r.text
 
 r_entity = re.compile(r'&([^;\s]+);')

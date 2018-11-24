@@ -9,20 +9,20 @@ class TestIssue(unittest.TestCase):
         self.input = MagicMock()
         
     @patch('modules.issue.post')
-    def testSuccess(self, mock_post):
+    def test_success(self, mock_post):
         mock_response = MagicMock()
         mock_response.json.return_value = {
-        'html_url': 'https://github.com/test/test'
-    }
-    mock_post.return_value = mock_response
-    self.input.group.return_value = 'test'
-    issue.issue(self.phenny, self.input)
-    self.phenny.reply.assert_called_with('Issue created. You can add a description at https://github.com/test/test')
+            'html_url': 'https://github.com/test/test'
+        }
+        mock_post.return_value = mock_response
+        self.input.group.return_value = 'test'
+        issue.issue(self.phenny, self.input)
+        self.phenny.reply.assert_called_with('Issue created. You can add a description at https://github.com/test/test')
              
-    def testIllegal(self):
+    def test_illegal(self):
         test = ['.issue', 'octocat/Hello-World Create an illegal issue.']
-        self.assertTrue(issue.issue(test) == 'Begiak cannot create an issue there.')
+        self.phenny.reply.assert_called_with('Begiak cannot create an issue there.')
         
-    def testInvalid(self):
+    def test_invalid(self):
         test = ['.issue', 'boing boing boing someone is hungry']
-        self.assertTrue(issue.issue(test) == 'Invalid .issue command. Usage: .issue <owner>/<repository> <title>')
+        self.phenny.reply.assert_called_with('Invalid .issue command. Usage: .issue <owner>/<repository> <title>')

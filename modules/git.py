@@ -141,6 +141,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             result = self.do_POST_unsafe(data)
         except Exception as error:
             logger.error(str(error))
+            result = None
 
         if result:
             status = 200 # OK

@@ -15,14 +15,16 @@ class TestIssue(unittest.TestCase):
             'html_url': 'https://github.com/test/test'
         }
         mock_post.return_value = mock_response
-        self.input.group.return_value = 'test'
+        self.input.group = lambda x: ['.issue' 'test/test Create a test issue.'][x]
         issue.issue(self.phenny, self.input)
         self.phenny.reply.assert_called_with('Issue created. You can add a description at https://github.com/test/test')
              
     def test_illegal(self):
-        test = ['.issue', 'octocat/Hello-World Create an illegal issue.']
+        self.input.group = lambda x: = ['.issue', 'octocat/Hello-World Create an illegal issue.']
+        issue.issue(self.phenny, self.input)
         self.phenny.reply.assert_called_with('Begiak cannot create an issue there.')
         
     def test_invalid(self):
-        test = ['.issue', 'boing boing boing someone is hungry']
+        self.input.group = lambda x: = ['.issue', 'boing boing boing someone is hungry']
+        issue.issue(self.phenny, self.input)
         self.phenny.reply.assert_called_with('Invalid .issue command. Usage: .issue <owner>/<repository> <title>')

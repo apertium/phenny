@@ -24,28 +24,24 @@ def issue(phenny, input):
         return phenny.reply('GitHub authentication token needs to first be set in the configuration file (default.py)')
 		
     # check input validity
-    try:
-        if not input.group(1):
-            return phenny.reply(invalidmsg)
+    if not input.group(1):
+        return phenny.reply(invalidmsg)
 
-        content = input.group(1).strip()
-        ghpath = content.split()[0].split('/')
+    content = input.group(1).strip()
+    ghpath = content.split()[0].split('/')
         
-        # check whether likely in an owner/repository combo format
-        if len(ghpath) != 2:
-            return phenny.reply(invalidmsg)
+    # check whether likely in an owner/repository combo format
+    if len(ghpath) != 2:
+        return phenny.reply(invalidmsg)
 
-        owner = ghpath[0]
-        repo = ghpath[1]
+    owner = ghpath[0]
+    repo = ghpath[1]
 
-        if owner not in allowed_owners:
-            return phenny.reply('Begiak cannot create an issue there.')
+    if owner not in allowed_owners:
+        return phenny.reply('Begiak cannot create an issue there.')
 
-        title = " ".join(content.split()[1:]).strip()
-        if len(title) < 1:
-            return phenny.reply(invalidmsg)
-		
-    except SyntaxError:
+    title = " ".join(content.split()[1:]).strip()
+    if len(title) < 1:
         return phenny.reply(invalidmsg)
 
     # build and post HTTP request

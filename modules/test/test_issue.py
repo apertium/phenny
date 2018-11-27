@@ -15,6 +15,7 @@ class TestIssue(unittest.TestCase):
             'html_url': 'https://github.com/test/test'
         }
         mock_post.return_value = mock_response
+        mock_post.assert_called_with('https://api.github.com/repos/test/test/issues')
         self.input.group = lambda x: ['.issue' 'test/test Create a test issue.'][x]
         self.input.group.return_value = mock_response
         issue.issue(self.phenny, self.input)

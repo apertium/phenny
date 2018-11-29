@@ -8,7 +8,7 @@ import json
 
 gh_uri = 'https://api.github.com'
 allowed_owners = ['apertium'] # makes checking for valid owner/repo combo faster
-default_desc = 'This issue was automatically made by begiak, Apertium\'s beloved IRC bot, by the order of someone on #apertium. A human is yet to update the description.'
+default_desc = 'This issue was automatically made by begiak, Apertium\'s beloved IRC bot, by the order of {} on #apertium. A human is yet to update the description.'
 invalidmsg = 'Invalid .issue command. Usage: .issue <owner>/<repository> <title>'
 
 def issue(phenny, input):
@@ -45,17 +45,17 @@ def issue(phenny, input):
         return phenny.reply(invalidmsg)
 
     # build and post HTTP request
-    req_url = '%u/repos/%o/%r/issues' % (gh_uri, owner, repo)
-    req_headers = {'Authorization': 'token ' + oauth_token}
+    req_url = '{}/repos/{}/{}/issues'.format(gh_uri, owner, repo)
+    req_headers = {'Authorization': 'token {}'.format(oauth_token)}
     req_body = json.dumps({
         "title": title,
-        "body": default_desc
+        "body": default_desc.format(input.nick)
     })
 
     try:
         req_str = post(req_url, req_body, req_headers)
         req_json = json.loads(req_str)
-        return phenny.reply('Issue created. You can add a description at ' + req_json['html_url'])
+        return phenny.reply('Issue created. You can add a description at {}'.format(req_json['html_url']))
     except HTTPError:
         return phenny.reply('It appears that that repository does not exist.')
 

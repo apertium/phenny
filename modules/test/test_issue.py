@@ -9,7 +9,7 @@ class TestIssue(unittest.TestCase):
         self.input = MagicMock()
         self.phenny.nick = 'phenny'
        
-    @patch('modules.issue.phenny.config.oauth_token')    
+    @patch('modules.issue.phenny.config.gh_oauth_token')    
     def test_token(self, mock_token):
         mock_response = MagicMock()
         mock_response.return_value = 'test_token'

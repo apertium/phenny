@@ -1,4 +1,4 @@
-import unittest
+import unittest, json
 from mock import MagicMock, patch
 from modules import issue
 

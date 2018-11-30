@@ -27,7 +27,7 @@ def issue(phenny, input):
     if not input.group(1):
         return phenny.reply(invalidmsg)
 
-    content = input.group(1).strip()
+    content = ''.join(input.group(1)).strip()
     ghpath = content.split()[0].split('/')
         
     # check whether likely in an owner/repository combo format
@@ -40,7 +40,7 @@ def issue(phenny, input):
     if owner not in allowed_owners:
         return phenny.reply('Begiak cannot create an issue there.')
 
-    title = " ".join(content.split()[1:]).strip()
+    title = ' '.join(content.split()[1:]).strip()
     if len(title) < 1:
         return phenny.reply(invalidmsg)
 

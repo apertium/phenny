@@ -22,15 +22,15 @@ logger = logging.getLogger('phenny')
 
 home = os.getcwd()
 
-def decode(bytes): 
+def decode(bytes):
     if type(bytes) == str:
         return bytes
     try:
         text = bytes.decode('utf-8')
-    except UnicodeDecodeError: 
+    except UnicodeDecodeError:
         try:
             text = bytes.decode('iso-8859-1')
-        except UnicodeDecodeError: 
+        except UnicodeDecodeError:
             text = bytes.decode('cp1252')
     except AttributeError:
         return bytes
@@ -52,8 +52,8 @@ def module_control(phenny, module, func):
     logger.error("Error during %s of %s module:\n%s" % (func, name, desc))
     return False
 
-class Phenny(irc.Bot): 
-    def __init__(self, config): 
+class Phenny(irc.Bot):
+    def __init__(self, config):
         args = (config.nick, config.name, config.channels, config.password)
         irc.Bot.__init__(self, *args)
         self.config = config
@@ -61,25 +61,25 @@ class Phenny(irc.Bot):
         self.stats = {}
         self.setup()
 
-    def setup(self): 
+    def setup(self):
         self.variables = {}
 
         filenames = []
-        if not hasattr(self.config, 'enable'): 
-            for fn in os.listdir(os.path.join(home, 'modules')): 
-                if fn.endswith('.py') and not fn.startswith('_'): 
+        if not hasattr(self.config, 'enable'):
+            for fn in os.listdir(os.path.join(home, 'modules')):
+                if fn.endswith('.py') and not fn.startswith('_'):
                     filenames.append(os.path.join(home, 'modules', fn))
-        else: 
-            for fn in self.config.enable: 
+        else:
+            for fn in self.config.enable:
                 filenames.append(os.path.join(home, 'modules', fn + '.py'))
 
-        if hasattr(self.config, 'extra'): 
-            for fn in self.config.extra: 
-                if os.path.isfile(fn): 
+        if hasattr(self.config, 'extra'):
+            for fn in self.config.extra:
+                if os.path.isfile(fn):
                     filenames.append(fn)
-                elif os.path.isdir(fn): 
-                    for n in os.listdir(fn): 
-                        if n.endswith('.py') and not n.startswith('_'): 
+                elif os.path.isdir(fn):
+                    for n in os.listdir(fn):
+                        if n.endswith('.py') and not n.startswith('_'):
                             filenames.append(os.path.join(fn, n))
 
         tools.setup(self)
@@ -87,14 +87,14 @@ class Phenny(irc.Bot):
         modules = {}
         excluded_modules = getattr(self.config, 'exclude', [])
 
-        for filename in filenames: 
+        for filename in filenames:
             name = os.path.basename(filename)[:-3]
             if name in excluded_modules: continue
 
             try:
                 module_loader = importlib.machinery.SourceFileLoader(name, filename)
                 module = module_loader.load_module()
-            except Exception as e: 
+            except Exception as e:
                 trace = traceback.format_exc()
                 logger.error("Error loading %s module:\n%s" % (name, trace))
                 continue
@@ -105,7 +105,7 @@ class Phenny(irc.Bot):
 
         self.modules = modules
 
-        if modules: 
+        if modules:
             logger.info('Registered modules: ' + ', '.join(sorted(modules.keys())))
         else:
             logger.warning("Couldn't find any modules")
@@ -118,7 +118,7 @@ class Phenny(irc.Bot):
             self.variables[module.__name__] = {}
 
         for name, obj in vars(module).items():
-            if hasattr(obj, 'commands') or hasattr(obj, 'rule'): 
+            if hasattr(obj, 'commands') or hasattr(obj, 'rule'):
                 self.variables[module.__name__][name] = obj
 
     def bind(self, module, name, func, regexp):
@@ -163,7 +163,7 @@ class Phenny(irc.Bot):
 
         func.event = func.event.upper()
 
-        def sub(pattern, self=self): 
+        def sub(pattern, self=self):
             # These replacements have significant order
             pattern = pattern.replace('$nickname', re.escape(self.nick))
             return pattern.replace('$nick', r'%s[,:] +' % re.escape(self.nick))
@@ -222,7 +222,7 @@ class Phenny(irc.Bot):
         return decorate(self, delegate)
 
     def input(self, origin, text, match, args):
-        class CommandInput(str): 
+        class CommandInput(str):
             def __new__(cls, text, origin,  match, args):
                 s = str.__new__(cls, text)
                 s.sender = decode(origin.sender)
@@ -250,14 +250,14 @@ class Phenny(irc.Bot):
             rephrase_errors(func, phenny, input)
         except GrumbleError as e:
             report(str(e), verbose=False)
-        except Exception as e: 
+        except Exception as e:
             self.error(report)
 
-    def limit(self, origin, func): 
-        if origin.sender and origin.sender.startswith('#'): 
-            if hasattr(self.config, 'limit'): 
+    def limit(self, origin, func):
+        if origin.sender and origin.sender.startswith('#'):
+            if hasattr(self.config, 'limit'):
                 limits = self.config.limit.get(origin.sender)
-                if limits and (func.__module__ not in limits): 
+                if limits and (func.__module__ not in limits):
                     return True
         return False
 
@@ -267,11 +267,11 @@ class Phenny(irc.Bot):
         if origin.nick in self.config.ignore:
              return
 
-        for priority in ('high', 'medium', 'low'): 
+        for priority in ('high', 'medium', 'low'):
             items = list(self.commands[priority].items())
 
-            for regexp, funcs in items: 
-                for func in funcs: 
+            for regexp, funcs in items:
+                for func in funcs:
                     if event != func.event and func.event != '*': continue
 
                     match = regexp.fullmatch(text)
@@ -295,5 +295,5 @@ class Phenny(irc.Bot):
                         except KeyError:
                             self.stats[(func.name, source)] = 1
 
-if __name__ == '__main__': 
+if __name__ == '__main__':
     print(__doc__)

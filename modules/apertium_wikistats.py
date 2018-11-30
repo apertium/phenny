@@ -12,21 +12,11 @@ import urllib.error
 from web import REQUEST_TIMEOUT
 from tools import dot_path
 
-BOT = ('https://svn.code.sf.net/p/apertium/svn/trunk/apertium-tools/wiki-tools/bot.py', 'apertium_wikistats_bot.py')
-LEXCCOUNTER = ('https://svn.code.sf.net/p/apertium/svn/trunk/apertium-tools/lexccounter.py', 'lexccounter.py')
-
+BOT = (os.path.dirname(os.path.dirname(os.path.abspath(__file__)))+ '/apertium_wikistats_bot.py')
 BOT_AUTOCOVERAGE = ('/bot_autocoverage.py', 'bot_autocoverage.py')
-AUTOCOVERAGE = ('https://svn.code.sf.net/p/apertium/svn/trunk/apertium-tools/autocoverage.py', 'autocoverage.py')
+AUTOCOVERAGE = ('../autocoverage.py')
 
 IS_COVERAGE_RUNNING = ''
-
-def setup(phenny):
-    for files in [BOT, LEXCCOUNTER, AUTOCOVERAGE]:
-        r = requests.get(files[0], timeout=REQUEST_TIMEOUT)
-        if r.status_code == 200:
-            with open(dot_path(files[1]), 'wb') as f:
-                for chunk in r.iter_content():
-                    f.write(chunk)
 
 def awikstats(phenny, input):
     """Issue commands to the Apertium Stem Counter Bot."""
@@ -50,12 +40,15 @@ def awikstats(phenny, input):
     if option == 'update':
         try:
             langs = ''.join(rawInput.split(' ')[2:]).split(',')
+
         except:
             phenny.say('Invalid .awikstats update command; try something like %s' % repr(awikstats.example_update))
             return
 
-        commands = shlex.split('python3 %s %s "%s" dict -p %s -r "%s"' % (BOT[1], botLogin, botPassword, ' '.join(langs), input.nick))
+        commands = shlex.split('python3 %s %s "%s" dict -p %s -r "%s"' % (BOT, botLogin, botPassword, ' '.join(langs), input.nick))
+
         process = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=dot_path(''))
+
         stdout, stderr = process.communicate()
 
         for line in stderr.splitlines():
@@ -77,8 +70,7 @@ def awikstats(phenny, input):
                 return
 
             phenny.say('%s: Calculating coverage... It may take a while, I will inform you after it\'s completed.' % input.nick)
-
-            commands = shlex.split('python3 %s %s "%s" coverage -p %s -r "%s"' % (BOT[1], botLogin, botPassword, lang, input.nick))
+            commands = shlex.split('python3 %s %s "%s" coverage -p %s -r "%s"' % (BOT, botLogin, botPassword, lang, input.nick))
             IS_COVERAGE_RUNNING = lang
             process = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=dot_path(''))
             stdout, stderr = process.communicate()

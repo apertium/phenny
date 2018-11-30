@@ -1,5 +1,5 @@
 import unittest
-from mock import MagicMock
+from mock import MagicMock, patch
 from modules import issue
 
 class TestIssue(unittest.TestCase):

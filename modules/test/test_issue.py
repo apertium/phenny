@@ -8,12 +8,7 @@ class TestIssue(unittest.TestCase):
         self.phenny = MagicMock()
         self.input = MagicMock()
         self.phenny.nick = 'phenny'
-       
-    @patch('modules.issue.phenny.config.gh_oauth_token')    
-    def test_token(self, mock_token):
-        mock_response = MagicMock()
-        mock_response.return_value = 'test_token'
-        mock_token.return_value = mock_response
+        self.phenny.config.gh_oauth_token = 'test_token'
         
     @patch('modules.issue.post')
     def test_success(self, mock_post):

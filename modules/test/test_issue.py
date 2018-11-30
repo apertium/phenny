@@ -9,7 +9,12 @@ class TestIssue(unittest.TestCase):
         self.input = MagicMock()
         self.phenny.nick = 'phenny'
        
-    @patch('modules.issue.issue.oauth_token', 'test_token')    
+    @patch('modules.issue.phenny.config.oauth_token')    
+    def test_token(self, mock_token):
+        mock_response = MagicMock()
+        mock_response.return_value = 'test_token'
+        mock_token.return_value = mock_response
+        
     @patch('modules.issue.post')
     def test_success(self, mock_post):
         mock_response = MagicMock()
@@ -22,8 +27,8 @@ class TestIssue(unittest.TestCase):
         mock_body = json.dumps({ "title": "Create a test issue.", "body": "This issue was automatically made by begiak, Apertium\'s beloved IRC bot, by the order of phenny on #apertium. A human is yet to update the description."})
         mock_head = {'Authorization': 'token test_token'}
         mock_post.assert_called_with('https://api.github.com/repos/test/test/issues', mock_body, mock_head)
-        self.input.group = lambda x: ['.issue' 'test/test Create a test issue.'][x]
         
+        self.input.group = lambda x: ['.issue' 'test/test Create a test issue.'][x]  
         issue.issue(self.phenny, self.input)
         self.phenny.reply.assert_called_with('Issue created. You can add a description at https://github.com/test/test')
              

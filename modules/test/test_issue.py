@@ -9,6 +9,7 @@ class TestIssue(unittest.TestCase):
         self.input = MagicMock()
         self.phenny.nick = 'phenny'
         self.phenny.config.gh_oauth_token = 'test_token'
+        self.input.nick = "tester"
         
     @patch('modules.issue.post')
     def test_success(self, mock_post):
@@ -19,7 +20,7 @@ class TestIssue(unittest.TestCase):
         mock_post.return_value = mock_response
         self.input.group.return_value = mock_response
         
-        mock_body = json.dumps({ "title": "Create a test issue.", "body": "This issue was automatically made by begiak, Apertium\'s beloved IRC bot, by the order of phenny on #apertium. A human is yet to update the description."})
+        mock_body = json.dumps({ "title": "Create a test issue.", "body": "This issue was automatically made by begiak, Apertium\'s beloved IRC bot, by the order of tester on #apertium. A human is yet to update the description."})
         mock_head = {'Authorization': 'token test_token'}
         self.input.group = lambda x: ['.issue', 'test/test Create a test issue.'][x]  
         issue.issue(self.phenny, self.input)

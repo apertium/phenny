@@ -6,12 +6,13 @@ class TestIssue(unittest.TestCase):
     
     def setUp(self):
         self.phenny = MagicMock()
-        self.input = MagicMock()
         self.phenny.nick = 'phenny'
         self.phenny.config.gh_oauth_token = 'test_token'
-        self.input.nick = "tester"
         
-    @patch('web.post')
+        self.input = MagicMock()
+        self.input.nick = 'tester'
+        
+    @patch('modules.issue.post')
     def test_success(self, mock_post):
         mock_response = MagicMock()
         mock_response.json.return_value = {
@@ -29,13 +30,13 @@ class TestIssue(unittest.TestCase):
         self.phenny.reply.assert_called_with('Issue created. You can add a description at https://github.com/test/test')
              
     def test_illegal(self):
-        self.input.group = lambda x: ['.issue', 'octocat/Hello-World Create an illegal issue.']
+        self.input.group = lambda x: ['.issue', 'octocat/Hello-World Create an illegal issue.'][x]
         self.input.group.return_value = 'Begiak cannot create an issue there.'
         issue.issue(self.phenny, self.input)
         self.phenny.reply.assert_called_with('Begiak cannot create an issue there.')
         
     def test_invalid(self):
-        self.input.group = lambda x: ['.issue', 'boing boing boing someone is hungry']
+        self.input.group = lambda x: ['.issue', 'boing boing boing someone is hungry'][x]
         self.input.group.return_value = 'Invalid .issue command. Usage: .issue <owner>/<repository> <title>'
         issue.issue(self.phenny, self.input)
         self.phenny.reply.assert_called_with('Invalid .issue command. Usage: .issue <owner>/<repository> <title>')

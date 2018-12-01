@@ -3,6 +3,7 @@
 wikiURL = 'http://wiki.apertium.org/wiki/'
 apiURL = 'http://wiki.apertium.org/w/api.php'
 statsURL = 'http://apertium.projectjj.com/stats-service/apertium-%s'
+githubBlobUrl = 'https://raw.githubusercontent.com/apertium/%s/master/%s'
 import argparse, requests, json, logging, sys, re, os, subprocess, shutil, importlib, urllib.request, collections, tempfile
 import xml.etree.ElementTree as etree
 import datetime
@@ -68,16 +69,19 @@ def countAllStats(statsServiceJsonResult, arr):
     fileCounts = {}
     if "stats" in statsServiceJsonResult:
         for stat in statsServiceJsonResult["stats"]:
+
             format = stat["file_kind"]
             fileLoc = stat["path"]
             pair = stat["name"]
             lang_pair_to_post = pair.split('apertium-')[1]
             counts = getCounts(statsServiceJsonResult, format)
+            if format == "MetaMonodix":
+                lang_pair_to_post = fileLoc.split('.')[1].split('.')[0]
             if counts:
                 for countType, count in counts.items():
                     revisionInfo = getRevisionInfo(statsServiceJsonResult, format)
                     if revisionInfo:
-                        fileCounts[lang_pair_to_post + ' ' + countType] = (count, revisionInfo, "https://raw.githubusercontent.com/apertium/"+pair+"/master/"+fileLoc)
+                        fileCounts[lang_pair_to_post + ' ' + countType] = (count, revisionInfo, githubBlobUrl % (pair, fileLoc))
     return fileCounts
 
 def getJSONFromStatsService(lang):
@@ -97,7 +101,7 @@ def getMonoLangCounts(statsServiceJsonResult):
         for countType, count in counts.items():
             revisionInfo = getRevisionInfo(statsServiceJsonResult, file_kind)
             if revisionInfo:
-                fileCounts[countType] = (count, revisionInfo, "https://raw.githubusercontent.com/apertium/apertium-"+lang+"/master/"+fileLoc)
+                fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (lang, fileLoc))
     if getCounts(lang, 'Lexc'):
         if "stats" in statsServiceJsonResult:
             for stat in statsServiceJsonResult["stats"]:
@@ -108,7 +112,7 @@ def getMonoLangCounts(statsServiceJsonResult):
         for countType, count in counts.items():
             revisionInfo = getRevisionInfo(statsServiceJsonResult, file_kind)
             if revisionInfo:
-                fileCounts[countType] = (count, revisionInfo, "https://raw.githubusercontent.com/apertium/apertium-"+lang+"/master/"+fileLoc)
+                fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (lang, fileLoc))
     if getCounts(lang, 'Rlx'):
         if "stats" in statsServiceJsonResult:
             for stat in statsServiceJsonResult["stats"]:
@@ -119,7 +123,7 @@ def getMonoLangCounts(statsServiceJsonResult):
         for countType, count in counts.items():
             revisionInfo = getRevisionInfo(statsServiceJsonResult, file_kind)
             if revisionInfo:
-                fileCounts[countType] = (count, revisionInfo, "https://raw.githubusercontent.com/apertium/apertium-"+lang+"/master/"+fileLoc)
+                fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (lang, fileLoc))
 
     return fileCounts
 

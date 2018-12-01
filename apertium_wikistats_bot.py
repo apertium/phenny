@@ -26,13 +26,14 @@ def queryForValue(statsServiceJsonResult, file_kind, stat_kind=None):
     if stat_kind:
         if "stats" in statsServiceJsonResult:
             for stat in statsServiceJsonResult["stats"]:
-                if stat["file_kind"] == file_kind:
+                if stat["file_kind"] == file_kind and stat["stat_kind"] == stat_kind:
                     return stat["value"]
     else:
         if "stats" in statsServiceJsonResult:
             for stat in statsServiceJsonResult["stats"]:
-                if stat["file_kind"] == file_kind and stat["stat_kind"] == stat_kind:
+                if stat["file_kind"] == file_kind:
                     return stat["value"]
+
 
 def getCounts(statsServiceJsonResult, fileFormat):
     if fileFormat == 'Monodix':

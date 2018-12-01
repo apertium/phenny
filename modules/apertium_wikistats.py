@@ -11,10 +11,10 @@ import urllib.request
 import urllib.error
 from web import REQUEST_TIMEOUT
 from tools import dot_path
-
-BOT = (os.path.dirname(os.path.dirname(os.path.abspath(__file__)))+ '/apertium_wikistats_bot.py')
+LAST_DIRECTORY = (os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BOT = (LAST_DIRECTORY + '/apertium_wikistats_bot.py')
 BOT_AUTOCOVERAGE = ('/bot_autocoverage.py', 'bot_autocoverage.py')
-AUTOCOVERAGE = ('../autocoverage.py')
+AUTOCOVERAGE = (LAST_DIRECTORY + '/autocoverage.py')
 
 IS_COVERAGE_RUNNING = ''
 
@@ -40,7 +40,6 @@ def awikstats(phenny, input):
     if option == 'update':
         try:
             langs = ''.join(rawInput.split(' ')[2:]).split(',')
-
         except:
             phenny.say('Invalid .awikstats update command; try something like %s' % repr(awikstats.example_update))
             return
@@ -70,6 +69,7 @@ def awikstats(phenny, input):
                 return
 
             phenny.say('%s: Calculating coverage... It may take a while, I will inform you after it\'s completed.' % input.nick)
+
             commands = shlex.split('python3 %s %s "%s" coverage -p %s -r "%s"' % (BOT, botLogin, botPassword, lang, input.nick))
             IS_COVERAGE_RUNNING = lang
             process = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=dot_path(''))

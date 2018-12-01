@@ -2,7 +2,7 @@
 
 wikiURL = 'http://wiki.apertium.org/wiki/'
 apiURL = 'http://wiki.apertium.org/w/api.php'
-
+statsURL = 'http://apertium.projectjj.com/stats-service/apertium-%s'
 import argparse, requests, json, logging, sys, re, os, subprocess, shutil, importlib, urllib.request, collections, tempfile
 import xml.etree.ElementTree as etree
 import datetime
@@ -10,10 +10,7 @@ import autocoverage
 
 s = requests.Session()
 
-def countStems(dictionary, vanilla=False):
-    url = "http://apertium.projectjj.com/stats-service/apertium-"+dictionary
-    statsServiceResult = s.get(url)
-    statsServiceJsonResult = json.loads(statsServiceResult.text)
+def countStems(statsServiceJsonResult, vanilla=False):
     if vanilla == False:
         for stat in statsServiceJsonResult["stats"]:
             if stat["stat_kind"] == "Stems":
@@ -24,60 +21,51 @@ def countStems(dictionary, vanilla=False):
                 return stat["value"]
     return
 
-def queryForValue(lang, file_kind, stat_kind=None):
-    if(stat_kind):
-        url = "http://apertium.projectjj.com/stats-service/apertium-"+lang
-        statsServiceResult = s.get(url)
-        statsServiceJsonResult = json.loads(statsServiceResult.text)
+def queryForValue(statsServiceJsonResult, file_kind, stat_kind=None):
+    if stat_kind:
         if "stats" in statsServiceJsonResult:
             for stat in statsServiceJsonResult["stats"]:
                 if stat["file_kind"] == file_kind:
                     return stat["value"]
     else:
-        url = "http://apertium.projectjj.com/stats-service/apertium-"+lang
-        statsServiceResult = s.get(url)
-        statsServiceJsonResult = json.loads(statsServiceResult.text)
         if "stats" in statsServiceJsonResult:
             for stat in statsServiceJsonResult["stats"]:
                 if stat["file_kind"] == file_kind and stat["stat_kind"] == stat_kind:
                     return stat["value"]
 
-def getCounts(lang, fileFormat):
+def getCounts(statsServiceJsonResult, fileFormat):
     if fileFormat == 'Monodix':
         return {
-            'stems': queryForValue(lang, fileFormat, "Stems"),
-            'paradigms': queryForValue(lang, fileFormat, "Paradigms")
+            'stems': queryForValue(statsServiceJsonResult, fileFormat, "Stems"),
+            'paradigms': queryForValue(statsServiceJsonResult, fileFormat, "Paradigms")
         }
     elif fileFormat == 'MetaMonodix':
         return {
-            'meta stems': queryForValue(lang, fileFormat, "Stems"),
-            'meta paradigms': queryForValue(lang, fileFormat, "Paradigms")
+            'meta stems': queryForValue(statsServiceJsonResult, fileFormat, "Stems"),
+            'meta paradigms': queryForValue(statsServiceJsonResult, fileFormat, "Paradigms")
         }
     elif fileFormat == 'Bidix':
         return {
-            'stems': queryForValue(lang, fileFormat, "Stems")
+            'stems': queryForValue(statsServiceJsonResult, fileFormat, "Stems")
         }
     elif fileFormat == 'MetaBidix':
         return {
-            'meta stems': queryForValue(lang, fileFormat, "Stems")
+            'meta stems': queryForValue(statsServiceJsonResult, fileFormat, "Stems")
         }
     elif fileFormat == 'Lexc':
         return {
             'stems': countStems(lang),
-            'vanilla stems': countStems(lang, vanilla=True)
+            'vanilla stems': countStems(statsServiceJsonResult, vanilla=True)
         }
     elif fileFormat == 'Rlx':
         return {
-            'rlx rules': queryForValue(lang, fileFormat, "Rules")
+            'rlx rules': queryForValue(statsServiceJsonResult, fileFormat, "Rules")
         }
 
     return
 
-def countAllStats(lang, arr):
+def countAllStats(statsServiceJsonResult, arr):
     fileCounts = {}
-    url = "http://apertium.projectjj.com/stats-service/apertium-"+lang
-    statsServiceResult = s.get(url)
-    statsServiceJsonResult = json.loads(statsServiceResult.text)
     if "stats" in statsServiceJsonResult:
         for stat in statsServiceJsonResult["stats"]:
             format = stat["file_kind"]
@@ -92,54 +80,51 @@ def countAllStats(lang, arr):
                         fileCounts[lang + ' ' + countType] = (count, revisionInfo, "https://raw.githubusercontent.com/apertium/"+pair+"/master/"+fileLoc)
     return fileCounts
 
-def getMonoLangCounts(lang):
+def getJSONFromStatsService(lang):
+    url = statsURL % lang
+    statsServiceJsonResult = s.get(url).json()
+    return statsServiceJsonResult
+
+def getMonoLangCounts(statsServiceJsonResult):
     fileCounts = {}
-
-    url = "http://apertium.projectjj.com/stats-service/apertium-"+lang
-    statsServiceResult = s.get(url)
-    statsServiceJsonResult = json.loads(statsServiceResult.text)
-
     if getCounts(lang, 'Monodix'):
         if "stats" in statsServiceJsonResult:
             for stat in statsServiceJsonResult["stats"]:
                 if stat["file_kind"] == 'Monodix':
-                    type = stat["file_kind"]
+                    file_kind = stat["file_kind"]
                     fileLoc = stat["path"]
         counts = getCounts(lang, 'Monodix')
         for countType, count in counts.items():
-            revisionInfo = getRevisionInfo(lang, type)
+            revisionInfo = getRevisionInfo(statsServiceJsonResult, file_kind)
             if revisionInfo:
                 fileCounts[countType] = (count, revisionInfo, "https://raw.githubusercontent.com/apertium/apertium-"+lang+"/master/"+fileLoc)
     if getCounts(lang, 'Lexc'):
         if "stats" in statsServiceJsonResult:
             for stat in statsServiceJsonResult["stats"]:
                 if stat["file_kind"] == 'Monodix':
-                    type = stat["file_kind"]
+                    file_kind = stat["file_kind"]
                     fileLoc = stat["path"]
         counts = getCounts(lang, 'Lexc')
         for countType, count in counts.items():
-            revisionInfo = getRevisionInfo(lang, type)
+            revisionInfo = getRevisionInfo(statsServiceJsonResult, file_kind)
             if revisionInfo:
                 fileCounts[countType] = (count, revisionInfo, "https://raw.githubusercontent.com/apertium/apertium-"+lang+"/master/"+fileLoc)
     if getCounts(lang, 'Rlx'):
         if "stats" in statsServiceJsonResult:
             for stat in statsServiceJsonResult["stats"]:
                 if stat["file_kind"] == 'Monodix':
-                    type = stat["file_kind"]
+                    file_kind = stat["file_kind"]
                     fileLoc = stat["path"]
         counts = getCounts(lang, 'Rlx')
         for countType, count in counts.items():
-            revisionInfo = getRevisionInfo(lang, type)
+            revisionInfo = getRevisionInfo(statsServiceJsonResult, file_kind)
             if revisionInfo:
                 fileCounts[countType] = (count, revisionInfo, "https://raw.githubusercontent.com/apertium/apertium-"+lang+"/master/"+fileLoc)
 
     return fileCounts
 
-def getRevisionInfo(lang, file_kind):
+def getRevisionInfo(statsServiceJsonResult, file_kind):
     try:
-        url = "http://apertium.projectjj.com/stats-service/apertium-"+lang
-        statsServiceResult = s.get(url)
-        statsServiceJsonResult = json.loads(statsServiceResult.text)
         for stat in statsServiceJsonResult["stats"]:
             if stat["file_kind"] == file_kind:
                 revisionNumber = stat["revision"]
@@ -420,10 +405,9 @@ if __name__ == '__main__':
             except:
                 logging.error('Failed to parse language module name: %s' % pair)
                 break
-
+            jsonResponse = getJSONFromStatsService(pair)
             if len(langs) == 2:
-                #fileLocs = sum(map(lambda x: getFileLocs(pair, x), ['dix', 'metadix', 'lexc', 'rlx', 't\dx']), [])
-                fileCounts = countAllStats(pair, ['Bidix', 'MetaMonodix', 'Lexc', 'Rlx'])
+                fileCounts = countAllStats(jsonResponse, ['Bidix', 'MetaMonodix', 'Lexc', 'Rlx'])
                 logging.debug('Acquired file counts %s' % fileCounts)
 
                 if len(fileCounts) is 0:
@@ -456,15 +440,8 @@ if __name__ == '__main__':
                         logging.error('Creation of page %s failed: %s' % (pageTitle, editResult.text))
 
             elif len(langs) == 1:
-
-                # dixLoc = next(iter(sorted(sorted(getFileLocs(pair, 'dix'), key=lambda x: collections.defaultdict(lambda _: -1, {'.postdix': 0, '.dix': 1, '.metadix': 2})[x[x.rfind('.'):]])[::-1], key=len)), None)
-                # lexcLoc = next(iter(getFileLocs(pair, 'lexc')), None)
-                # rlxLoc = next(iter(getFileLocs(pair, 'rlx')), None)
-                #
-                # fileCounts = getMonoLangCounts(dixLoc, lexcLoc, rlxLoc)
-                fileCounts = getMonoLangCounts(pair)
+                fileCounts = getMonoLangCounts(jsonResponse)
                 logging.info('Acquired file counts %s' % fileCounts)
-                ########HERE IS WHER
                 if fileCounts:
                     pageContents = getPage(pageTitle)
                     if pageContents:

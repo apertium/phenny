@@ -277,7 +277,7 @@ class Phenny(irc.Bot):
                     match = regexp.fullmatch(text)
                     if not match: continue
 
-                    if self.limit(origin, func): continue
+                    if self.limit(origin, func):  continue
 
                     phenny = self.wrapped(origin, text, match)
                     input = self.input(origin, text, match, args)

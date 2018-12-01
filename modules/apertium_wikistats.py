@@ -45,9 +45,7 @@ def awikstats(phenny, input):
             return
 
         commands = shlex.split('python3 %s %s "%s" dict -p %s -r "%s"' % (BOT, botLogin, botPassword, ' '.join(langs), input.nick))
-
         process = subprocess.Popen(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=dot_path(''))
-
         stdout, stderr = process.communicate()
 
         for line in stderr.splitlines():

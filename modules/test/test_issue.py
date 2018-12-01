@@ -11,7 +11,7 @@ class TestIssue(unittest.TestCase):
         self.phenny.config.gh_oauth_token = 'test_token'
         self.input.nick = "tester"
         
-    @patch('modules.issue.web.post')
+    @patch('web.post')
     def test_success(self, mock_post):
         mock_response = MagicMock()
         mock_response.json.return_value = {

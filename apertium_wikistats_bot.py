@@ -71,13 +71,13 @@ def countAllStats(statsServiceJsonResult, arr):
             format = stat["file_kind"]
             fileLoc = stat["path"]
             pair = stat["name"]
-
-            counts = getCounts(lang, format)
+            lang_pair_to_post = pair.split('apertium-')[1]
+            counts = getCounts(statsServiceJsonResult, format)
             if counts:
                 for countType, count in counts.items():
-                    revisionInfo = getRevisionInfo(lang, format)
+                    revisionInfo = getRevisionInfo(statsServiceJsonResult, format)
                     if revisionInfo:
-                        fileCounts[lang + ' ' + countType] = (count, revisionInfo, "https://raw.githubusercontent.com/apertium/"+pair+"/master/"+fileLoc)
+                        fileCounts[lang_pair_to_post + ' ' + countType] = (count, revisionInfo, "https://raw.githubusercontent.com/apertium/"+pair+"/master/"+fileLoc)
     return fileCounts
 
 def getJSONFromStatsService(lang):

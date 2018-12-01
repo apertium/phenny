@@ -3,7 +3,6 @@
 bot.py - Phenny IRC Bot
 Copyright 2008, Sean B. Palmer, inamidst.com
 Licensed under the Eiffel Forum License 2.
-
 http://inamidst.com/phenny/
 """
 
@@ -27,17 +26,17 @@ def decode(bytes):
         return bytes
     try:
         text = bytes.decode('utf-8')
-    except UnicodeDecodeError:
+    except UnicodeDecodeError: 
         try:
             text = bytes.decode('iso-8859-1')
-        except UnicodeDecodeError:
+        except UnicodeDecodeError: 
             text = bytes.decode('cp1252')
     except AttributeError:
         return bytes
     return text
 
-def module_control(phenny, module, func): 
-    if not hasattr(module, func): 
+def module_control(phenny, module, func):
+    if not hasattr(module, func):
         return True
 
     try:
@@ -69,12 +68,12 @@ class Phenny(irc.Bot):
             for fn in os.listdir(os.path.join(home, 'modules')): 
                 if fn.endswith('.py') and not fn.startswith('_'): 
                     filenames.append(os.path.join(home, 'modules', fn))
-        else:
-            for fn in self.config.enable:
+        else: 
+            for fn in self.config.enable: 
                 filenames.append(os.path.join(home, 'modules', fn + '.py'))
 
         if hasattr(self.config, 'extra'): 
-            for fn in self.config.extra:
+            for fn in self.config.extra: 
                 if os.path.isfile(fn): 
                     filenames.append(fn)
                 elif os.path.isdir(fn): 
@@ -87,47 +86,47 @@ class Phenny(irc.Bot):
         modules = {}
         excluded_modules = getattr(self.config, 'exclude', [])
 
-        for filename in filenames:
+        for filename in filenames: 
             name = os.path.basename(filename)[:-3]
             if name in excluded_modules: continue
 
             try:
                 module_loader = importlib.machinery.SourceFileLoader(name, filename)
                 module = module_loader.load_module()
-            except Exception as e:
+            except Exception as e: 
                 trace = traceback.format_exc()
                 logger.error("Error loading %s module:\n%s" % (name, trace))
                 continue
 
-            if module_control(self, module, 'setup'): 
+            if module_control(self, module, 'setup'):
                 self.register(module)
                 modules[name] = module
 
         self.modules = modules
 
-        if modules:
+        if modules: 
             logger.info('Registered modules: ' + ', '.join(sorted(modules.keys())))
         else:
             logger.warning("Couldn't find any modules")
 
         self.bind_commands()
 
-    def register(self, module): 
+    def register(self, module):
         # This is used by reload.py, hence it being methodised
         if module.__name__ not in self.variables:
             self.variables[module.__name__] = {}
 
-        for name, obj in vars(module).items(): 
+        for name, obj in vars(module).items():
             if hasattr(obj, 'commands') or hasattr(obj, 'rule'): 
                 self.variables[module.__name__][name] = obj
 
-    def bind(self, module, name, func, regexp): 
+    def bind(self, module, name, func, regexp):
         # register documentation
-        if not hasattr(func, 'name'): 
+        if not hasattr(func, 'name'):
             func.name = func.__name__
 
         if func.__doc__:
-            if hasattr(func, 'example'): 
+            if hasattr(func, 'example'):
                 example = func.example
                 example = example.replace('$nickname', self.nick)
             else: example = None
@@ -147,7 +146,7 @@ class Phenny(irc.Bot):
             key = re.compile(key)
             commands.setdefault(key, []).append(func)
 
-    def bind_command(self, module, name, func): 
+    def bind_command(self, module, name, func):
         logger.debug("Binding module '{:}' command '{:}'".format(module, name))
 
         defaults = {
@@ -157,8 +156,8 @@ class Phenny(irc.Bot):
             'event': 'PRIVMSG',
         }
 
-        for key, value in defaults.items(): 
-            if not hasattr(func, key): 
+        for key, value in defaults.items():
+            if not hasattr(func, key):
                 setattr(func, key, value)
 
         func.event = func.event.upper()
@@ -168,22 +167,22 @@ class Phenny(irc.Bot):
             pattern = pattern.replace('$nickname', re.escape(self.nick))
             return pattern.replace('$nick', r'%s[,:] +' % re.escape(self.nick))
 
-        if hasattr(func, 'rule'): 
-            if isinstance(func.rule, str): 
+        if hasattr(func, 'rule'):
+            if isinstance(func.rule, str):
                 pattern = sub(func.rule)
                 regexp = pattern
                 self.bind(module, name, func, regexp)
 
-            if isinstance(func.rule, tuple): 
+            if isinstance(func.rule, tuple):
                 # 1) e.g. ('$nick', '(.*)')
-                if len(func.rule) == 2 and isinstance(func.rule[0], str): 
+                if len(func.rule) == 2 and isinstance(func.rule[0], str):
                     prefix, pattern = func.rule
                     prefix = sub(prefix)
                     regexp = prefix + pattern
                     self.bind(module, name, func, regexp)
 
                 # 2) e.g. (['p', 'q'], '(.*)')
-                elif len(func.rule) == 2 and isinstance(func.rule[0], list): 
+                elif len(func.rule) == 2 and isinstance(func.rule[0], list):
                     prefix = self.config.prefix
                     commands, pattern = func.rule
                     command = r'(?:%s)(?: +(%s))?' % ('|'.join(commands), pattern)
@@ -198,20 +197,20 @@ class Phenny(irc.Bot):
                     regexp = prefix + command + pattern
                     self.bind(module, name, func, regexp)
 
-        if hasattr(func, 'commands'): 
+        if hasattr(func, 'commands'):
             template = r'(?:%s)(?: +(.+))?'
             pattern = template % '|'.join(func.commands)
             regexp = self.config.prefix + pattern
             self.bind(module, name, func, regexp)
 
-    def bind_commands(self): 
+    def bind_commands(self):
         self.commands = {'high': {}, 'medium': {}, 'low': {}}
 
-        for module, functions in self.variables.items(): 
-            for name, func in functions.items(): 
+        for module, functions in self.variables.items():
+            for name, func in functions.items():
                 self.bind_command(module, name, func)
 
-    def wrapped(self, origin, text, match): 
+    def wrapped(self, origin, text, match):
         sender = origin.sender or text
         delegate = {
             'reply': lambda msg, target=origin.nick: self.msg(sender, msg, target=target),
@@ -221,9 +220,9 @@ class Phenny(irc.Bot):
 
         return decorate(self, delegate)
 
-    def input(self, origin, text, match, args): 
+    def input(self, origin, text, match, args):
         class CommandInput(str): 
-            def __new__(cls, text, origin,  match, args): 
+            def __new__(cls, text, origin,  match, args):
                 s = str.__new__(cls, text)
                 s.sender = decode(origin.sender)
                 s.nick = decode(origin.nick)
@@ -237,8 +236,8 @@ class Phenny(irc.Bot):
 
         return CommandInput(text, origin, match, args)
 
-    def call(self, func, origin, phenny, input): 
-        def report(*lines, verbose=True): 
+    def call(self, func, origin, phenny, input):
+        def report(*lines, verbose=True):
             for admin in self.config.admins:
                 if verbose:
                     self.msg(admin, "Error in '{}/{}' with input '{}'"
@@ -250,7 +249,7 @@ class Phenny(irc.Bot):
             rephrase_errors(func, phenny, input)
         except GrumbleError as e:
             report(str(e), verbose=False)
-        except Exception as e:
+        except Exception as e: 
             self.error(report)
 
     def limit(self, origin, func): 
@@ -261,7 +260,7 @@ class Phenny(irc.Bot):
                     return True
         return False
 
-    def dispatch(self, origin, args, text): 
+    def dispatch(self, origin, args, text):
         event = args[0]
 
         if origin.nick in self.config.ignore:
@@ -270,14 +269,14 @@ class Phenny(irc.Bot):
         for priority in ('high', 'medium', 'low'): 
             items = list(self.commands[priority].items())
 
-            for regexp, funcs in items:
-                for func in funcs:
+            for regexp, funcs in items: 
+                for func in funcs: 
                     if event != func.event and func.event != '*': continue
 
                     match = regexp.fullmatch(text)
                     if not match: continue
 
-                    if self.limit(origin, func):    continue
+                    if self.limit(origin, func): continue
 
                     phenny = self.wrapped(origin, text, match)
                     input = self.input(origin, text, match, args)
@@ -295,5 +294,5 @@ class Phenny(irc.Bot):
                         except KeyError:
                             self.stats[(func.name, source)] = 1
 
-if __name__ == '__main__':
+if __name__ == '__main__': 
     print(__doc__)

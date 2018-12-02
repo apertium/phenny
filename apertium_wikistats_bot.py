@@ -95,8 +95,8 @@ def getJSONFromStatsService(lang):
         url = statsURL % pair_for_url
         statsServiceJsonResult = s.post(url).json()
     else:
-        if toAlpha3Code(ind_langs[0]):
-            isoCodeLangPair = toAlpha3Code(ind_langs[0])
+        if toAlpha3Code(pair_for_url):
+            isoCodeLangPair = toAlpha3Code(pair_for_url)
         if isoCodeLangPair != "":
             pair_for_url = isoCodeLangPair
         url = statsURL % pair_for_url

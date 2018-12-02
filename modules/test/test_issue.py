@@ -17,10 +17,8 @@ class TestIssue(unittest.TestCase):
     @patch('modules.issue.post')
     def test_success(self, mock_post):
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            'html_url': 'https://github.com/test/test'
-        }
-        mock_post.return_value = mock_response
+        mock_response.return_value = '{"html_url": "https://github.com/test/test"}'
+        mock_post.return_value = mock_response.return_value
         
         mock_body = json.dumps({ "title": "Create a test issue.", "body": "This issue was automatically made by begiak, Apertium\'s beloved IRC bot, by the order of tester on #apertium. A human is yet to update the description."})
         mock_head = {'Authorization': 'token test_token'}

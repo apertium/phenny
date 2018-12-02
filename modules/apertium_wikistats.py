@@ -11,7 +11,7 @@ import urllib.request
 import urllib.error
 from web import REQUEST_TIMEOUT
 from tools import dot_path
-PARENT_DIRECTORY = (os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+PARENT_DIRECTORY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BOT = os.path.join(PARENT_DIRECTORY, 'apertium_wikistats_bot.py')
 BOT_AUTOCOVERAGE = ('/bot_autocoverage.py', 'bot_autocoverage.py')
 AUTOCOVERAGE = os.path.join(PARENT_DIRECTORY, 'autocoverage.py')

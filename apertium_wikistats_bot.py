@@ -2,7 +2,7 @@
 
 wikiURL = 'http://wiki.apertium.org/wiki/'
 apiURL = 'http://wiki.apertium.org/w/api.php'
-statsURL = 'http://apertium.projectjj.com/stats-service/apertium-%s'
+statsURL = 'http://apertium.projectjj.com/stats-service/apertium-%s/?async=false'
 githubBlobUrl = 'https://raw.githubusercontent.com/apertium/%s/master/%s'
 import argparse, requests, json, logging, sys, re, os, subprocess, shutil, importlib, urllib.request, collections, tempfile
 import xml.etree.ElementTree as etree
@@ -13,46 +13,44 @@ s = requests.Session()
 
 def countStems(statsServiceJsonResult, vanilla=False):
     if vanilla == False:
-        for stat in statsServiceJsonResult["stats"]:
-            if stat["stat_kind"] == "Stems":
-                return stat["value"]
+        for rawStats in statsServiceJsonResult:
+            if rawStats['stat_kind'] == 'Stems':
+                return rawStats['value']
     else:
-        for stat in statsServiceJsonResult["stats"]:
-            if stat["stat_kind"] == "VanillaStems":
-                return stat["value"]
+        for rawStats in statsServiceJsonResult:
+            if rawStats['stat_kind'] == 'VanillaStems':
+                return rawStats['value']
     return
 
 def queryForValue(statsServiceJsonResult, file_kind, stat_kind=None):
     if stat_kind:
-        if "stats" in statsServiceJsonResult:
-            for stat in statsServiceJsonResult["stats"]:
-                if stat["file_kind"] == file_kind and stat["stat_kind"] == stat_kind:
-                    return stat["value"]
+        for rawStats in statsServiceJsonResult:
+            if rawStats['file_kind'] == file_kind and rawStats['stat_kind'] == stat_kind:
+                return rawStats['value']
     else:
-        if "stats" in statsServiceJsonResult:
-            for stat in statsServiceJsonResult["stats"]:
-                if stat["file_kind"] == file_kind:
-                    return stat["value"]
+        for rawStats in statsServiceJsonResult:
+            if rawStats['file_kind'] == file_kind:
+                return rawStats['value']
 
 
 def getCounts(statsServiceJsonResult, fileFormat):
     if fileFormat == 'Monodix':
         return {
-            'stems': queryForValue(statsServiceJsonResult, fileFormat, "Stems"),
-            'paradigms': queryForValue(statsServiceJsonResult, fileFormat, "Paradigms")
+            'stems': queryForValue(statsServiceJsonResult, fileFormat, 'Stems'),
+            'paradigms': queryForValue(statsServiceJsonResult, fileFormat, 'Paradigms')
         }
     elif fileFormat == 'MetaMonodix':
         return {
-            'meta stems': queryForValue(statsServiceJsonResult, fileFormat, "Stems"),
-            'meta paradigms': queryForValue(statsServiceJsonResult, fileFormat, "Paradigms")
+            'meta stems': queryForValue(statsServiceJsonResult, fileFormat, 'Stems'),
+            'meta paradigms': queryForValue(statsServiceJsonResult, fileFormat, 'Paradigms')
         }
     elif fileFormat == 'Bidix':
         return {
-            'stems': queryForValue(statsServiceJsonResult, fileFormat, "Stems")
+            'stems': queryForValue(statsServiceJsonResult, fileFormat, 'Stems')
         }
     elif fileFormat == 'MetaBidix':
         return {
-            'meta stems': queryForValue(statsServiceJsonResult, fileFormat, "Stems")
+            'meta stems': queryForValue(statsServiceJsonResult, fileFormat, 'Stems')
         }
     elif fileFormat == 'Lexc':
         return {
@@ -61,79 +59,86 @@ def getCounts(statsServiceJsonResult, fileFormat):
         }
     elif fileFormat == 'Rlx':
         return {
-            'rlx rules': queryForValue(statsServiceJsonResult, fileFormat, "Rules")
+            'rlx rules': queryForValue(statsServiceJsonResult, fileFormat, 'Rules')
         }
 
     return
 
 def countAllStats(statsServiceJsonResult, arr):
     fileCounts = {}
-    if "stats" in statsServiceJsonResult:
-        for stat in statsServiceJsonResult["stats"]:
-
-            format = stat["file_kind"]
-            fileLoc = stat["path"]
-            pair = stat["name"]
-            lang_pair_to_post = pair.split('apertium-')[1]
-            counts = getCounts(statsServiceJsonResult, format)
-            if format == "MetaMonodix":
-                lang_pair_to_post = toISO(fileLoc.split('.')[1].split('.')[0])
-            if counts:
-                for countType, count in counts.items():
-                    revisionInfo = getRevisionInfo(statsServiceJsonResult, format)
-                    if revisionInfo:
-                        fileCounts[lang_pair_to_post + ' ' + countType] = (count, revisionInfo, githubBlobUrl % (pair, fileLoc))
+    for rawStats in statsServiceJsonResult:
+        format = rawStats['file_kind']
+        fileLoc = rawStats['path']
+        pair = rawStats['name']
+        lang_pair_to_post = pair.split('apertium-')[1]
+        counts = getCounts(statsServiceJsonResult, format)
+        if format == 'MetaMonodix':
+            lang_pair_to_post = toISO(fileLoc.split('.')[1].split('.')[0])
+        if counts:
+            for countType, count in counts.items():
+                revisionInfo = getRevisionInfo(statsServiceJsonResult, format)
+                if revisionInfo:
+                    fileCounts[lang_pair_to_post + ' ' + countType] = (count, revisionInfo, githubBlobUrl % (pair, fileLoc))
     return fileCounts
 
 def getJSONFromStatsService(lang):
-    url = statsURL % lang
-    statsServiceJsonResult = s.get(url).json()
-    return statsServiceJsonResult
+    pair_for_url = lang
+    isoCodeLangPair = ""
+    ind_langs = pair_for_url.split('-')
+    if toAlpha3Code(ind_langs[0]):
+        isoCodeLangPair = toAlpha3Code(ind_langs[0]) + '-'
+    if toAlpha3Code(ind_langs[1]):
+        isoCodeLangPair += toAlpha3Code(ind_langs[1])
+    if isoCodeLangPair != "":
+        pair_for_url = isoCodeLangPair
+    url = statsURL % pair_for_url
+    statsServiceJsonResult = s.post(url).json()
+    if 'stats' in statsServiceJsonResult:
+        return statsServiceJsonResult['stats']
+    logging.error('Unable to find %s' % isoCodeLangPair)
+    return
 
 def getMonoLangCounts(statsServiceJsonResult):
     fileCounts = {}
     if getCounts(lang, 'Monodix'):
-        if "stats" in statsServiceJsonResult:
-            for stat in statsServiceJsonResult["stats"]:
-                if stat["file_kind"] == 'Monodix':
-                    file_kind = stat["file_kind"]
-                    fileLoc = stat["path"]
-        counts = getCounts(lang, 'Monodix')
+        for rawStats in statsServiceJsonResult:
+            if rawStats['file_kind'] == 'Monodix':
+                file_kind = rawStats['file_kind']
+                fileLoc = rawStats['path']
+        counts = getCounts(statsServiceJsonResult, 'Monodix')
         for countType, count in counts.items():
             revisionInfo = getRevisionInfo(statsServiceJsonResult, file_kind)
             if revisionInfo:
-                fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (lang, fileLoc))
-    if getCounts(lang, 'Lexc'):
-        if "stats" in statsServiceJsonResult:
-            for stat in statsServiceJsonResult["stats"]:
-                if stat["file_kind"] == 'Monodix':
-                    file_kind = stat["file_kind"]
-                    fileLoc = stat["path"]
-        counts = getCounts(lang, 'Lexc')
+                fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (statsServiceJsonResult, fileLoc))
+    if getCounts(statsServiceJsonResult, 'Lexc'):
+        for rawStats in statsServiceJsonResult:
+            if rawStats['file_kind'] == 'Monodix':
+                file_kind = rawStats['file_kind']
+                fileLoc = rawStats['path']
+        counts = getCounts(statsServiceJsonResult, 'Lexc')
         for countType, count in counts.items():
             revisionInfo = getRevisionInfo(statsServiceJsonResult, file_kind)
             if revisionInfo:
-                fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (lang, fileLoc))
-    if getCounts(lang, 'Rlx'):
-        if "stats" in statsServiceJsonResult:
-            for stat in statsServiceJsonResult["stats"]:
-                if stat["file_kind"] == 'Monodix':
-                    file_kind = stat["file_kind"]
-                    fileLoc = stat["path"]
-        counts = getCounts(lang, 'Rlx')
+                fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (statsServiceJsonResult, fileLoc))
+    if getCounts(statsServiceJsonResult, 'Rlx'):
+        for rawStats in statsServiceJsonResult:
+            if rawStats['file_kind'] == 'Monodix':
+                file_kind = rawStats['file_kind']
+                fileLoc = rawStats['path']
+        counts = getCounts(statsServiceJsonResult, 'Rlx')
         for countType, count in counts.items():
             revisionInfo = getRevisionInfo(statsServiceJsonResult, file_kind)
             if revisionInfo:
-                fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (lang, fileLoc))
+                fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (statsServiceJsonResult, fileLoc))
 
     return fileCounts
 
 def getRevisionInfo(statsServiceJsonResult, file_kind):
     try:
-        for stat in statsServiceJsonResult["stats"]:
-            if stat["file_kind"] == file_kind:
-                revisionNumber = stat["revision"]
-                revisionAuthor = stat["last_author"]
+        for rawStats in statsServiceJsonResult:
+            if rawStats['file_kind'] == file_kind:
+                revisionNumber = rawStats['revision']
+                revisionAuthor = rawStats['last_author']
                 return (revisionNumber, revisionAuthor)
         return
     except Exception as e:

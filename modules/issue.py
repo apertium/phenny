@@ -55,7 +55,7 @@ def issue(phenny, input):
     try:
         req_str = post(req_url, req_body, req_headers)
         req_json = json.loads(req_str)
-        return phenny.reply('Issue created. You can add a description at {}'.format(req_json['html_url']))
+        phenny.reply('Issue created. You can add a description at {}'.format(req_json['html_url']))
     except HTTPError:
         phenny.reply('It appears that the repository you provided does not exist.')
 

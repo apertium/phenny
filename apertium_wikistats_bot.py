@@ -54,7 +54,7 @@ def getCounts(statsServiceJsonResult, fileFormat):
         }
     elif fileFormat == 'Lexc':
         return {
-            'stems': countStems(lang),
+            'stems': countStems(statsServiceJsonResult),
             'vanilla stems': countStems(statsServiceJsonResult, vanilla=True)
         }
     elif fileFormat == 'Rlx':
@@ -85,14 +85,22 @@ def getJSONFromStatsService(lang):
     pair_for_url = lang
     isoCodeLangPair = ""
     ind_langs = pair_for_url.split('-')
-    if toAlpha3Code(ind_langs[0]):
-        isoCodeLangPair = toAlpha3Code(ind_langs[0]) + '-'
-    if toAlpha3Code(ind_langs[1]):
-        isoCodeLangPair += toAlpha3Code(ind_langs[1])
-    if isoCodeLangPair != "":
-        pair_for_url = isoCodeLangPair
-    url = statsURL % pair_for_url
-    statsServiceJsonResult = s.post(url).json()
+    if len(ind_langs) == 2:
+        if toAlpha3Code(ind_langs[0]):
+            isoCodeLangPair = toAlpha3Code(ind_langs[0]) + '-'
+        if toAlpha3Code(ind_langs[1]):
+            isoCodeLangPair += toAlpha3Code(ind_langs[1])
+        if isoCodeLangPair != "":
+            pair_for_url = isoCodeLangPair
+        url = statsURL % pair_for_url
+        statsServiceJsonResult = s.post(url).json()
+    else:
+        if toAlpha3Code(ind_langs[0]):
+            isoCodeLangPair = toAlpha3Code(ind_langs[0])
+        if isoCodeLangPair != "":
+            pair_for_url = isoCodeLangPair
+        url = statsURL % pair_for_url
+        statsServiceJsonResult = s.post(url).json()
     if 'stats' in statsServiceJsonResult:
         return statsServiceJsonResult['stats']
     logging.error('Unable to find %s' % isoCodeLangPair)
@@ -100,7 +108,7 @@ def getJSONFromStatsService(lang):
 
 def getMonoLangCounts(statsServiceJsonResult):
     fileCounts = {}
-    if getCounts(lang, 'Monodix'):
+    if getCounts(statsServiceJsonResult, 'Monodix'):
         for rawStats in statsServiceJsonResult:
             if rawStats['file_kind'] == 'Monodix':
                 file_kind = rawStats['file_kind']

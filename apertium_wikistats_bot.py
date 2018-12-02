@@ -1,157 +1,124 @@
 #!/usr/bin/env python3
 
-wikiURL = 'http://wiki.apertium.org/wiki/'
-apiURL = 'http://wiki.apertium.org/w/api.php'
-statsURL = 'http://apertium.projectjj.com/stats-service/apertium-%s/?async=false'
-githubBlobUrl = 'https://raw.githubusercontent.com/apertium/%s/master/%s'
 import argparse, requests, json, logging, sys, re, os, subprocess, shutil, importlib, urllib.request, collections, tempfile
 import xml.etree.ElementTree as etree
 import datetime
 import autocoverage
+wikiURL = 'http://wiki.apertium.org/wiki/'
+apiURL = 'http://wiki.apertium.org/w/api.php'
+statsURL = 'http://apertium.projectjj.com/stats-service/apertium-%s/?async=false'
+githubBlobUrl = 'https://raw.githubusercontent.com/apertium/%s/master/%s'
 
 s = requests.Session()
 
-def countStems(statsServiceJsonResult, vanilla=False):
-    if vanilla == False:
-        for rawStats in statsServiceJsonResult:
-            if rawStats['stat_kind'] == 'Stems':
-                return rawStats['value']
-    else:
-        for rawStats in statsServiceJsonResult:
-            if rawStats['stat_kind'] == 'VanillaStems':
-                return rawStats['value']
-    return
-
-def queryForValue(statsServiceJsonResult, file_kind, stat_kind=None):
+def queryForValue(rawStats, fileKind, stat_kind):
     if stat_kind:
-        for rawStats in statsServiceJsonResult:
-            if rawStats['file_kind'] == file_kind and rawStats['stat_kind'] == stat_kind:
-                return rawStats['value']
-    else:
-        for rawStats in statsServiceJsonResult:
-            if rawStats['file_kind'] == file_kind:
-                return rawStats['value']
+        for stat in rawStats:
+            if stat['file_kind'] == fileKind and stat['stat_kind'] == stat_kind:
+                return stat['value']
 
-
-def getCounts(statsServiceJsonResult, fileFormat):
+def getCounts(rawStats, fileFormat):
     if fileFormat == 'Monodix':
         return {
-            'stems': queryForValue(statsServiceJsonResult, fileFormat, 'Stems'),
-            'paradigms': queryForValue(statsServiceJsonResult, fileFormat, 'Paradigms')
+            'stems': queryForValue(rawStats, fileFormat, 'Stems'),
+            'paradigms': queryForValue(rawStats, fileFormat, 'Paradigms')
         }
     elif fileFormat == 'MetaMonodix':
         return {
-            'meta stems': queryForValue(statsServiceJsonResult, fileFormat, 'Stems'),
-            'meta paradigms': queryForValue(statsServiceJsonResult, fileFormat, 'Paradigms')
+            'meta stems': queryForValue(rawStats, fileFormat, 'Stems'),
+            'meta paradigms': queryForValue(rawStats, fileFormat, 'Paradigms')
         }
     elif fileFormat == 'Bidix':
         return {
-            'stems': queryForValue(statsServiceJsonResult, fileFormat, 'Stems')
+            'stems': queryForValue(rawStats, fileFormat, 'Stems')
         }
     elif fileFormat == 'MetaBidix':
         return {
-            'meta stems': queryForValue(statsServiceJsonResult, fileFormat, 'Stems')
+            'meta stems': queryForValue(rawStats, fileFormat, 'Stems')
         }
     elif fileFormat == 'Lexc':
         return {
-            'stems': countStems(statsServiceJsonResult),
-            'vanilla stems': countStems(statsServiceJsonResult, vanilla=True)
+            'stems': queryForValue(rawStats, fileFormat, 'Stems'),
+            'vanilla stems': queryForValue(rawStats, fileFormat, 'VanillaStems')
         }
     elif fileFormat == 'Rlx':
         return {
-            'rlx rules': queryForValue(statsServiceJsonResult, fileFormat, 'Rules')
+            'rlx rules': queryForValue(rawStats, fileFormat, 'Rules')
         }
 
-    return
-
-def countAllStats(statsServiceJsonResult, arr):
+def countAllStats(rawStats, arr):
     fileCounts = {}
-    for rawStats in statsServiceJsonResult:
-        format = rawStats['file_kind']
-        fileLoc = rawStats['path']
-        pair = rawStats['name']
+    for stat in rawStats:
+        format = stat['file_kind']
+        fileLoc = stat['path']
+        pair = stat['name']
         lang_pair_to_post = pair.split('apertium-')[1]
-        counts = getCounts(statsServiceJsonResult, format)
+        counts = getCounts(rawStats, format)
         if format == 'MetaMonodix':
             lang_pair_to_post = toISO(fileLoc.split('.')[1].split('.')[0])
         if counts:
             for countType, count in counts.items():
-                revisionInfo = getRevisionInfo(statsServiceJsonResult, format)
+                revisionInfo = getRevisionInfo(rawStats, format)
                 if revisionInfo:
                     fileCounts[lang_pair_to_post + ' ' + countType] = (count, revisionInfo, githubBlobUrl % (pair, fileLoc))
     return fileCounts
 
 def getJSONFromStatsService(lang):
-    pair_for_url = lang
+    pairForUrl = lang
     isoCodeLangPair = ""
-    ind_langs = pair_for_url.split('-')
-    if len(ind_langs) == 2:
-        if toAlpha3Code(ind_langs[0]):
-            isoCodeLangPair = toAlpha3Code(ind_langs[0]) + '-'
-        if toAlpha3Code(ind_langs[1]):
-            isoCodeLangPair += toAlpha3Code(ind_langs[1])
+    indLangs = pairForUrl.split('-')
+    if toAlpha3Code(pairForUrl):
+        isoCodeLangPair = toAlpha3Code(pairForUrl)
+    if len(indLangs) == 2:
+        if toAlpha3Code(indLangs[0]):
+            isoCodeLangPair = toAlpha3Code(indLangs[0]) + '-'
+        if toAlpha3Code(indLangs[1]):
+            isoCodeLangPair += toAlpha3Code(indLangs[1])
         if isoCodeLangPair != "":
-            pair_for_url = isoCodeLangPair
-        url = statsURL % pair_for_url
-        statsServiceJsonResult = s.post(url).json()
+            pairForUrl = isoCodeLangPair
+        url = statsURL % pairForUrl
+        rawStats = s.post(url).json()
     else:
-        if toAlpha3Code(pair_for_url):
-            isoCodeLangPair = toAlpha3Code(pair_for_url)
         if isoCodeLangPair != "":
-            pair_for_url = isoCodeLangPair
-        url = statsURL % pair_for_url
-        statsServiceJsonResult = s.post(url).json()
-    if 'stats' in statsServiceJsonResult:
-        return statsServiceJsonResult['stats']
+            pairForUrl = isoCodeLangPair
+        url = statsURL % pairForUrl
+        rawStats = s.post(url).json()
+    if 'stats' in rawStats:
+        return rawStats['stats']
     logging.error('Unable to find %s' % isoCodeLangPair)
-    return
 
-def getMonoLangCounts(statsServiceJsonResult):
+def monoLangInformation(typeOfDict, rawStats, fileCounts):
+    for stat in rawStats:
+        if stat['file_kind'] == 'Monodix':
+            fileKind = stat['file_kind']
+            fileLoc = stat['path']
+            fileName = stat['name']
+    counts = getCounts(rawStats, typeOfDict)
+    for countType, count in counts.items():
+        revisionInfo = getRevisionInfo(rawStats, fileKind)
+        if revisionInfo:
+            fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (fileName, fileLoc))
+
+def getMonoLangCounts(rawStats):
     fileCounts = {}
-    if getCounts(statsServiceJsonResult, 'Monodix'):
-        for rawStats in statsServiceJsonResult:
-            if rawStats['file_kind'] == 'Monodix':
-                file_kind = rawStats['file_kind']
-                fileLoc = rawStats['path']
-        counts = getCounts(statsServiceJsonResult, 'Monodix')
-        for countType, count in counts.items():
-            revisionInfo = getRevisionInfo(statsServiceJsonResult, file_kind)
-            if revisionInfo:
-                fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (statsServiceJsonResult, fileLoc))
-    if getCounts(statsServiceJsonResult, 'Lexc'):
-        for rawStats in statsServiceJsonResult:
-            if rawStats['file_kind'] == 'Monodix':
-                file_kind = rawStats['file_kind']
-                fileLoc = rawStats['path']
-        counts = getCounts(statsServiceJsonResult, 'Lexc')
-        for countType, count in counts.items():
-            revisionInfo = getRevisionInfo(statsServiceJsonResult, file_kind)
-            if revisionInfo:
-                fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (statsServiceJsonResult, fileLoc))
-    if getCounts(statsServiceJsonResult, 'Rlx'):
-        for rawStats in statsServiceJsonResult:
-            if rawStats['file_kind'] == 'Monodix':
-                file_kind = rawStats['file_kind']
-                fileLoc = rawStats['path']
-        counts = getCounts(statsServiceJsonResult, 'Rlx')
-        for countType, count in counts.items():
-            revisionInfo = getRevisionInfo(statsServiceJsonResult, file_kind)
-            if revisionInfo:
-                fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (statsServiceJsonResult, fileLoc))
-
+    if getCounts(rawStats, 'Monodix'):
+        monoLangInformation('Monodix', rawStats, fileCounts)
+    if getCounts(rawStats, 'Lexc'):
+        monoLangInformation('Lexc', rawStats, fileCounts)
+    if getCounts(rawStats, 'Rlx'):
+        monoLangInformation('Rlx', rawStats, fileCounts)
     return fileCounts
 
-def getRevisionInfo(statsServiceJsonResult, file_kind):
+def getRevisionInfo(rawStats, fileKind):
     try:
-        for rawStats in statsServiceJsonResult:
-            if rawStats['file_kind'] == file_kind:
-                revisionNumber = rawStats['revision']
-                revisionAuthor = rawStats['last_author']
+        for stat in rawStats:
+            if stat['file_kind'] == fileKind:
+                revisionNumber = stat['revision']
+                revisionAuthor = stat['last_author']
                 return (revisionNumber, revisionAuthor)
         return
     except Exception as e:
         logging.error('Unable to get revision info for %s: %s' % (uri, e))
-        return None
 
 def createStatsSection(fileCounts, requester=None):
     statsSection = '==Over-all stats=='
@@ -424,6 +391,8 @@ if __name__ == '__main__':
             try:
                 langs = pair.split('-')
                 pageTitle = 'Apertium-' + '-'.join(langs) + '/stats'
+                if len(langs) == 1:
+                    pageTitle = 'Apertium-' + toAlpha3Code(langs[0]) + '/stats'
             except:
                 logging.error('Failed to parse language module name: %s' % pair)
                 break

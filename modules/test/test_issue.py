@@ -12,6 +12,8 @@ class TestIssue(unittest.TestCase):
         self.input = MagicMock()
         self.input.nick = 'tester'
         
+        issue.allowed_owners = ['test']
+        
     @patch('modules.issue.post')
     def test_success(self, mock_post):
         mock_response = MagicMock()

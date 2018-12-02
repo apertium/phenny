@@ -57,7 +57,7 @@ def issue(phenny, input):
         req_json = json.loads(req_str)
         return phenny.reply('Issue created. You can add a description at {}'.format(req_json['html_url']))
     except HTTPError:
-        return phenny.reply('It appears that that repository does not exist.')
+        phenny.reply('It appears that the repository you provided does not exist.')
 
 issue.commands = ['issue']
 issue.priority = 'medium'

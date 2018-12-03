@@ -29,7 +29,7 @@ countDict = {
 'MetaMonodix': {'meta stems': 'Stems', 'meta paradigms': 'Paradigms'},
 'Bidix': {'stems': 'Stems'},
 'MetaBidix': {'meta stems': 'Stems'},
-'Lexc': {'lexc stems': 'Stems', 'vanilla stems': 'VanillaStems'},
+'Lexc': {'stems': 'Stems', 'vanilla stems': 'VanillaStems'},
 'Rlx': {'rlx rules': 'Rules'}
 }
 

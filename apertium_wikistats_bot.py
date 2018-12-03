@@ -27,23 +27,36 @@ s = requests.Session()
 countDict = {
 'Monodix': {'stems': 'Stems', 'paradigms': 'Paradigms'},
 'MetaMonodix': {'meta stems': 'Stems', 'meta paradigms': 'Paradigms'},
-'Bidix': {'stems': 'Stems'},
+'Bidix': {'stems': 'Entries'},
 'MetaBidix': {'meta stems': 'Stems'},
 'Lexc': {'stems': 'Stems', 'vanilla stems': 'VanillaStems'},
-'Rlx': {'rlx rules': 'Rules'}
+'Rlx': {'rlx rules': 'Rules'},
+'Transfer': {'rules': 'Rules', 'macros': 'Macros'}
 }
 
-def queryForValue(rawStats, fileKind, statKind):
+def queryForValue(rawStats, fileKind, statKind, pair=None, fileLoc=None):
     for stat in rawStats:
-        if stat['file_kind'] == fileKind and stat['stat_kind'] == statKind:
-            return stat['value']
+        if pair and fileLoc:
+            if stat['file_kind'] == fileKind and stat['stat_kind'] == statKind and pair == stat['path'].split('.')[1] and stat['path'].split('.')[-1] == fileLoc.split('.')[-1]:
+                return stat['value']
+        else:
+            if stat['file_kind'] == fileKind and stat['stat_kind'] == statKind:
+                return stat['value']
 
-def getCounts(rawStats, fileFormat):
+def getCounts(rawStats, fileFormat, langPairToPost=None, fileLoc=None):
     count = {}
     if fileFormat in countDict:
         for key in countDict[fileFormat]:
-            if queryForValue(rawStats, fileFormat, countDict[fileFormat][key]):
-                count[key] = queryForValue(rawStats, fileFormat, countDict[fileFormat][key])
+            if queryForValue(rawStats, fileFormat, countDict[fileFormat][key]) != None:
+                wikiKey = key
+                if langPairToPost and fileLoc:
+                    for stat in rawStats:
+                        if stat['file_kind'] == 'Transfer' and stat['stat_kind'] == countDict[fileFormat][key] and langPairToPost == stat['path'].split('.')[1] and stat['path'].split('.')[-1] == fileLoc.split('.')[-1]:
+                            wikiKey = stat['path'].split('.')[-1] + ' ' + key
+                            count[langPairToPost + ' ' + wikiKey] = queryForValue(rawStats, fileFormat, countDict[fileFormat][key], langPairToPost, fileLoc)
+                    count[langPairToPost + ' ' + wikiKey] = queryForValue(rawStats, fileFormat, countDict[fileFormat][key], langPairToPost, fileLoc)
+                else:
+                    count[wikiKey] = queryForValue(rawStats, fileFormat, countDict[fileFormat][key])
         return count
 
 def countAllStats(rawStats, arr):
@@ -52,13 +65,13 @@ def countAllStats(rawStats, arr):
         format = stat['file_kind']
         fileLoc = stat['path']
         pair = stat['name']
-        lang_pair_to_post = pair.split('apertium-')[1]
-        counts = getCounts(rawStats, format)
+        langPairToPost = stat['path'].split('.')[1]
+        counts = getCounts(rawStats, format, langPairToPost, fileLoc)
         if counts:
             for countType, count in counts.items():
                 revisionInfo = getRevisionInfo(rawStats, format)
                 if revisionInfo:
-                    fileCounts[lang_pair_to_post + ' ' + countType] = (count, revisionInfo, githubBlobUrl % (pair, fileLoc))
+                    fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (pair, fileLoc))
     return fileCounts
 
 def getJSONFromStatsService(lang):

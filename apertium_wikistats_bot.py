@@ -25,7 +25,7 @@ githubBlobUrl = 'https://raw.githubusercontent.com/apertium/%s/master/%s'
 s = requests.Session()
 
 countDict = {
-'Monodix': {'monodix stems': 'Stems', 'paradigms': 'Paradigms'},
+'Monodix': {'stems': 'Stems', 'paradigms': 'Paradigms'},
 'MetaMonodix': {'meta stems': 'Stems', 'meta paradigms': 'Paradigms'},
 'Bidix': {'stems': 'Stems'},
 'MetaBidix': {'meta stems': 'Stems'},

@@ -42,7 +42,8 @@ def getCounts(rawStats, fileFormat):
     count = {}
     if fileFormat in countDict:
         for key in countDict[fileFormat]:
-            count[key] = queryForValue(rawStats, fileFormat, countDict[fileFormat][key])
+            if queryForValue(rawStats, fileFormat, countDict[fileFormat][key]):
+                count[key] = queryForValue(rawStats, fileFormat, countDict[fileFormat][key])
         return count
 
 def countAllStats(rawStats, arr):

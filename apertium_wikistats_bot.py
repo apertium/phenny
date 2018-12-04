@@ -343,7 +343,6 @@ def updateCoverageStats(pageContents, coverage, words, lang):
             isAfter = True
         elif isCorpora and isAfter and line == '':
             isCorpora = False
-    githubBlobUrl % (pair, fileLoc)
     words, coverage, revision_num = human_format(words), '{0:.1f}'.format(coverage), getRevisionInfo(lang)
     middleSection = middleSection.replace('[[Category:Datastats]]\n', '').replace('[[Category:Datastats]]', '')
     afterSection = afterSection.replace('[[Category:Datastats]]\n', '').replace('[[Category:Datastats]]', '')

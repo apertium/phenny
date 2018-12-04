@@ -87,17 +87,20 @@ def countAllStats(rawStats, arr):
     return fileCounts
 
 def getJSONFromStatsService(lang):
-    pairForUrl = lang
-    isoCodeLangPair = None
-    indLangs = pairForUrl.split('-')
-    isoCodeLangPair = '-'.join(list(map(toAlpha3Code, indLangs)))
-    if isoCodeLangPair:
-        pairForUrl = isoCodeLangPair
-    url = statsURL % pairForUrl
-    rawStats = s.post(url).json()
-    if 'stats' in rawStats:
-        return rawStats['stats']
-    logging.error('Unable to request stats for %s' % isoCodeLangPair)
+    try:
+        pairForUrl = lang
+        isoCodeLangPair = None
+        indLangs = pairForUrl.split('-')
+        isoCodeLangPair = '-'.join(list(map(toAlpha3Code, indLangs)))
+        if isoCodeLangPair:
+            pairForUrl = isoCodeLangPair
+        url = statsURL % pairForUrl
+        rawStats = s.post(url).json()
+        if 'stats' in rawStats:
+            return rawStats['stats']
+        raise ValueError('Cannot find this module')
+    except ValueError:
+        logging.error('Unable to request stats for %s' % isoCodeLangPair)
 
 def monoLangInformation(typeOfDict, rawStats, fileCounts):
     for stat in rawStats:

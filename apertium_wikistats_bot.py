@@ -24,20 +24,24 @@ githubBlobUrl = 'https://raw.githubusercontent.com/apertium/%s/master/%s'
 
 s = requests.Session()
 
-countDict = {
-'Monodix': {'stems': 'Stems', 'paradigms': 'Paradigms'},
-'MetaMonodix': {'meta stems': 'Stems', 'meta paradigms': 'Paradigms'},
-'Bidix': {'stems': 'Entries'},
-'MetaBidix': {'meta stems': 'Stems'},
-'Lexc': {'stems': 'Stems', 'vanilla stems': 'VanillaStems'},
-'Rlx': {'rlx rules': 'Rules'},
-'Transfer': {'rules': 'Rules', 'macros': 'Macros'}
-}
+fileStatTypeMapping = {'Monodix': {'stems': 'Stems', 'paradigms': 'Paradigms'},
+    'MetaMonodix': {'meta stems': 'Stems', 'meta paradigms': 'Paradigms'},
+    'Bidix': {'stems': 'Entries'},
+    'MetaBidix': {'meta stems': 'Stems'},
+    'Lexc': {'stems': 'Stems', 'vanilla stems': 'VanillaStems'},
+    'Rlx': {'rlx rules': 'Rules'},
+    'Transfer': {'rules': 'Rules', 'macros': 'Macros'}
+    }
 
-def queryForValue(rawStats, fileKind, statKind, pair=None, fileLoc=None):
+def getStatValue(rawStats, fileKind, statKind, pair=None, fileLoc=None):
     for stat in rawStats:
         if pair and fileLoc:
-            if stat['file_kind'] == fileKind and stat['stat_kind'] == statKind and pair == stat['path'].split('.')[1] and stat['path'].split('.')[-1] == fileLoc.split('.')[-1]:
+            langAndExtension = stat['path'].split('.')
+            pairInFile = langAndExtension[1]
+            extension = langAndExtension[-1]
+            extensionMatches = (extension == fileLoc.split('.')[-1])
+            pairMatches = (pair == pairInFile)
+            if stat['file_kind'] == fileKind and stat['stat_kind'] == statKind and pairMatches and extensionMatches:
                 return stat['value']
         else:
             if stat['file_kind'] == fileKind and stat['stat_kind'] == statKind:
@@ -45,87 +49,85 @@ def queryForValue(rawStats, fileKind, statKind, pair=None, fileLoc=None):
 
 def getCounts(rawStats, fileFormat, langPairToPost=None, fileLoc=None):
     count = {}
-    if fileFormat in countDict:
-        for key in countDict[fileFormat]:
-            if queryForValue(rawStats, fileFormat, countDict[fileFormat][key]) != None:
+    if fileFormat in fileStatTypeMapping:
+        for key in fileStatTypeMapping[fileFormat]:
+            if getStatValue(rawStats, fileFormat, fileStatTypeMapping[fileFormat][key]) != None:
                 wikiKey = key
                 if langPairToPost and fileLoc:
                     for stat in rawStats:
-                        if stat['file_kind'] == 'Transfer' and stat['stat_kind'] == countDict[fileFormat][key] and langPairToPost == stat['path'].split('.')[1] and stat['path'].split('.')[-1] == fileLoc.split('.')[-1]:
-                            wikiKey = stat['path'].split('.')[-1] + ' ' + key
-                            count[langPairToPost + ' ' + wikiKey] = queryForValue(rawStats, fileFormat, countDict[fileFormat][key], langPairToPost, fileLoc)
-                    count[langPairToPost + ' ' + wikiKey] = queryForValue(rawStats, fileFormat, countDict[fileFormat][key], langPairToPost, fileLoc)
+                        langAndExtension = stat['path'].split('.')
+                        pairInFile = langAndExtension[1]
+                        extension = langAndExtension[-1]
+                        extensionAndPairEqual = (langPairToPost == pairInFile and extension == fileLoc.split('.')[-1])
+                        statKindsEqual = (stat['stat_kind'] == fileStatTypeMapping[fileFormat][key])
+                        if stat['file_kind'] == 'Transfer' and statKindsEqual and extensionAndPairEqual:
+                            wikiKey = extension + ' ' + key
+                            count[langPairToPost + ' ' + wikiKey] = getStatValue(rawStats, fileFormat, fileStatTypeMapping[fileFormat][key], langPairToPost, fileLoc)
+                    count[langPairToPost + ' ' + wikiKey] = getStatValue(rawStats, fileFormat, fileStatTypeMapping[fileFormat][key], langPairToPost, fileLoc)
                 else:
-                    count[wikiKey] = queryForValue(rawStats, fileFormat, countDict[fileFormat][key])
+                    count[wikiKey] = getStatValue(rawStats, fileFormat, fileStatTypeMapping[fileFormat][key])
         return count
 
 def countAllStats(rawStats, arr):
     fileCounts = {}
-    for stat in rawStats:
-        format = stat['file_kind']
-        fileLoc = stat['path']
-        pair = stat['name']
-        langPairToPost = stat['path'].split('.')[1]
-        counts = getCounts(rawStats, format, langPairToPost, fileLoc)
-        if counts:
-            for countType, count in counts.items():
-                revisionInfo = getRevisionInfo(rawStats, format)
-                if revisionInfo:
-                    fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (pair, fileLoc))
+    if rawStats:
+        for stat in rawStats:
+            format = stat['file_kind']
+            fileLoc = stat['path']
+            pair = stat['name']
+            lastAuthor = stat['last_author']
+            revisionNumber = stat['revision']
+            langPairToPost = stat['path'].split('.')[1]
+            counts = getCounts(rawStats, format, langPairToPost, fileLoc)
+            if counts:
+                for countType, count in counts.items():
+                    revisionInfo = (revisionNumber, lastAuthor)
+                    if revisionInfo:
+                        fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (pair, fileLoc))
     return fileCounts
 
 def getJSONFromStatsService(lang):
     pairForUrl = lang
-    isoCodeLangPair = ""
+    isoCodeLangPair = None
     indLangs = pairForUrl.split('-')
-    if toAlpha3Code(pairForUrl):
-        isoCodeLangPair = toAlpha3Code(pairForUrl)
-    if len(indLangs) == 2:
-        if toAlpha3Code(indLangs[0]):
-            isoCodeLangPair = toAlpha3Code(indLangs[0]) + '-'
-        if toAlpha3Code(indLangs[1]):
-            isoCodeLangPair += toAlpha3Code(indLangs[1])
-    if isoCodeLangPair != "":
+    isoCodeLangPair = '-'.join(list(map(toAlpha3Code, indLangs)))
+    if isoCodeLangPair:
         pairForUrl = isoCodeLangPair
     url = statsURL % pairForUrl
     rawStats = s.post(url).json()
     if 'stats' in rawStats:
         return rawStats['stats']
-    logging.error('Unable to find %s' % isoCodeLangPair)
+    logging.error('Unable to request stats for %s' % isoCodeLangPair)
 
 def monoLangInformation(typeOfDict, rawStats, fileCounts):
-    try:
-        for stat in rawStats:
-            if stat['file_kind'] == typeOfDict:
-                fileKind = stat['file_kind']
-                fileLoc = stat['path']
-                fileName = stat['name']
-        counts = getCounts(rawStats, typeOfDict)
-        for countType, count in counts.items():
-            revisionInfo = getRevisionInfo(rawStats, fileKind)
-            if revisionInfo:
-                fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (fileName, fileLoc))
-    except UnboundLocalError:
-        pass
+    for stat in rawStats:
+        if stat['file_kind'] == typeOfDict:
+            fileKind = stat['file_kind']
+            fileLoc = stat['path']
+            fileName = stat['name']
+            revisionNumber = stat['revision']
+            revisionAuthor = stat['last_author']
+    counts = getCounts(rawStats, typeOfDict)
+    for countType, count in counts.items():
+        revisionInfo = (revisionNumber, revisionAuthor)
+        if revisionInfo:
+            fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (fileName, fileLoc))
 
 def getMonoLangCounts(rawStats):
+    file_types = ['Monodix', 'Lexc', 'Rlx']
     fileCounts = {}
-    if getCounts(rawStats, 'Monodix'):
-        monoLangInformation('Monodix', rawStats, fileCounts)
-    if getCounts(rawStats, 'Lexc'):
-        monoLangInformation('Lexc', rawStats, fileCounts)
-    if getCounts(rawStats, 'Rlx'):
-        monoLangInformation('Rlx', rawStats, fileCounts)
+    for file_type in file_types:
+        if getCounts(rawStats, file_type):
+            monoLangInformation(file_type, rawStats, fileCounts)
     return fileCounts
 
-def getRevisionInfo(rawStats, fileKind):
+def getRevisionInfo(lang):
     try:
-        for stat in rawStats:
-            if stat['file_kind'] == fileKind:
-                revisionNumber = stat['revision']
-                revisionAuthor = stat['last_author']
-                return (revisionNumber, revisionAuthor)
-        return
+        commitUrl = "https://api.github.com/repos/apertium/apertium-%/commits" % lang
+        commitsJson = s.get(url).json()
+        revisionNumber = commitsJson[0]['sha']
+        revisionAuthor = commitsJson[0]['committer']['date']
+        return (revisionNumber, revisionAuthor)
     except Exception as e:
         logging.error('Unable to get revision info for %s: %s' % (uri, e))
 
@@ -332,8 +334,8 @@ def updateCoverageStats(pageContents, coverage, words, lang):
             isAfter = True
         elif isCorpora and isAfter and line == '':
             isCorpora = False
-
-    words, coverage, revision_num = human_format(words), '{0:.1f}'.format(coverage), getRevisionInfo('https://svn.code.sf.net/p/apertium/svn/languages/apertium-' + lang + '/')
+    githubBlobUrl % (pair, fileLoc)
+    words, coverage, revision_num = human_format(words), '{0:.1f}'.format(coverage), getRevisionInfo(lang)
     middleSection = middleSection.replace('[[Category:Datastats]]\n', '').replace('[[Category:Datastats]]', '')
     afterSection = afterSection.replace('[[Category:Datastats]]\n', '').replace('[[Category:Datastats]]', '')
 

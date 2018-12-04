@@ -106,15 +106,15 @@ def getJSONFromStatsService(lang):
         return rawStats['stats']
     logging.error('Unable to request stats for %s' % isoCodeLangPair)
 
-def monoLangInformation(typeOfDict, rawStats, fileCounts):
+def monoLangInformation(fileFormat, rawStats, fileCounts):
     for stat in rawStats:
-        if stat['file_kind'] == typeOfDict:
+        if stat['file_kind'] == fileFormat:
             fileKind = stat['file_kind']
             fileLoc = stat['path']
             fileName = stat['name']
             revisionNumber = stat['revision']
             revisionAuthor = stat['last_author']
-    counts = getCounts(rawStats, typeOfDict)
+    counts = getCounts(rawStats, fileFormat)
     for countType, count in counts.items():
         revisionInfo = (revisionNumber, revisionAuthor)
         if revisionInfo:

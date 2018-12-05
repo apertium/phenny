@@ -34,46 +34,26 @@ fileStatTypeMapping = {
     'Transfer': {'rules': 'Rules', 'macros': 'Macros'}
 }
 
-def getStatValue(rawStats, fileKind, statKind, pair=None, fileLoc=None):
+def getStatValue(rawStats, fileKind, statKind, count, key, pair, fileLoc, monoLang):
     for stat in rawStats:
-        if pair and fileLoc:
-            langAndExtension = stat['path'].split('.')
-            pairInFile = langAndExtension[1]
-            extension = langAndExtension[-1]
-            extensionMatches = extension == fileLoc.split('.')[-1]
-            pairMatches = pair == pairInFile
-            if stat['file_kind'] == fileKind and \
-               stat['stat_kind'] == statKind and \
-               pairMatches and \
-               extensionMatches:
-                return stat['value']
-        else:
-            if stat['file_kind'] == fileKind and stat['stat_kind'] == statKind:
-                return stat['value']
+        langAndExtension = stat['path'].split('.')
+        pairInFile = langAndExtension[1]
+        extension = langAndExtension[-1]
+        if stat['file_kind'] == fileKind and \
+           stat['stat_kind'] == statKind and \
+           pair == pairInFile and \
+           extension == fileLoc.split('.')[-1]:
+            wikiKey = extension + ' ' + key
+            if not monoLang:
+                count[pair + ' ' + wikiKey] = stat['value']
+            else:
+                count[key] = stat['value']
 
-def getCounts(rawStats, fileFormat, langPairToPost=None, fileLoc=None):
+def getCounts(rawStats, fileFormat, langPairToPost, fileLoc, monoLang):
     count = {}
     if fileFormat in fileStatTypeMapping:
         for key in fileStatTypeMapping[fileFormat]:
-            if getStatValue(rawStats, fileFormat, fileStatTypeMapping[fileFormat][key]) is not None:
-                wikiKey = key
-                if langPairToPost and fileLoc:
-                    for stat in rawStats:
-                        langAndExtension = stat['path'].split('.')
-                        pairInFile = langAndExtension[1]
-                        extension = langAndExtension[-1]
-                        pairEqual = langPairToPost == pairInFile
-                        extensionEqual = extension == fileLoc.split('.')[-1]
-                        statKindsEqual = (stat['stat_kind'] == fileStatTypeMapping[fileFormat][key])
-                        if stat['file_kind'] == 'Transfer' and \
-                           statKindsEqual and \
-                           extensionEqual and \
-                           pairEqual:
-                            wikiKey = extension + ' ' + key
-                            count[langPairToPost + ' ' + wikiKey] = getStatValue(rawStats, fileFormat, fileStatTypeMapping[fileFormat][key], langPairToPost, fileLoc)
-                    count[langPairToPost + ' ' + wikiKey] = getStatValue(rawStats, fileFormat, fileStatTypeMapping[fileFormat][key], langPairToPost, fileLoc)
-                else:
-                    count[wikiKey] = getStatValue(rawStats, fileFormat, fileStatTypeMapping[fileFormat][key])
+            getStatValue(rawStats, fileFormat, fileStatTypeMapping[fileFormat][key], count, key, langPairToPost, fileLoc, monoLang)
         return count
 
 def countAllStats(rawStats, arr):
@@ -86,7 +66,7 @@ def countAllStats(rawStats, arr):
             lastAuthor = stat['last_author']
             revisionNumber = stat['revision']
             langPairToPost = stat['path'].split('.')[1]
-            counts = getCounts(rawStats, format, langPairToPost, fileLoc)
+            counts = getCounts(rawStats, format, langPairToPost, fileLoc, False)
             if counts:
                 for countType, count in counts.items():
                     revisionInfo = (revisionNumber, lastAuthor)
@@ -107,25 +87,28 @@ def getJSONFromStatsService(lang):
     logging.error('Unable to request stats for %s' % isoCodeLangPair)
 
 def monoLangInformation(fileFormat, rawStats, fileCounts):
+    entryExists = False
     for stat in rawStats:
         if stat['file_kind'] == fileFormat:
             fileKind = stat['file_kind']
             fileLoc = stat['path']
+            langName = stat['path'].split('.')[1]
             fileName = stat['name']
             revisionNumber = stat['revision']
             revisionAuthor = stat['last_author']
-    counts = getCounts(rawStats, fileFormat)
-    for countType, count in counts.items():
-        revisionInfo = (revisionNumber, revisionAuthor)
-        if revisionInfo:
-            fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (fileName, fileLoc))
+            entryExists = True
+    if entryExists:
+        counts = getCounts(rawStats, fileFormat, langName, fileLoc, True)
+        for countType, count in counts.items():
+            revisionInfo = (revisionNumber, revisionAuthor)
+            if revisionInfo:
+                fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (fileName, fileLoc))
 
 def getMonoLangCounts(rawStats):
     file_types = ['Monodix', 'Lexc', 'Rlx']
     fileCounts = {}
     for file_type in file_types:
-        if getCounts(rawStats, file_type):
-            monoLangInformation(file_type, rawStats, fileCounts)
+        monoLangInformation(file_type, rawStats, fileCounts)
     return fileCounts
 
 def getRevisionInfo(lang):

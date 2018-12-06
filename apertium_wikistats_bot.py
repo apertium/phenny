@@ -25,91 +25,49 @@ githubBlobUrl = 'https://raw.githubusercontent.com/apertium/%s/master/%s'
 s = requests.Session()
 
 fileStatTypeMapping = {
-    'Monodix': {'stems': 'Stems', 'paradigms': 'Paradigms'},
-    'MetaMonodix': {'meta stems': 'Stems', 'meta paradigms': 'Paradigms'},
-    'Bidix': {'stems': 'Entries'},
-    'MetaBidix': {'meta stems': 'Stems'},
-    'Lexc': {'stems': 'Stems', 'vanilla stems': 'VanillaStems'},
-    'Rlx': {'rlx rules': 'Rules'},
-    'Transfer': {'rules': 'Rules', 'macros': 'Macros'}
+    'Monodix': {'Stems': 'stems', 'Paradigms': 'paradigms'},
+    'MetaMonodix': {'Stems': 'meta stems', 'Paradigms': 'meta paradigms'},
+    'Bidix': {'Entries': 'stems'},
+    'MetaBidix': {'Stems': 'meta stems'},
+    'Lexc': {'Stems': 'stems', 'VanillaStems': 'vanilla stems'},
+    'Rlx': {'Rules': 'rlx rules'},
+    'Transfer': {'Rules': 'rules', 'Macros': 'macros'}
 }
 
-def getStatValue(rawStats, fileKind, statKind, count, key, pair, fileLoc, monoLang):
-    for stat in rawStats:
-        langAndExtension = stat['path'].split('.')
-        pairInFile = langAndExtension[1]
-        extension = langAndExtension[-1]
-        if stat['file_kind'] == fileKind and \
-           stat['stat_kind'] == statKind and \
-           pair == pairInFile and \
-           extension == fileLoc.split('.')[-1]:
-            wikiKey = extension + ' ' + key
-            if not monoLang:
-                count[pair + ' ' + wikiKey] = stat['value']
-            else:
-                count[key] = stat['value']
-
-def getCounts(rawStats, fileFormat, langPairToPost, fileLoc, monoLang):
-    count = {}
-    if fileFormat in fileStatTypeMapping:
-        for key in fileStatTypeMapping[fileFormat]:
-            getStatValue(rawStats, fileFormat, fileStatTypeMapping[fileFormat][key], count, key, langPairToPost, fileLoc, monoLang)
-        return count
-
-def countAllStats(rawStats, arr):
+def countAllStats(rawStats, arr, monoLang):
     fileCounts = {}
     if rawStats:
         for stat in rawStats:
-            format = stat['file_kind']
+            counts = {}
+            fileFormat = stat['file_kind']
             fileLoc = stat['path']
             pair = stat['name']
+            statKind = stat['stat_kind']
             lastAuthor = stat['last_author']
             revisionNumber = stat['revision']
             langPairToPost = stat['path'].split('.')[1]
-            counts = getCounts(rawStats, format, langPairToPost, fileLoc, False)
-            if counts:
-                for countType, count in counts.items():
-                    revisionInfo = (revisionNumber, lastAuthor)
-                    if revisionInfo:
-                        fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (pair, fileLoc))
+            extension = stat['path'].split('.')[-1]
+            if fileFormat in fileStatTypeMapping and statKind in fileStatTypeMapping[fileFormat]:
+                key = fileStatTypeMapping[fileFormat][statKind]
+                wikiKey = extension + ' ' + key
+            if fileFormat in fileStatTypeMapping:
+                if not monoLang:
+                    counts[langPairToPost + ' ' + wikiKey] = stat['value']
+                else:
+                    counts[key] = stat['value']
+            for countType, count in counts.items():
+                revisionInfo = (revisionNumber, lastAuthor)
+                fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (pair, fileLoc))
     return fileCounts
 
 def getJSONFromStatsService(lang):
-    pairForUrl = lang
-    isoCodeLangPair = None
-    indLangs = pairForUrl.split('-')
+    indLangs = lang.split('-')
     isoCodeLangPair = '-'.join(list(map(toAlpha3Code, indLangs)))
-    pairForUrl = isoCodeLangPair
-    url = statsURL % pairForUrl
+    url = statsURL % isoCodeLangPair
     rawStats = s.post(url).json()
     if 'stats' in rawStats:
         return rawStats['stats']
     logging.error('Unable to request stats for %s' % isoCodeLangPair)
-
-def monoLangInformation(fileFormat, rawStats, fileCounts):
-    entryExists = False
-    for stat in rawStats:
-        if stat['file_kind'] == fileFormat:
-            fileKind = stat['file_kind']
-            fileLoc = stat['path']
-            langName = stat['path'].split('.')[1]
-            fileName = stat['name']
-            revisionNumber = stat['revision']
-            revisionAuthor = stat['last_author']
-            entryExists = True
-    if entryExists:
-        counts = getCounts(rawStats, fileFormat, langName, fileLoc, True)
-        for countType, count in counts.items():
-            revisionInfo = (revisionNumber, revisionAuthor)
-            if revisionInfo:
-                fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (fileName, fileLoc))
-
-def getMonoLangCounts(rawStats):
-    file_types = ['Monodix', 'Lexc', 'Rlx']
-    fileCounts = {}
-    for file_type in file_types:
-        monoLangInformation(file_type, rawStats, fileCounts)
-    return fileCounts
 
 def getRevisionInfo(lang):
     try:
@@ -326,7 +284,7 @@ def updateCoverageStats(pageContents, coverage, words, lang):
             isAfter = True
         elif isCorpora and isAfter and line == '':
             isCorpora = False
-    words, coverage, revision_num = human_format(words), '{0:.1f}'.format(coverage), getRevisionInfo(lang)
+    words, coverage, revisionNum = human_format(words), '{0:.1f}'.format(coverage), getRevisionInfo(lang)
     middleSection = middleSection.replace('[[Category:Datastats]]\n', '').replace('[[Category:Datastats]]', '')
     afterSection = afterSection.replace('[[Category:Datastats]]\n', '').replace('[[Category:Datastats]]', '')
 
@@ -336,13 +294,13 @@ def updateCoverageStats(pageContents, coverage, words, lang):
         middleSection += '\n\n' + wpName + '\n'
         middleSection += '* words: <section begin=' + wpName + '-words />' + words + '<section end=' + wpName + '-words />\n'
         middleSection += '* coverage: ~<section begin=' + wpName + '-coverage />' + coverage + '<section end=' + wpName + '-coverage />%\n'
-        middleSection += '* as of: r' + revision_num[0] + '\n'
+        middleSection += '* as of: r' + revisionNum[0] + '\n'
     else:
         wpSection = ''
         wpSection += wpName + '\n'
         wpSection += '* words: <section begin=' + wpName + '-words />' + words + '<section end=' + wpName + '-words />\n'
         wpSection += '* coverage: ~<section begin=' + wpName + '-coverage />' + coverage + '<section end=' + wpName + '-coverage />%\n'
-        wpSection += '* as of: r' + revision_num[0] + '\n'
+        wpSection += '* as of: r' + revisionNum[0] + '\n'
 
         middleSection = middleSection[:middleSection.index(wpName+'\n')] + wpSection + middleSection[len(middleSection)-1]
 
@@ -403,7 +361,7 @@ if __name__ == '__main__':
                 break
             jsonResponse = getJSONFromStatsService(pair)
             if len(langs) == 2:
-                fileCounts = countAllStats(jsonResponse, ['Bidix', 'MetaMonodix', 'Lexc', 'Rlx'])
+                fileCounts = countAllStats(jsonResponse, ['Bidix', 'MetaMonodix', 'Lexc', 'Rlx'], False)
                 logging.debug('Acquired file counts %s' % fileCounts)
 
                 if len(fileCounts) is 0:
@@ -436,7 +394,7 @@ if __name__ == '__main__':
                         logging.error('Creation of page %s failed: %s' % (pageTitle, editResult.text))
 
             elif len(langs) == 1:
-                fileCounts = getMonoLangCounts(jsonResponse)
+                fileCounts = countAllStats(jsonResponse, ['Monodix', 'Lexc', 'Rlx'], True)
                 logging.info('Acquired file counts %s' % fileCounts)
                 if fileCounts:
                     pageContents = getPage(pageTitle)
@@ -471,11 +429,7 @@ if __name__ == '__main__':
         lang = args.pairs[0]
         wikiPath, coverage = autocoverage.StartScript(False, False, '', lang)
         words = autocoverage.CountWords(wikiPath)
-        #coverage = 93.32132
-        #words = 3768235
         pageTitle = 'Apertium-' + lang + '/stats'
-        #pageTitle = 'Apertium-test/teststats/'
-
         pageContents = getPage(pageTitle)
 
         if pageContents:

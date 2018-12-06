@@ -34,7 +34,7 @@ fileStatTypeMapping = {
     'Transfer': {'Rules': 'rules', 'Macros': 'macros'}
 }
 
-def countAllStats(rawStats, arr, monoLang):
+def countAllStats(rawStats, monoLang):
     fileCounts = {}
     if rawStats:
         for stat in rawStats:
@@ -361,7 +361,7 @@ if __name__ == '__main__':
                 break
             jsonResponse = getJSONFromStatsService(pair)
             if len(langs) == 2:
-                fileCounts = countAllStats(jsonResponse, ['Bidix', 'MetaMonodix', 'Lexc', 'Rlx'], False)
+                fileCounts = countAllStats(rawStats=jsonResponse, monoLang=False)
                 logging.debug('Acquired file counts %s' % fileCounts)
 
                 if len(fileCounts) is 0:
@@ -394,7 +394,7 @@ if __name__ == '__main__':
                         logging.error('Creation of page %s failed: %s' % (pageTitle, editResult.text))
 
             elif len(langs) == 1:
-                fileCounts = countAllStats(jsonResponse, ['Monodix', 'Lexc', 'Rlx'], True)
+                fileCounts = countAllStats(rawStats=jsonResponse, monoLang=True)
                 logging.info('Acquired file counts %s' % fileCounts)
                 if fileCounts:
                     pageContents = getPage(pageTitle)

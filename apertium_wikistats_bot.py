@@ -34,30 +34,29 @@ fileStatTypeMapping = {
     'Transfer': {'Rules': 'rules', 'Macros': 'macros'}
 }
 
-def countAllStats(rawStats, monoLang):
+def getStats(rawStats, monoLang):
     fileCounts = {}
-    if rawStats:
-        for stat in rawStats:
-            counts = {}
-            fileFormat = stat['file_kind']
-            fileLoc = stat['path']
-            pair = stat['name']
-            statKind = stat['stat_kind']
-            lastAuthor = stat['last_author']
-            revisionNumber = stat['revision']
-            langPairToPost = stat['path'].split('.')[1]
-            extension = stat['path'].split('.')[-1]
-            if fileFormat in fileStatTypeMapping and statKind in fileStatTypeMapping[fileFormat]:
-                key = fileStatTypeMapping[fileFormat][statKind]
-                wikiKey = extension + ' ' + key
-            if fileFormat in fileStatTypeMapping:
-                if not monoLang:
-                    counts[langPairToPost + ' ' + wikiKey] = stat['value']
-                else:
-                    counts[key] = stat['value']
-            for countType, count in counts.items():
-                revisionInfo = (revisionNumber, lastAuthor)
-                fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (pair, fileLoc))
+    if not rawStats:
+        return {}
+    for stat in rawStats:
+        fileFormat = stat['file_kind']
+        fileLoc = stat['path']
+        pair = stat['name']
+        statKind = stat['stat_kind']
+        lastAuthor = stat['last_author']
+        revisionNumber = stat['revision']
+        langPairToPost = stat['path'].split('.')[1]
+        extension = stat['path'].split('.')[-1]
+        if fileFormat in fileStatTypeMapping and statKind in fileStatTypeMapping[fileFormat]:
+            key = fileStatTypeMapping[fileFormat][statKind]
+            wikiKey = extension + ' ' + key
+            count = stat['value']
+            if monoLang:
+                countType = key
+            else:
+                countType = langPairToPost + ' ' + wikiKey
+            revisionInfo = (revisionNumber, lastAuthor)
+            fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (pair, fileLoc))
     return fileCounts
 
 def getJSONFromStatsService(lang):
@@ -361,7 +360,7 @@ if __name__ == '__main__':
                 break
             jsonResponse = getJSONFromStatsService(pair)
             if len(langs) == 2:
-                fileCounts = countAllStats(rawStats=jsonResponse, monoLang=False)
+                fileCounts = getStats(jsonResponse, False)
                 logging.debug('Acquired file counts %s' % fileCounts)
 
                 if len(fileCounts) is 0:
@@ -394,7 +393,7 @@ if __name__ == '__main__':
                         logging.error('Creation of page %s failed: %s' % (pageTitle, editResult.text))
 
             elif len(langs) == 1:
-                fileCounts = countAllStats(rawStats=jsonResponse, monoLang=True)
+                fileCounts = getStats(jsonResponse, True)
                 logging.info('Acquired file counts %s' % fileCounts)
                 if fileCounts:
                     pageContents = getPage(pageTitle)

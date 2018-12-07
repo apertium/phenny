@@ -35,28 +35,22 @@ fileStatTypeMapping = {
 }
 
 def getStats(rawStats, monoLang):
-    fileCounts = {}
     if not rawStats:
         return {}
+
+    fileCounts = {}
     for stat in rawStats:
         fileFormat = stat['file_kind']
-        fileLoc = stat['path']
-        pair = stat['name']
+        filePath = stat['path']
         statKind = stat['stat_kind']
-        lastAuthor = stat['last_author']
-        revisionNumber = stat['revision']
-        langPairToPost = stat['path'].split('.')[1]
-        extension = stat['path'].split('.')[-1]
         if fileFormat in fileStatTypeMapping and statKind in fileStatTypeMapping[fileFormat]:
-            key = fileStatTypeMapping[fileFormat][statKind]
-            wikiKey = extension + ' ' + key
-            count = stat['value']
-            if monoLang:
-                countType = key
-            else:
-                countType = langPairToPost + ' ' + wikiKey
-            revisionInfo = (revisionNumber, lastAuthor)
-            fileCounts[countType] = (count, revisionInfo, githubBlobUrl % (pair, fileLoc))
+            splitFilePath = filePath.split('.')
+            countType = fileStatTypeMapping[fileFormat][statKind]
+            wikiKey = splitFilePath[-1] + ' ' + countType
+            if not monoLang:
+                countType = splitFilePath[1] + ' ' + wikiKey
+            revisionInfo = (stat['revision'], stat['last_author'])
+            fileCounts[countType] = (stat['value'], revisionInfo, githubBlobUrl % (stat['name'], filePath))
     return fileCounts
 
 def getJSONFromStatsService(lang):

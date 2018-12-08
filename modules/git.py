@@ -211,9 +211,10 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 event_types = None
 
             event_in_config = False
-            for event_type in event_types:
-                if (event + '_' + data['action'] == event_type) or (event == event_type):
-                     event_in_config = True
+            if 'action' in data:
+                for event_type in event_types:
+                    if (event + '_' + data['action'] == event_type) or (event == event_type):
+                        event_in_config = True
 
             if (event_types is not None) and ((event not in event_types) and (not event_in_config)):
                 return [], []

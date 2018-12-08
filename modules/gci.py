@@ -134,6 +134,11 @@ def linking(phenny, input):
     if not input.group(1):
         phenny.reply("Syntax: .gci <nick>")
         return
+
+    s = select(phenny, nick)
+    if not s:
+        phenny.reply("{} has already been linked to the GCI module.".format(nick))
+        return
     
     mentor_nick = input.nick.casefold()
     nick = input.group(1).casefold()
@@ -154,7 +159,7 @@ def checking(phenny, input):
     
     t = select(phenny, nick)
     if not t:
-        phenny.reply("The nick '{}' isn't linked.".format(nick))
+        phenny.reply("The nick '{}' isn't linked to the GCI module.".format(nick))
         return
 
     if nick in phenny.gci_data:

@@ -49,7 +49,7 @@ def getStats(rawStats, monoLang):
             wikiKey = splitFilePath[-1] + ' ' + countType
             if not monoLang:
                 countType = splitFilePath[1] + ' ' + wikiKey
-            revisionInfo = (stat['revision'], stat['last_author'])
+            revisionInfo = (stat['sha'], stat['last_author'])
             fileCounts[countType] = (stat['value'], revisionInfo, githubBlobUrl % (stat['name'], filePath))
     return fileCounts
 

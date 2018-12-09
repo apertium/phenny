@@ -21,7 +21,7 @@ wikiURL = 'http://wiki.apertium.org/wiki/'
 apiURL = 'http://wiki.apertium.org/w/api.php'
 statsURL = 'http://apertium.projectjj.com/stats-service/apertium-%s/?async=false'
 githubBlobUrl = 'https://raw.githubusercontent.com/apertium/%s/master/%s'
-
+githubCommitUrl = 'https://github.com/apertium/%s/commit/%s'
 s = requests.Session()
 
 fileStatTypeMapping = {
@@ -42,6 +42,7 @@ def getStats(rawStats, monoLang):
     for stat in rawStats:
         fileFormat = stat['file_kind']
         filePath = stat['path']
+        statName = stat['name']
         statKind = stat['stat_kind']
         if fileFormat in fileStatTypeMapping and statKind in fileStatTypeMapping[fileFormat]:
             splitFilePath = filePath.split('.')
@@ -49,7 +50,7 @@ def getStats(rawStats, monoLang):
             wikiKey = splitFilePath[-1] + ' ' + countType
             if not monoLang:
                 countType = splitFilePath[1] + ' ' + wikiKey
-            revisionInfo = (stat['sha'], stat['last_author'])
+            revisionInfo = (githubCommitUrl % (statName, stat['sha']), stat['last_author'], stat['sha'][:6])
             fileCounts[countType] = (stat['value'], revisionInfo, githubBlobUrl % (stat['name'], filePath))
     return fileCounts
 
@@ -86,9 +87,9 @@ def createStatsSection(fileCounts, requester=None):
 
 def createStatSection(countName, count, revisionInfo, fileUrl, requester=None):
     if count is 0:
-        statSection = "*<span style='opacity: .6'>'''[{5} {0}]''': <section begin={1} />{2:,d}<section end={1} /> as of r{3} by {4} ~ ~~~~".format(countName, countName.replace(' ', '_'), count, revisionInfo[0], revisionInfo[1], fileUrl)
+        statSection = "*<span style='opacity: .6'>'''[{6} {0}]''': <section begin={1} />{2:,d}<section end={1} /> as of [{3} {5}] by {4} ~ ~~~~".format(countName, countName.replace(' ', '_'), count, revisionInfo[0], revisionInfo[1], revisionInfo[2], fileUrl)
     else:
-        statSection = "*'''[{5} {0}]''': <section begin={1} />{2}<section end={1} /> as of r{3} by {4} ~ ~~~~".format(countName, countName.replace(' ', '_'), count, revisionInfo[0], revisionInfo[1], fileUrl)
+        statSection = "*'''[{6} {0}]''': <section begin={1} />{2}<section end={1} /> as of [{3} {5}] by {4} ~ ~~~~".format(countName, countName.replace(' ', '_'), count, revisionInfo[0], revisionInfo[1], revisionInfo[2], fileUrl)
 
     if requester:
         statSection += ', run by %s' % requester
@@ -287,13 +288,13 @@ def updateCoverageStats(pageContents, coverage, words, lang):
         middleSection += '\n\n' + wpName + '\n'
         middleSection += '* words: <section begin=' + wpName + '-words />' + words + '<section end=' + wpName + '-words />\n'
         middleSection += '* coverage: ~<section begin=' + wpName + '-coverage />' + coverage + '<section end=' + wpName + '-coverage />%\n'
-        middleSection += '* as of: r' + revisionNum[0] + '\n'
+        middleSection += '* as of: ' + revisionNum[0] + '\n'
     else:
         wpSection = ''
         wpSection += wpName + '\n'
         wpSection += '* words: <section begin=' + wpName + '-words />' + words + '<section end=' + wpName + '-words />\n'
         wpSection += '* coverage: ~<section begin=' + wpName + '-coverage />' + coverage + '<section end=' + wpName + '-coverage />%\n'
-        wpSection += '* as of: r' + revisionNum[0] + '\n'
+        wpSection += '* as of: ' + revisionNum[0] + '\n'
 
         middleSection = middleSection[:middleSection.index(wpName+'\n')] + wpSection + middleSection[len(middleSection)-1]
 

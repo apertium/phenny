@@ -22,6 +22,7 @@ apiURL = 'http://wiki.apertium.org/w/api.php'
 statsURL = 'http://apertium.projectjj.com/stats-service/apertium-%s/?async=false'
 githubBlobUrl = 'https://raw.githubusercontent.com/apertium/%s/master/%s'
 githubCommitUrl = 'https://raw.githubusercontent.com/apertium/%s/%s/%s'
+
 s = requests.Session()
 
 fileStatTypeMapping = {
@@ -51,7 +52,7 @@ def getStats(rawStats, monoLang):
             if not monoLang:
                 countType = splitFilePath[1] + ' ' + wikiKey
             revisionInfo = (githubCommitUrl % (statName, stat['sha'], filePath), stat['last_author'], stat['sha'][:6])
-            fileCounts[countType] = (stat['value'], revisionInfo, githubBlobUrl % (stat['name'], filePath))
+            fileCounts[countType] = (stat['value'], revisionInfo, githubBlobUrl % (statName, filePath))
     return fileCounts
 
 def getJSONFromStatsService(lang):

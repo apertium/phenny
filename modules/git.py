@@ -316,15 +316,16 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 number = data['pull_request']['number']
                 url = data['comment']['html_url']
                 action = data['action']
-
                 if action == 'deleted':
                     messages.append(template.format(repo, user, number, url))
                 else:
-                    template = '{:}: {:} * review comment {:} on pull request #{:}: {:} {:}'
-                    messages.append(truncate(
-                        data['comment']['body'],
-                        template.format(repo, user, action, number, '{}', url)
-                    ))
+                    blacklist_pull_request_users = config.blacklist_pull_request_users
+                    if user not in blacklist_pull_request_users:
+                        template = '{:}: {:} * review comment {:} on pull request #{:}: {:} {:}'
+                        messages.append(truncate(
+                            data['comment']['body'],
+                            template.format(repo, user, action, number, '{}', url)
+                        ))
             elif event == 'push':
                 pusher_name = data['pusher']['name']
 

@@ -141,6 +141,5 @@ class TestApertiumWiki(unittest.TestCase):
         self.input.group = lambda x: [None, None][x]
         apertium_wiki.logs(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
-        string_check = ("Log at " in out) and (not out.endswith(".log"))
 
-        self.assertTrue(string_check)
+        self.assertTrue(('Log at ' in out) and (not out.endswith('.log')))

@@ -76,7 +76,7 @@ def logs(phenny, input):
 
     if not date_query:
         # .logs
-        phenny.say("Log at {0}.log".format(endpoints['log']))
+        phenny.say("Log at {0}".format(endpoints['log']))
     elif "today" in date_query:
         # .logs today
         phenny.say("Log at {0}{1}.log".format(endpoints['log'], dt.date.today()))

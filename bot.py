@@ -227,7 +227,7 @@ class Phenny(irc.Bot):
                 s = str.__new__(cls, text)
                 s.sender = decode(origin.sender)
                 s.nick = decode(origin.nick)
-                s.bytes = text
+                s.bytes = str(text).lower()
                 s.group = match.group
                 s.groups = match.groups
                 s.args = args

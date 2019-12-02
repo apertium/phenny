@@ -1,9 +1,9 @@
-# phenny
+# begiak
 [![Build Status](https://travis-ci.org/apertium/phenny.png?branch=master)](https://travis-ci.org/apertium/phenny)
 [![Coverage Status](https://coveralls.io/repos/github/apertium/phenny/badge.svg?branch=master)](https://coveralls.io/github/apertium/phenny?branch=master)
 
-This is phenny, a Python IRC bot. Originally written by Sean B. Palmer, it has
-been ported to Python3.
+This is begiak, a Python IRC bot.
+Originally written by Sean B. Palmer as "phenny", it has been ported to Python3.
 
 This version comes with many new modules, IPv6 support, TLS support, and unit
 tests.

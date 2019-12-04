@@ -3,8 +3,8 @@
 # bot initscript
 #
 # Last Updated: Oct 31, 2011
-# Modified for Apertium on Dec 28, 2012
-# If broken, yell at: conor_f
+# Modified for Apertium on Dec 28, 2012 and Dec 3, 2019
+# If broken, yell at: conor_f, scoopgracie
 #
 
 ### BEGIN INIT INFO
@@ -19,7 +19,7 @@
 BOT="begiak"
 EXEC="/home/begiak/phenny/phenny"
 ARGS="--config=/home/begiak/.phenny/default.py -v"
-LOGFILE="/home/begiak/logs/begiak.log"
+LOGFILE="/home/begiak/begiak.log"
 USER="begiak"
 
 start_bot() {
@@ -55,6 +55,7 @@ case "$1" in
         if [ $? -gt 0 ]; then
             exit -1
         fi
+	sleep 1
         start_bot
         ;;
     force-reload)
@@ -63,6 +64,7 @@ case "$1" in
         if [ $? -gt 0 ]; then
             exit -1
         fi
+	sleep 1 
         start_bot
         ;;
     status)

@@ -144,7 +144,7 @@ class Phenny(irc.Bot):
             keys.append(regexp)
 
         for key in keys:
-            key = re.compile(key)
+            key = re.compile(key, re.IGNORECASE)
             commands.setdefault(key, []).append(func)
 
     def bind_command(self, module, name, func):

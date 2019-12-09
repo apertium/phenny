@@ -64,7 +64,10 @@ def login(phenny):
 def format_email(e, list_name):
     subject = e['Subject']
     subject = re.sub(r"(=\?.*\?=)(?!$)", r"\1 ", subject)
-    subject = str(make_header(decode_header(subject)))
+
+    subject = decode_header(subject)[0][0]
+    subject = subject.decode("utf-8")
+
     subject = subject.replace('['+list_name.capitalize()+'] ', '')
 
     # message = '{}: {} * {} * {}'.format(list_name, obfuscate_address(e['From']), subject, strip_reply_lines(e))

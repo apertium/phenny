@@ -61,14 +61,20 @@ def login(phenny):
     except imaplib.IMAP4.error:
         phenny.msg(phenny.config.owner, 'IMAP connection/auth failed :(')
 
+def decode_email_header(header):
+    header = re.sub(r"(=\?.*\?=)(?!$)", r"\1 ", header)
+    header = str(make_header(decode_header(header)))
+    return header
+
 def format_email(e, list_name):
-    subject = e['Subject']
-    subject = re.sub(r"(=\?.*\?=)(?!$)", r"\1 ", subject)
-    subject = str(make_header(decode_header(subject)))
+    from_header = decode_email_header(e['From'])
+    from_header = obfuscate_address(from_header)
+
+    subject = decode_email_header(e['Subject'])
     subject = subject.replace('['+list_name.capitalize()+'] ', '')
 
-    # message = '{}: {} * {} * {}'.format(list_name, obfuscate_address(e['From']), subject, strip_reply_lines(e))
-    message = '{}: {}: {}'.format(list_name, obfuscate_address(e['From']), subject)
+    # message = '{}: {}: {}: {}'.format(list_name, from_header, subject, strip_reply_lines(e))
+    message = '{}: {}: {}'.format(list_name, from_header, subject)
 
     return truncate(message)
 

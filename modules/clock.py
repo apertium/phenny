@@ -190,7 +190,16 @@ def scrape_wiki_time_zone_abbreviations(doc):
                 else:
                     name = cell.find('a').text
             elif column == column_names.index('UTC offset'):
-                offset = cell.find('a').text[3:]
+                # There was an issue with crashes, caused by
+                # cells not containing links. Attempting
+                # to fix through testing whether cell has
+                # a link inside of it, otherwise just get text.
+
+                if len(cell.findall('a')) == 0:
+                    offset = cell.text[3:]
+                else:
+                    offset = cell.find('a').text[3:]
+                
                 offset = offset.replace('−', '-') # hyphen -> minus
 
                 if offset.find(':') > 0:

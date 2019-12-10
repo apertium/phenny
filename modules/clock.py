@@ -186,7 +186,7 @@ def scrape_wiki_time_zone_abbreviations(doc):
                 # a link inside of it, otherwise just get text.
 
                 if len(cell.findall('a')) == 0:
-                    name = cell.html.text
+                    name = cell.text
                 else:
                     name = cell.find('a').text
             elif column == column_names.index('UTC offset'):

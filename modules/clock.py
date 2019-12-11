@@ -199,7 +199,7 @@ def scrape_wiki_time_zone_abbreviations(doc):
                     offset = cell.text[3:]
                 else:
                     offset = cell.find('a').text[3:]
-                
+
                 offset = offset.replace('−', '-') # hyphen -> minus
 
                 if offset.find(':') > 0:
@@ -236,12 +236,14 @@ def scrape_wiki_tz_database_time_zones(doc):
         column = 0
 
         for cell in row.findall('td'):
-            if column == column_names.index('TZ'):
+            # issue with finding the column, fixing
+            if column == column_names.index('TZ database name'):
                 text = cell.find('a').text
                 text = text.replace('_', ' ').replace('−', '-')
 
                 name = text.split('/')[-1]
-            elif column == column_names.index('UTC offset'):
+            # used to be UTC offset but I think complete names are necessary
+            elif column == column_names.index('UTC offset ±hh:mm'):
                 text = cell.find('a').text
                 text = text.replace('_', ' ').replace('−', '-')
 

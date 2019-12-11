@@ -68,10 +68,9 @@ def decode_mime_utf(text):
     return text
 
 def format_email(e, list_name):
-    #subject = e['Subject']
-    #subject = re.sub(r"(=\?.*\?=)(?!$)", r"\1 ", subject)
-
     subject = decode_mime_utf(e['Subject'])
+    subject = subject.replace('['+list_name.capitalize()+'] ', '')
+
     from_address = decode_mime_utf(e['From'])
 
     # message = '{}: {} * {} * {}'.format(list_name, obfuscate_address(e['From']), subject, strip_reply_lines(e))

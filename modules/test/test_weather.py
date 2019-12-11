@@ -39,7 +39,7 @@ class TestWeather(unittest.TestCase):
             ("Vilnius", (54.7, 25.3)),
 
             ('Blacksburg, VA', (37.2, -80.4)),
-            ('Granger, IN', (41.7, -86.1)),
+            ('Granger, IN', (41.8, -86.1)),
         ]
 
         for query, expected in locations:

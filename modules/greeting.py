@@ -24,17 +24,21 @@ def setup(self):
         unique (channel, nick) on conflict replace
     );''')
 
+    cursor.execute('''create table if not exists opted_out (
+        nick varchar(255)
+    );''')
+
     cursor.close()
     connection.close()
 
 def greeting(phenny, input):
     with lock: users.add(input.nick)
-    try:
-        opted_out_list = open(os.getenv('HOME') + '/.phenny/opted_out_of_matrix_message.json')
-        opted_out_of_m = json.load(opted_out_list)
-        opted_out_list.close()
-    except:
+    with DatabaseCursor(phenny.greeting_db) as cursor:
+        cursor.execute('select nick from opted_out')
+        rows = cursor.fetchall()
         opted_out_of_m = []
+        for row in rows:
+            opted_out_of_m.append(row[0])
 
     if "[m]" in input.nick and not input.nick in opted_out_of_m:
         hint = "Please consider removing [m] from your IRC nick. See http://wiki.apertium.org/wiki/IRC/Matrix#Remove_.5Bm.5D_from_your_IRC_nick for details. Reply .dismiss to prevent this message from appearing again."
@@ -156,6 +160,21 @@ def greeting_del(phenny, input):
 greeting_del.rule = (['greeting del'], r'(.*)')
 greeting_del.name = 'greeting del'
 greeting_del.priority = 'low'
+
+def dismiss(phenny, input):
+    try:
+        with DatabaseCursor(phenny.greeting_db) as cursor:
+            cursor.execute(
+                'insert into opted_out (nick) values (?)',
+                (input.nick,)
+            )
+        phenny.say('I won\'t tell you again.')
+    except Exception as e:
+        phenny.say('Sorry, an error occurred.')
+        raise e
+
+dismiss.commands = ['dismiss']
+dismiss.priority = 'medium'
 
 
 if __name__ == '__main__':

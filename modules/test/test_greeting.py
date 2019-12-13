@@ -51,5 +51,5 @@ class TestGreeting(unittest.TestCase):
 
         greeting.greeting(self.phenny, self.input)
 
-        hint = "Consider removing [m] from your IRC nick! See http://wiki.apertium.org/wiki/IRC/Matrix#Remove_.5Bm.5D_from_your_IRC_nick for details."
+        hint = "Please consider removing [m] from your IRC nick. See http://wiki.apertium.org/wiki/IRC/Matrix#Remove_.5Bm.5D_from_your_IRC_nick for details. Reply .dismiss to prevent this message from appearing again."
         self.phenny.msg.assert_called_once_with(self.input.nick, self.input.nick + ": " + hint)

@@ -39,6 +39,13 @@ fileStatTypeMapping = {
 def formatNumberThousands(number):
     return '{:,}'.format(number)
 
+def isInt(var):
+    try:
+        int(var)
+        return True
+    except ValueError:
+        return False
+
 def getStats(rawStats, monoLang):
     if not rawStats:
         return {}
@@ -58,8 +65,11 @@ def getStats(rawStats, monoLang):
             revisionInfo = (githubCommitUrl % (statName, stat['sha'], filePath), stat['last_author'], stat['sha'][:6])
 
             statValue = stat['value']
-            statValue = formatNumberThousands(statValue)
 
+            if isInt(statValue):
+                statValue = int(statValue)
+                statValue = formatNumberThousands(statValue)
+            
             fileCounts[countType] = (statValue, revisionInfo, githubBlobUrl % (statName, filePath))
     return fileCounts
 

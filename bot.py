@@ -16,6 +16,7 @@ import sys
 import threading
 import traceback
 import tools
+import send_exceptions
 from tools import GrumbleError, decorate, rephrase_errors
 
 logger = logging.getLogger('phenny')
@@ -251,7 +252,9 @@ class Phenny(irc.Bot):
         except GrumbleError as e:
             report(str(e), verbose=False)
         except Exception as e: 
-            self.error(report)
+            logger.error("Oh no! An error occurred!")
+            logger.error(traceback.format_exc())
+            send_exceptions.log(traceback.format_exc(), self.config.error_host)
 
     def limit(self, origin, func): 
         if origin.sender and origin.sender.startswith('#'): 

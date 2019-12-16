@@ -48,7 +48,7 @@ def template(title, content, is_home):
         <footer>Made by <a href=https://scoopgracie.com>ScoopGracie</a> for <a href=https://apertium.org>Apertium</a></footer>
     </body>
 </html>''')
-
+    
 @app.route('/')
 @requires_auth
 def root():
@@ -114,6 +114,11 @@ def report():
     except Exception as e:
         abort(500)
         raise e
+
+@app.route('/robots.txt')
+def robots():
+    return '''User-agent: *
+Disallow: /'''
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)

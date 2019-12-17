@@ -8,3 +8,5 @@ coverage
 google-api-python-client
 sympy
 python-coveralls
+flask
+portalocker

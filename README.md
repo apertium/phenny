@@ -15,7 +15,8 @@ core modules have been ported, removed, or replaced.
 ## Requirements
 * Python 3.4+
 * [python-requests](http://docs.python-requests.org/en/latest/)
-* [flask](https://www.palletsprojects.com/p/flask/) (see "Error reporting")
+* [flask](https://www.palletsprojects.com/p/flask/)
+* [portalocker](https://github.com/WoLpH/portalocker)
 
 ## Installation
 1. Run `./phenny` - this creates a default config file
@@ -29,25 +30,27 @@ You will need the Python3 versions of `python-nose` and `python-mock`. To run
 the tests, simply run `nosetests3`.
 
 ## Error reporting
-phenny supports error reporting through a specially designed Web app. This
-uses a separate error reporting server. The error server is found in the
-`error_scripts` directory as `server.py`. Edit this file to set the variable
-`admin_password` to the desired password. The username is "admin". **Do not
-run this script directly in production!** Use a production WSGI server
-instead. Also, `clean.py` (in the same directory) should be run periodically
-to delete old logs. Be sure to edit it so the `path_to_error_log` variable is
-set to the actual path to the JSON file. This is `error_logs.json` in the
-current directory used for `server.py`.
+phenny supports experimental error reporting to a Web app. You should not need
+to configure phenny for this, as it is preconfigured. Just be sure that the
+current directory is the top-level phenny directory (that contains this
+README) when running phenny.
 
-The error reporting URL is, by default, `http://localhost:8080`. If this is
-not the host and port of the error reporting server, be sure to change it in
-the main phenny configuration file; the variable is `error_host`. Set
-`error_host` to `https://example.com` to disable error reporting.
-(Technically, error reporting is still enabled, but example.com just "throws
-away" any input.)
+In the `error_server` directory, there are two scripts. `server.py` is a Web
+app for accessing the logs. Edit it to set the variable `admin_password` to
+the desired password. The username is `admin`. **Do not run this script
+directly when in production!** Use a production WSGI server instead. To
+access the logs, point your browser at its URL (the WSGI server should tell
+you).
 
-Visit the same URL of the error reporting server in a browser to see the
-errors.
+Also, be sure to periodically run `clean.py` in the same directory. This will
+delete all logs over a week old. It is a good idea to make it a daily cron
+job.
+
+Note that `server.py` and `clean.py` both require that their current directory
+be `error_server`.
+
+There is no way to "disable" error logging, but you do not have to run
+server.py.
 
 ## Authors
 * Sean B. Palmer, http://inamidst.com/sbp/

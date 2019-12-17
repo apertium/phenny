@@ -96,25 +96,6 @@ def view():
 
     return template(title, content, False)
 
-@app.route('/report')
-def report():
-    error = { 'timestamp': str(datetime.datetime.utcnow()), 'message': request.args.get('error') }
-    try:
-        try:
-            with open('error_logs.json', 'r') as f:
-                logs = json.load(f)
-        except Exception:
-            logs = []
-
-        with open('error_logs.json', 'w+') as f:
-            logs.append(error)
-            json.dump(logs, f)
-
-        return json.dumps(error)
-    except Exception as e:
-        abort(500)
-        raise e
-
 @app.route('/robots.txt')
 def robots():
     return '''User-agent: *

@@ -254,7 +254,7 @@ class Phenny(irc.Bot):
         except Exception as e: 
             logger.error("Oh no! An error occurred!")
             logger.error(traceback.format_exc())
-            send_exceptions.log(traceback.format_exc(), self.config.error_host)
+            send_exceptions.log(traceback.format_exc(), self.config)
 
     def limit(self, origin, func): 
         if origin.sender and origin.sender.startswith('#'): 

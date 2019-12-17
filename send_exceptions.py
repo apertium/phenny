@@ -1,17 +1,31 @@
 #!/usr/bin/python3
 import requests
 import logging
+import datetime
+import json
+import portalocker
 from urllib.parse import quote_plus
 
 logger = logging.getLogger('phenny')
 class LogError(BaseException):
     pass
 
-def log(text, url):
-    logger.error(text)
-    try:
-        response = requests.get(url + '/report?error= ' + quote_plus(text))
-        if response.status_code is not 200:
-            raise LogError("logging server returned " + str(response.status_code))
-    except:
-        raise LogError("could not communicate with logging server")
+def log(text, config):
+    with portalocker.Lock(config.path_to_error_log) as _:
+        logger.error(text)
+        error = { 'timestamp': str(datetime.datetime.utcnow()), 'message': text}
+        try:
+            try:
+                with open(config.path_to_error_log, 'r') as f:
+                    logs = json.load(f)
+            except Exception:
+                logs = []
+
+            with open(config.path_to_error_log, 'w+') as f:
+                logs.append(error)
+                json.dump(logs, f)
+
+            return json.dumps(error)
+        except Exception as e:
+            logger.error('could not report to file')
+            raise LogError from e

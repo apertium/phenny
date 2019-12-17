@@ -135,7 +135,7 @@ try:
                 'git_events': {},
                 'git_repositories': {},
                 'svn_repositories': {},
-                'error_host': 'http://localhost:8080',
+                'path_to_error_log': 'error_server/error_logs.json'
             }
 
             for key, value in defaults.items():
@@ -170,4 +170,4 @@ except Exception as e:
     string = format_exc()
     logger.critical("Oh no! An error occurred!")
     logger.critical(string)
-    send_exceptions.log(string, module.error_host)
+    send_exceptions.log(string, module)

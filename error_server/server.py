@@ -37,6 +37,8 @@ def template(title, content, is_home):
     <head>
         <title>''' + ( ( title + ' - ' ) if title else '' ) + '''begiak Error Log</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css?family=Ubuntu&display=swap" rel="stylesheet">
+        <style>''' + styles() + '''</style>
     </head>
     <body>
         <header>
@@ -48,7 +50,29 @@ def template(title, content, is_home):
         <footer>Made by <a href=https://scoopgracie.com>ScoopGracie</a> for <a href=https://apertium.org>Apertium</a></footer>
     </body>
 </html>''')
-    
+
+def styles():
+        return '''* {
+    font-family: 'Ubuntu', 'Arial', sans-serif;
+}
+
+textarea {
+    border: none;
+    font-family: monospace;
+}
+
+li a {
+    font-family: monospace !important;
+}
+
+a {
+    color: #0000ff;
+}
+
+ul a:visited {
+    color: black;
+}'''
+
 @app.route('/')
 @requires_auth
 def root():
@@ -88,7 +112,8 @@ def view():
 
         if log['timestamp'] == request.args.get('log'):
             title = log['timestamp']
-            content = '<h2>Log for ' + log['timestamp'] + '</h2><textarea style="width: 95vw; height: 50vh">' + log['message'] + '</textarea>'
+            content = '''<h2>Log for ''' + log['timestamp'] + '''</h2>
+<textarea readonly=true style="width: 95vw; height: 50vh">''' + log['message'] + '''</textarea>'''
             break
 
     if content is None:

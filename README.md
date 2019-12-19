@@ -46,11 +46,17 @@ Also, be sure to periodically run `clean.py` in the same directory. This will
 delete all logs over a week old. It is a good idea to make it a daily cron
 job.
 
-Note that `server.py` and `clean.py` both require that their current directory
-be `error_server`.
+In case you cannot access the Flask app, or choose not to run it, you can run
+`./extract.py <yyyy-mm-dd>` in the `error_server` directory to see logs from
+that day.
+
+Note that `server.py`, `extract.py`, and `clean.py` all require that their
+current directory be `error_server`.
 
 There is no way to "disable" error logging, but you do not have to run
 server.py.
+
+Also, please note that all times used for error logging are UTC.
 
 ## Authors
 * Sean B. Palmer, http://inamidst.com/sbp/

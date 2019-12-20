@@ -55,6 +55,14 @@ class TestAPy(unittest.TestCase):
                                    msg='No exception raised for {:s}!'.format(reason)):
                 name.__call__(self.phenny, self.input)
 
+    def check_syntax_error(self, bad_list, name, reason=None):
+        if not reason:
+            reason = 'invalid input to {:s}'.format(name.__name__)
+        for inp in bad_list:
+            self.input.group.return_value = inp
+            function_return_val = name.__call__(self.phenny, self.input)
+            self.assertEqual(function_return_val, apy.SYNTAX_ERROR, msg='No syntax error returned for {:s}!'.format(reason))
+
     def test_translate_langs(self, mock_open):
         # single language
         self.input.group.return_value = 'eng-spa ' + self.texts['eng']
@@ -89,9 +97,9 @@ class TestAPy(unittest.TestCase):
         self.reset_mocks(self.phenny, mock_open, mock_handle)
 
         # bad input
-        self.check_exceptions([self.texts['spa'], 'spa ' + self.texts['spa'], 'spa-eng'],
+        self.check_syntax_error([self.texts['spa'], 'spa ' + self.texts['spa'], 'spa-eng'],
                               apy.apertium_translate)
-        self.check_exceptions(['en-en Translate to the same language?'],
+        self.check_syntax_error(['en-en Translate to the same language?'],
                               apy.apertium_translate, 'self-translation')
         self.reset_mocks(self.phenny, mock_open, mock_handle)
 
@@ -111,7 +119,7 @@ class TestAPy(unittest.TestCase):
 
         # restricted length for non-admin
         self.input.admin = False
-        self.check_exceptions(['eng-spa ' + self.texts['eng_long']],
+        self.check_syntax_error(['eng-spa ' + self.texts['eng_long']],
                               apy.apertium_translate, 'long non-admin translation!')
         self.reset_mocks(self.phenny, mock_open)
 
@@ -189,8 +197,8 @@ class TestAPy(unittest.TestCase):
         self.reset_mocks(mock_open, mock_addmsgs)
 
         # bad input
-        self.check_exceptions([' '.join(words), 'eng'], apy.apertium_analyse)
-        self.check_exceptions([' '.join(words), 'eng'], apy.apertium_generate)
+        self.check_syntax_error([' '.join(words), 'eng'], apy.apertium_analyse)
+        self.check_syntax_error([' '.join(words), 'eng'], apy.apertium_generate)
 
     @mock.patch('modules.apy.more.add_messages')
     def test_identlang(self, mock_addmsgs, mock_open):
@@ -224,7 +232,7 @@ class TestAPy(unittest.TestCase):
         self.reset_mocks(self.phenny, mock_open)
 
         # bad input
-        self.check_exceptions(['eng', self.texts['eng'], 'eng-spa'], apy.apertium_calccoverage)
+        self.check_syntax_error(['eng', self.texts['eng'], 'eng-spa'], apy.apertium_calccoverage)
 
     def test_perword(self, mock_open):
         # valid perword functions
@@ -250,5 +258,5 @@ class TestAPy(unittest.TestCase):
         # bad input
         self.check_exceptions(['fra (tagger nonfunc) word'], apy.apertium_perword,
                               'invalid perword function')
-        self.check_exceptions(['fra', 'fra (tagger)', '(tagger)', 'fra word',
+        self.check_syntax_error(['fra', 'fra (tagger)', '(tagger)', 'fra word',
                                '(tagger morph) word'], apy.apertium_perword)

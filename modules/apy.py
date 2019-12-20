@@ -101,6 +101,7 @@ def apertium_translate(phenny, input):
             if input_lang == output_lang:
                 #raise GrumbleError('Stop trying to confuse me! Pick different languages ;)')
                 phenny.say('Stop trying to confuse me! Pick different languages ;)')
+                return SYNTAX_ERROR
             
             # TODO: Remove this try/except block? web.decode doesn't seem to raise any GrumbleError's
             try:

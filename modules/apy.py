@@ -22,6 +22,7 @@ headers = [(
 Apy_errorData = 'Sorry, Apertium APy did not return any data.'
 langRE = r'[a-z]{2,3}(?:_[A-Za-z]+)?'
 
+SYNTAX_ERROR = 1
 
 def strict_check(pattern, string, function):
     error = ''
@@ -85,11 +86,12 @@ def apertium_translate(phenny, input):
     
     if line_error:
         phenny.say(line_error)
-        return
+        return SYNTAX_ERROR
 
     if (len(line.group(2)) > 350) and (not input.admin):
         #raise GrumbleError('Phrase must be under 350 characters.')
         phenny.say('Phrase must be under 350 characters.')
+        return SYNTAX_ERROR
 
     blocks = line.group(1).split(' ')
     for block in blocks:
@@ -183,7 +185,7 @@ def apertium_analyse(phenny, input):
 
     if cmd_error:
         phenny.say(cmd_error)
-        return
+        return SYNTAX_ERROR
 
     opener = urllib.request.build_opener()
     opener.addheaders = headers
@@ -214,7 +216,7 @@ def apertium_generate(phenny, input):
 
     if cmd_error:
         phenny.say(cmd_error)
-        return
+        return SYNTAX_ERROR
 
     opener = urllib.request.build_opener()
     opener.addheaders = headers
@@ -246,7 +248,7 @@ def apertium_identlang(phenny, input):
 
     if text_error:
         phenny.say(text_error)
-        return
+        return SYNTAX_ERROR
 
     opener = urllib.request.build_opener()
     opener.addheaders = headers
@@ -340,7 +342,7 @@ def apertium_calccoverage(phenny, input):
 
     if cmd_error:
         phenny.say(cmd_error)
-        return
+        return SYNTAX_ERROR
 
     opener = urllib.request.build_opener()
     opener.addheaders = headers
@@ -367,7 +369,7 @@ def apertium_perword(phenny, input):
 
     if cmd_error:
         phenny.say(cmd_error)
-        return
+        return SYNTAX_ERROR
 
     # validate requested functions
     funcs = cmd.group(2).split(' ')

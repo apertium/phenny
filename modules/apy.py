@@ -107,7 +107,7 @@ def apertium_translate(phenny, input):
                 translated = web.decode(translate(phenny, translated, input_lang, output_lang))
             except GrumbleError as err:
                 phenny.say('{:s}-{:s}: {:s}'.format(input_lang, output_lang, str(err)))
-                return
+                return SYNTAX_ERROR
         phenny.reply(web.decode(translated))
 
 apertium_translate.name = 't'

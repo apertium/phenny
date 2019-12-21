@@ -23,8 +23,6 @@ headers = [(
 Apy_errorData = 'Sorry, Apertium APy did not return any data.'
 langRE = r'[a-z]{2,3}(?:_[A-Za-z]+)?'
 
-SYNTAX_ERROR = 1
-
 class Status(IntEnum):
     OK = 0
     KEYWORD_ERROR = 1
@@ -44,7 +42,6 @@ def strict_check(pattern, string, function):
         error = 'Usage: {}'.format(function.example)
 
     return string, error
-
 
 def handle_error(error):
     response = error.read()

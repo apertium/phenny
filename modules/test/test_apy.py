@@ -102,7 +102,7 @@ class TestAPy(unittest.TestCase):
         self.check_error([self.texts['spa'], 'spa ' + self.texts['spa'], 'spa-eng'],
                               apy.apertium_translate, apy.Status.SYNTAX_ERROR)
         self.check_error(['en-en Translate to the same language?'],
-                              apy.apertium_translate, apy.Status.SYNTAX_ERROR, 'self-translation')
+                              apy.apertium_translate, apy.Status.ENUM_ERROR, 'self-translation')
         self.reset_mocks(self.phenny, mock_open, mock_handle)
 
         # non-existent language with actual language

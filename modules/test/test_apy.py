@@ -58,10 +58,12 @@ class TestAPy(unittest.TestCase):
     def check_error(self, bad_list, name, error, reason=None):
         if not reason:
             reason = 'invalid input to {:s}'.format(name.__name__)
+        if not isinstance(error, apy.Status):
+            raise ValueError('Parameter error must be a Status.')
         for inp in bad_list:
             self.input.group.return_value = inp
             function_return_val = name.__call__(self.phenny, self.input)
-            self.assertEqual(function_return_val, error, msg='No syntax error returned for {:s}!'.format(reason))
+            self.assertEqual(function_return_val, error, msg='No {:s} returned for {:s}!'.format(error.name, reason))
 
     def test_translate_langs(self, mock_open):
         # single language

@@ -12,7 +12,7 @@ from tools import GrumbleError
 from modules import more
 import operator
 from humanize import naturaldelta
-from enum import IntEnum
+from enum import Enum
 
 headers = [(
     'User-Agent', 'Mozilla/5.0' +
@@ -23,7 +23,7 @@ headers = [(
 Apy_errorData = 'Sorry, Apertium APy did not return any data.'
 langRE = r'[a-z]{2,3}(?:_[A-Za-z]+)?'
 
-class Status(IntEnum):
+class Status(Enum):
     OK = 0
     KEYWORD_ERROR = 1
     ENUM_ERROR = 2

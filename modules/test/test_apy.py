@@ -46,15 +46,6 @@ class TestAPy(unittest.TestCase):
         for moc in mocks:
             moc.reset_mock()
 
-    def check_exceptions(self, bad_list, name, reason=None):
-        if not reason:
-            reason = 'invalid input to {:s}'.format(name.__name__)
-        for inp in bad_list:
-            self.input.group.return_value = inp
-            with self.assertRaises(GrumbleError,
-                                   msg='No exception raised for {:s}!'.format(reason)):
-                name.__call__(self.phenny, self.input)
-
     def check_error(self, bad_list, name, error, reason=None):
         if not reason:
             reason = 'invalid input to {:s}'.format(name.__name__)
@@ -259,8 +250,8 @@ class TestAPy(unittest.TestCase):
         self.reset_mocks(self.phenny, mock_open)
 
         # bad input
-        self.check_exceptions(['fra (tagger nonfunc) word'], apy.apertium_perword,
-                              'invalid perword function')
+        self.check_error(['fra (tagger nonfunc) word'], apy.apertium_perword,
+                            apy.Status.KEYWORD_ERROR, 'invalid perword function')
         self.check_error(['fra', 'fra (tagger)', '(tagger)', 'fra word',
                                '(tagger morph) word'], apy.apertium_perword,
                                apy.Status.SYNTAX_ERROR)

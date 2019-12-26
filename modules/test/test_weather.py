@@ -17,8 +17,8 @@ class TestWeather(unittest.TestCase):
     @catch_timeout
     def test_locations(self):
         def check_location(result, expected):
-            self.assertAlmostEqual(result[0], expected[0], places=1)
-            self.assertAlmostEqual(result[1], expected[1], places=1)
+            self.assertAlmostEqual(result[0], expected[0], delta=0.07)
+            self.assertAlmostEqual(result[1], expected[1], delta=0.07)
 
         locations = [
             ('92121', (32.9, -117.2)),

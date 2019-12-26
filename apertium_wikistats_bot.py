@@ -35,6 +35,10 @@ fileStatTypeMapping = {
     'Transfer': {'Rules': 'rules', 'Macros': 'macros'}
 }
 
+# https://docs.python.org/3.8/library/string.html#format-examples
+def formatNumberThousands(number):
+    return '{:,}'.format(number)
+
 def getStats(rawStats, monoLang):
     if not rawStats:
         return {}
@@ -52,7 +56,11 @@ def getStats(rawStats, monoLang):
             if not monoLang:
                 countType = splitFilePath[1] + ' ' + wikiKey
             revisionInfo = (githubCommitUrl % (statName, stat['sha'], filePath), stat['last_author'], stat['sha'][:6])
-            fileCounts[countType] = (stat['value'], revisionInfo, githubBlobUrl % (statName, filePath))
+
+            statValue = int(stat['value'])
+            statValue = formatNumberThousands(statValue)
+            
+            fileCounts[countType] = (statValue, revisionInfo, githubBlobUrl % (statName, filePath))
     return fileCounts
 
 def getJSONFromStatsService(lang):

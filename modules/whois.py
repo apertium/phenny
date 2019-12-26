@@ -4,6 +4,9 @@ import os
 import sqlite3
 import time
 import shlex
+import datetime
+import logging
+import time
 import modules.alias as aliasmodule
 from threading import Lock, Thread
 from tools import DatabaseCursor, db_path
@@ -15,13 +18,14 @@ users = set()
 def make_table(cursor):
     cursor.execute('''create table if not exists users (
         nick        varchar(255) not null,
-        github      varchar(255) not null,
+        github      varchar(255)         ,
         wiki        varchar(255)         ,
-        timezone    varchar(255) not null,
+        timezone    varchar(255)         ,
         isgci       bool         not null,
         gciname     varchar(255)         ,
         isadmin     bool         not null,
         realname    varchar(255)         ,
+        location    varchar(255)         ,
         unique (nick, github, wiki, gciname) on conflict replace
     );''')
 
@@ -40,6 +44,7 @@ def setup(self):
 def whois(phenny, input):
     '''.whois <nick> - get whois for nick;
 .whois only accepts irc nicks; to search by github username, wiki username, or gci/gsoc name, see .whoislookup'''
+    bynick = True
     try:
         text = input.group().split(' ')[1]
         with DatabaseCursor(phenny.whois_db) as cursor:
@@ -67,6 +72,7 @@ def whois(phenny, input):
                         pass
 
                 if not found:
+                    bynick = False
                     #can't find by nick; try by other things
                     text = input.group().split(' ', 1)[1]
                     with DatabaseCursor(phenny.whois_db) as cursor:
@@ -89,15 +95,19 @@ def whois(phenny, input):
                     else:
                         phenny.say('Hmm... ' + text + ' is not in the database. Apparently, s/he has not registered.')
                         return 0
+        if data[3] is None:
+            if data[8] is None:
+                locstring = ''
+            else:
+                locstring = ' | ' + data[8]
+        else:
+            if data[8] is None:
+                locstring = ' | ' + data[3]
+            else:
+                locstring = ' | ' + data[8] + ' (' + data[3] + ')'
 
-        phenny.say(data[0] + ((' is a GCI/GSoC ' + ('admin.' if data[6] else 'mentor.')) if data[4] else ':' ) )
-        if data[4] and not data[6] and data[5] is not None:
-            phenny.say('S/he is listed as ' + data[5] + ' on GCI tasks/GSoC.')
-        phenny.say('His/her GitHub username is [' + data[1] + '](https://github.com/' + data[1] + ').'
-                + ( (' His/her Wiki username is [' + data[2] + '](http://wiki.apertium.org/wiki/User:' + data[2] + ').') if data[2] is not None else '' ))
-        if data[7] is not None:
-            phenny.say('His/her real name is ' + data[7] + '.')
-        phenny.say('His/her timezone is ' + data[3] + '.')
+        nick = ( text if bynick else data[0] )
+        phenny.say( nick + ( (' (' + data[7] + ')' ) if data[7] is not None else '') + locstring +  seen(nick, phenny))
     except Exception as e:
         phenny.say('Sorry, an error occurred.')
         raise e
@@ -114,9 +124,9 @@ def text_or_none(string):
 
 
 def whoisset(phenny, input):
-    '''.whoisset <github> <wiki> <timezone> <realname> - set whois info;
+    '''.whoisset <github> <wiki> <timezone> <realname> <location> - set whois info;
 multiword values go in quotes;
-wiki and realname optional; use x to omit a value;
+all values are optional; use x to omit a value;
 gci/gsoc mentors append name on gci tasks/gsoc to end of command;
 gci/gsoc admins append 'admin' to end of command;
 gci/gsoc admins/mentors, pls remember to rerun this command without gci/gsoc info after gci/gsoc ends'''
@@ -129,7 +139,7 @@ gci/gsoc admins/mentors, pls remember to rerun this command without gci/gsoc inf
             is_mentor = False
 
             try:
-                gci_status = text[5]
+                gci_status = text[6]
                 if gci_status == 'admin':
                     is_admin = True
                 else:
@@ -138,7 +148,7 @@ gci/gsoc admins/mentors, pls remember to rerun this command without gci/gsoc inf
                 pass
 
             cursor.execute('''delete from users where nick = ?;''', (input.nick,))
-            cursor.execute('''insert into users values (?, ?, ?, ?, ?, ?, ?, ?);''', (input.nick, text[1], text_or_none(text[2]), text[3], ( is_admin or is_mentor ) , (text[5] if is_mentor else None), is_admin, text_or_none(text[4])))
+            cursor.execute('''insert into users values (?, ?, ?, ?, ?, ?, ?, ?, ?);''', (input.nick, text_or_none(text[1]), text_or_none(text[2]), text_or_none(text[3]), ( is_admin or is_mentor ) , (text[6] if is_mentor else None), is_admin, text_or_none(text[4]), text_or_none(text[5])))
             cursor.close()
         phenny.say('OK, I recorded all that. Type `.whois ' + input.nick + '` to verify it.')
     except Exception as e:
@@ -147,7 +157,7 @@ gci/gsoc admins/mentors, pls remember to rerun this command without gci/gsoc inf
         raise e
 whoisset.commands = ['whoisset']
 whoisset.priority = 'medium'
-whoisset.example = '.whoisset scoopgracie ScoopGracie utc-8:00 "Scoop Gracie"'
+whoisset.example = '.whoisset scoopgracie ScoopGracie utc-8:00 "Scoop Gracie" "Oregon, USA"'
 
 
 def whoisdrop(phenny, input):
@@ -167,6 +177,54 @@ def whoisdrop(phenny, input):
 whoisdrop.commands = ['whoisdrop']
 whoisdrop.priority = 'medium'
 
+
+logger = logging.getLogger('phenny')
+
+def seen(nick, phenny):
+    if nick == "none":
+        return ''
+
+    logger_conn = sqlite3.connect(phenny.logger_db, detect_types=sqlite3.PARSE_DECLTYPES)
+
+    cNick = ""
+    cChannel = ""
+    c = logger_conn.cursor()
+    c.execute("select * from lines_by_nick where nick = ? order by datetime(last_time) desc limit 1", (nick,))
+    cl = c.fetchone()
+    try:
+        cNick = cl[1]
+        cChannel = cl[0]
+        cLastTime = cl[4]
+    except TypeError:
+        return ''
+    c.close()
+
+    if cNick != "":
+        dt = timesince(cLastTime)
+        msg = " | last seen %s" % (dt)
+        return msg
+
+def timesince(td):
+    seconds = int(abs(datetime.datetime.utcnow() - td).total_seconds())
+    periods = [
+        ('year', 60*60*24*365),
+        ('month', 60*60*24*30),
+        ('day', 60*60*24),
+        ('hour', 60*60),
+        ('minute', 60),
+        ('second', 1)
+    ]
+
+    strings = []
+    for period_name, period_seconds in periods:
+            if seconds > period_seconds and len(strings) < 2:
+                    period_value, seconds = divmod(seconds, period_seconds)
+                    if period_value == 1:
+                        strings.append("%s %s" % (period_value, period_name))
+                    else:
+                        strings.append("%s %ss" % (period_value, period_name))
+
+    return "just now" if len(strings) < 1 else " and ".join(strings) + " ago"
 
 if __name__ == '__main__':
     print(__doc__.strip())

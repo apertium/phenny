@@ -16,7 +16,6 @@ logger = logging.getLogger('phenny')
 
 def f_seen(phenny, input):
     """.seen <nick> - Reports when <nick> was last seen."""
-
     try:
         nick = str(input.group(2)).casefold()
     except UnboundLocalError:
@@ -25,7 +24,25 @@ def f_seen(phenny, input):
     if nick == "none":
         phenny.reply(".seen <nick> - Reports when <nick> was last seen.")
         return
+    try:
+        seen_info = seen(nick, phenny)
+    except NotSeenError:
+        phenny.reply("Sorry, I haven't seen %s around." % str(input.group(2)))
+        return
 
+    t = time.strftime('%Y-%m-%d %H:%M:%S UTC', seen_info['at'].timetuple())
+    msg = "I last saw %s at %s (%s) on %s" % (str(input.group(2)), t, seen_info['ago'], seen_info['channel'])
+    phenny.reply(msg)
+
+f_seen.name = 'seen'
+f_seen.example = '.seen firespeaker'
+f_seen.rule = (['seen'], r'(\S+)')
+
+class NotSeenError(BaseException):
+    pass
+
+def seen(nick, phenny):
+    '''seen(nick, phenny) returns dict of last seen for nick; 'ago' is a string describing how long ago; 'at' is datetime object in UTC; 'nick' is the nick; 'channel' is the last channel; raises NotSeenError when not seen.'''
     logger_conn = sqlite3.connect(phenny.logger_db, detect_types=sqlite3.PARSE_DECLTYPES)
 
     cNick = ""
@@ -38,19 +55,16 @@ def f_seen(phenny, input):
         cChannel = cl[0]
         cLastTime = cl[4]
     except TypeError:
-        phenny.reply("Sorry, I haven't seen %s around." % str(input.group(2)))
-        return
+        raise NotSeenError()
     c.close()
 
     if cNick != "":
         dt = timesince(cLastTime)
-        t = time.strftime('%Y-%m-%d %H:%M:%S UTC', cLastTime.timetuple())
-        msg = "I last saw %s at %s (%s) on %s" % (str(input.group(2)), t, dt, cChannel)
-        phenny.reply(msg)
+        t = cLastTime
+    else:
+        raise NotSeenError()
 
-f_seen.name = 'seen'
-f_seen.example = '.seen firespeaker'
-f_seen.rule = (['seen'], r'(\S+)')
+    return {'ago': dt, 'at': t, 'nick': cNick, 'channel': cChannel}
 
 def timesince(td):
     seconds = int(abs(datetime.datetime.utcnow() - td).total_seconds())

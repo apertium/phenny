@@ -8,6 +8,7 @@ import datetime
 import logging
 import time
 import modules.alias as aliasmodule
+import modules.seen as seen
 from threading import Lock, Thread
 from tools import DatabaseCursor, db_path
 from modules import caseless_list
@@ -40,74 +41,84 @@ def setup(self):
     cursor.close()
     connection.close()
 
+class Record:
+    def __init__(self, datum):
+        self.nick = datum[0]
+        self.github = datum[1]
+        self.wiki = datum[2]
+        self.timezone = datum[3]
+        self.isgci = datum[4]
+        self.gciname = datum[5]
+        self.isadmin = datum[6]
+        self.realname = datum[7]
+        self.location = datum[8]
 
 def whois(phenny, input):
     '''.whois <nick> - get whois for nick;
 .whois only accepts irc nicks; to search by github username, wiki username, or gci/gsoc name, see .whoislookup'''
     bynick = True
     try:
-        text = input.group().split(' ')[1]
+        if len(input.group().split(' ', 1)) < 2:
+            phenny.say('usage: .whois <query>')
+            return 0
+
+        text = input.group().split(' ', 1)[1]
         with DatabaseCursor(phenny.whois_db) as cursor:
             make_table(cursor)
-            cursor.execute(
-                'select * from users where nick = (?)',
-                (text,)
-            )
-            try:
-                data = cursor.fetchall()[0]
-            except:
+            cursor.execute('select * from users')
+            data = [Record(datum) for datum in cursor.fetchall()]
+
+            user = None
+
+            for record in data:
+                if record.nick.lower() == text.lower():
+                    user = record
+                    break
+
+            if user == None:
                 aliasmodule.loadAliases(phenny)
                 aliases = aliasmodule.aliasGroupFor(text)
-                found = False
                 for alias in aliases:
-                    cursor.execute(
-                        'select * from users where nick = (?)',
-                        (alias,)
-                    )
-                    try:
-                        data = cursor.fetchall()[0]
-                        found = True
-                        break
-                    except:
-                        pass
+                    for record in data:
+                        if record.nick.lower() == alias.lower():
+                            user = record
+                            user.nick = text
+                            break
 
-                if not found:
-                    bynick = False
-                    #can't find by nick; try by other things
-                    text = input.group().split(' ', 1)[1]
-                    with DatabaseCursor(phenny.whois_db) as cursor:
-                        make_table(cursor)
+            if user == None:
+                #can't find by nick; try by other things
+                text = input.group().split(' ', 1)[1]
+                results = []
+                for entry in data:
+                    e = [ text.lower() in record.lower() for record in [entry.nick, entry.github, entry.wiki, entry.gciname, entry.realname] if record is not None]
+                    if True in e:
+                        results.append(entry)
 
-                        cursor.execute(
-                            'select * from users;',
-                        )
-                        data = cursor.fetchall()
+                if results:
+                    user = results[0]
+                else:
+                    phenny.say('Hmm... {} is not in the database. Apparently, s/he has not registered.'.format(text))
+                    return 0
 
-                        cursor.close()
-
-                    results = []
-                    for entry in data:
-                        e = [ text.lower() in record.lower() for record in [entry[0], entry[1], entry[2], entry[5], entry[7]] if record is not None]
-                        if True in e:
-                            results.append(entry)
-                    if results:
-                        data = results[0]
-                    else:
-                        phenny.say('Hmm... ' + text + ' is not in the database. Apparently, s/he has not registered.')
-                        return 0
-        if data[3] is None:
-            if data[8] is None:
+        if user.timezone is None:
+            if user.location is None:
                 locstring = ''
             else:
-                locstring = ' | ' + data[8]
+                locstring = ' | {}'.format(user.location)
         else:
-            if data[8] is None:
-                locstring = ' | ' + data[3]
+            if user.location is None:
+                locstring = ' | {}'.format(user.timezone)
             else:
-                locstring = ' | ' + data[8] + ' (' + data[3] + ')'
+                locstring = ' | {} ({})'.format(user.location, user.timezone)
 
-        nick = ( text if bynick else data[0] )
-        phenny.say( nick + ( (' (' + data[7] + ')' ) if data[7] is not None else '') + locstring +  seen(nick, phenny))
+        try:
+            seen_string = ' | {}'.format(seen.seen(user.nick, phenny)['ago'])
+        except seen.NotSeenError:
+            seen_string = ''
+    
+        realnamestring = ( ' ({})'.format(user.realname) if user.realname is not None else '')
+
+        phenny.say('{}{}{}{}'.format(user.nick, realnamestring, locstring, seen_string))
     except Exception as e:
         phenny.say('Sorry, an error occurred.')
         raise e
@@ -132,6 +143,10 @@ gci/gsoc admins append 'admin' to end of command;
 gci/gsoc admins/mentors, pls remember to rerun this command without gci/gsoc info after gci/gsoc ends'''
     try:
         text = shlex.split(input.group())
+        if len(text) < 6:
+            phenny.say('usage: .whoisset <github> <wiki> <timezone> <realname> <location>')
+            return
+
         with DatabaseCursor(phenny.whois_db) as cursor:
             make_table(cursor)
 
@@ -163,12 +178,17 @@ whoisset.example = '.whoisset scoopgracie ScoopGracie utc-8:00 "Scoop Gracie" "O
 def whoisdrop(phenny, input):
     '''.whoisdrop <nick> - drop a record from the whois database (must be <nick> or a phenny admin)'''
     try:
-        text = input.group().split(' ')[1]
+        try:
+            text = input.group().split(' ')[1]
+        except IndexError:
+            phenny.say('usage: .whoisdrop <nick>')
+            return
+
         if input.nick.casefold() in caseless_list(phenny.config.admins) or input.nick.lower() is text.lower():
             with DatabaseCursor(phenny.whois_db) as cursor:
                 make_table(cursor)
                 cursor.execute('''delete from users where nick = ?;''', (text,))
-            phenny.say(text + ' has been removed from the database.')
+            phenny.say('{} has been removed from the database.'.format(text))
         else:
             phenny.say('You must be an admin to use this command.')
     except Exception as e:
@@ -179,52 +199,6 @@ whoisdrop.priority = 'medium'
 
 
 logger = logging.getLogger('phenny')
-
-def seen(nick, phenny):
-    if nick == "none":
-        return ''
-
-    logger_conn = sqlite3.connect(phenny.logger_db, detect_types=sqlite3.PARSE_DECLTYPES)
-
-    cNick = ""
-    cChannel = ""
-    c = logger_conn.cursor()
-    c.execute("select * from lines_by_nick where nick = ? order by datetime(last_time) desc limit 1", (nick,))
-    cl = c.fetchone()
-    try:
-        cNick = cl[1]
-        cChannel = cl[0]
-        cLastTime = cl[4]
-    except TypeError:
-        return ''
-    c.close()
-
-    if cNick != "":
-        dt = timesince(cLastTime)
-        msg = " | last seen %s" % (dt)
-        return msg
-
-def timesince(td):
-    seconds = int(abs(datetime.datetime.utcnow() - td).total_seconds())
-    periods = [
-        ('year', 60*60*24*365),
-        ('month', 60*60*24*30),
-        ('day', 60*60*24),
-        ('hour', 60*60),
-        ('minute', 60),
-        ('second', 1)
-    ]
-
-    strings = []
-    for period_name, period_seconds in periods:
-            if seconds > period_seconds and len(strings) < 2:
-                    period_value, seconds = divmod(seconds, period_seconds)
-                    if period_value == 1:
-                        strings.append("%s %s" % (period_value, period_name))
-                    else:
-                        strings.append("%s %ss" % (period_value, period_name))
-
-    return "just now" if len(strings) < 1 else " and ".join(strings) + " ago"
 
 if __name__ == '__main__':
     print(__doc__.strip())

@@ -236,8 +236,8 @@ def scrape_wiki_tz_database_time_zones(doc):
         for cell in row.findall('td'):
             # issue with finding the column, fixing
             # Used regex as mentioned in the pull-request review
-            r = re.compile("(^| )TZ( |$)")
-            if column == column_names.index(list(filter(r.match, column_names)[0]):
+            current_regex = re.compile("(^| )TZ( |$)")
+            if column == column_names.index(list(filter(current_regex.match, column_names))[0]):
                 text = cell.find('a').text
                 text = text.replace('_', ' ').replace('−', '-')
 

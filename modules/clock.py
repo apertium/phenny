@@ -25,6 +25,18 @@ logger = logging.getLogger('phenny')
 
 r_local = re.compile(r'\([a-z]+_[A-Z]+\)')
 
+def find_safe(cell, tag):
+    # There was an issue with crashes, caused by
+    # cells not containing links. Attempting
+    # to fix through testing whether cell has
+    # a link inside of it, otherwise just get text.
+
+    if len(cell.findall('a')) == 0:
+        offset = cell.text[3:]
+    else:
+        offset = cell.find('a').text[3:]
+
+    return offset
 
 def get_offsets(phenny, key):
     offsets = []
@@ -180,25 +192,11 @@ def scrape_wiki_time_zone_abbreviations(doc):
             if column == column_names.index('Abbr.'):
                 code = cell.text
             elif column == column_names.index('Name'):
-                # There was an issue with crashes, caused by
-                # cells not containing links. Attempting
-                # to fix through testing whether cell has
-                # a link inside of it, otherwise just get text.
+                name = find_safe(cell, 'a')
 
-                if len(cell.findall('a')) == 0:
-                    name = cell.text
-                else:
-                    name = cell.find('a').text
             elif column == column_names.index('UTC offset'):
-                # There was an issue with crashes, caused by
-                # cells not containing links. Attempting
-                # to fix through testing whether cell has
-                # a link inside of it, otherwise just get text.
 
-                if len(cell.findall('a')) == 0:
-                    offset = cell.text[3:]
-                else:
-                    offset = cell.find('a').text[3:]
+                offset = find_safe(cell, 'a')
 
                 offset = offset.replace('−', '-') # hyphen -> minus
 
@@ -237,7 +235,9 @@ def scrape_wiki_tz_database_time_zones(doc):
 
         for cell in row.findall('td'):
             # issue with finding the column, fixing
-            if column == column_names.index('TZ database name'):
+            # Used regex as mentioned in the pull-request review
+            r = re.compile("(^| )TZ( |$)")
+            if column == column_names.index(list(filter(r.match, column_names)[0]):
                 text = cell.find('a').text
                 text = text.replace('_', ' ').replace('−', '-')
 

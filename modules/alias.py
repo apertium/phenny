@@ -32,11 +32,11 @@ def aliasPairMerge(phenny, nick1, nick2):
     # Merges the alias group that nick1 is in with the one nick2 is in
     # The resulting group is stored in nick_aliases
     group1 = aliasGroupFor(nick1)
-    if len(group1) > 1: #group is in nick_aliases
+    if len(group1) > 1: # group is in nick_aliases
         nick_aliases.remove(group1)
 
     group2 = aliasGroupFor(nick2)
-    if len(group2) > 1: #group is in nick_aliases
+    if len(group2) > 1: # group is in nick_aliases
         nick_aliases.remove(group2)
 
     group1.extend(group2)

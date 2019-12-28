@@ -45,7 +45,7 @@ def aliasPairMerge(phenny, nick1, nick2):
 
     dumpAliases(phenny)
 
-def alias(phenny, raw):
+def c_alias(phenny, raw):
     if raw.group(1) :
         if raw.group(1) == 'add':
             nick1 = raw.nick
@@ -85,7 +85,7 @@ def alias(phenny, raw):
     else:
         phenny.reply("Usage: .alias add <nick>, .alias list <nick>?, .alias remove")
 
-alias.rule = r'\.alias(?:\s(\S+))?(?:\s(\S+))?'
+c_alias.rule = r'\.alias(?:\s(\S+))?(?:\s(\S+))?'
 
 def loadAliases(self):
     try:

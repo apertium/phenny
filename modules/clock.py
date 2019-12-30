@@ -32,11 +32,17 @@ def find_safe(cell, tag):
     # a link inside of it, otherwise just get text.
 
     if len(cell.findall('a')) == 0:
-        offset = cell.text[3:]
+        target = cell
     else:
-        offset = cell.find('a').text[3:]
+        target = cell.find('a')
 
-    return offset
+    return target.text
+
+def find_index_regex(column, regex):
+    # Used regex as mentioned in the pull-request review
+    current_regex = re.compile(regex)
+
+    return column.index(next(filter(current_regex.match, column)))
 
 def get_offsets(phenny, key):
     offsets = []
@@ -193,10 +199,9 @@ def scrape_wiki_time_zone_abbreviations(doc):
                 code = cell.text
             elif column == column_names.index('Name'):
                 name = find_safe(cell, 'a')
-
             elif column == column_names.index('UTC offset'):
-
-                offset = find_safe(cell, 'a')
+                # Make sure to strip the UTC off the offset for processing purposes
+                offset = find_safe(cell, 'a')[3:]
 
                 offset = offset.replace('−', '-') # hyphen -> minus
 
@@ -235,15 +240,13 @@ def scrape_wiki_tz_database_time_zones(doc):
 
         for cell in row.findall('td'):
             # issue with finding the column, fixing
-            # Used regex as mentioned in the pull-request review
-            current_regex = re.compile("(^| )TZ( |$)")
-            if column == column_names.index(list(filter(current_regex.match, column_names))[0]):
+            if column == find_index_regex(column_names, "(^| )TZ( |$)"):
                 text = cell.find('a').text
                 text = text.replace('_', ' ').replace('−', '-')
 
                 name = text.split('/')[-1]
             # used to be UTC offset but I think complete names are necessary
-            elif column == column_names.index('UTC offset ±hh:mm'):
+            elif column == find_index_regex(column_names, "(^| )UTC offset( |$)"):
                 text = cell.find('a').text
                 text = text.replace('_', ' ').replace('−', '-')
 

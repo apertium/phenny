@@ -44,7 +44,7 @@ start_pester.rule = ('$nick', ['pester'], r'(\S+) (.*)')
 def pester(phenny, input):
     pester.conn = sqlite3.connect(phenny.pester_db)
     c = pester.conn.cursor()
-    inputnick = input.nick.casefold();
+    inputnick = input.nick.casefold()
 
     pesterees = []
     c.execute('''SELECT pesteree FROM to_pester''')
@@ -101,7 +101,7 @@ def pester(phenny, input):
 pester.rule = r'(.*)'
 
 def pesters(phenny, input):
-    '''Usage: ".pesters snooze <person pestering you>" to 'snooze' a pester; ".pesters dismiss <person you are pestering>" to stop pestering someone.'''
+    '''Usage: ".pesters snooze <person pestering you>" to 'snooze' a pester; ".pesters remove <person pestering you>" to stop pestered by a pester; ".pesters dismiss <person you are pestering>" to stop pestering someone.'''
     pesters.conn = sqlite3.connect(phenny.pester_db)
     c = pesters.conn.cursor()
     inputnick = input.nick.casefold()
@@ -115,6 +115,13 @@ def pesters(phenny, input):
             c.execute('''UPDATE to_pester SET dismissed=? WHERE pesteree=? AND pesterer=?''', [current_time, inputnick, pesterernick])
             phenny.say(input.nick + ': Pester snoozed. Pester will recur in ' + str(phenny.config.pester_after_dismiss) + ' minutes.')
 
+    elif input.group(1) == 'remove':
+        if c.execute('''SELECT * FROM to_pester WHERE pesteree=? AND pesterer=?''', [inputnick, pesterernick]).fetchall() == []:
+            phenny.say(input.nick + ': You are not being pestered by ' + input.group(2))
+        else:
+            c.execute('''DELETE FROM to_pester WHERE pesteree=? AND pesterer=?''', [inputnick, pesterernick])
+            phenny.say(input.nick + ': You won\'t be pestered by ' + input.group(2) + ' anymore.')
+
     elif input.group(1) == 'dismiss':
         if c.execute('''SELECT * FROM to_pester WHERE pesteree=? AND pesterer=?''', [pesterernick, inputnick]).fetchall() == []:
             phenny.say(input.nick + ': You are not pestering ' + input.group(2))
@@ -124,7 +131,7 @@ def pesters(phenny, input):
 
     pesters.conn.commit()
 pesters.name = 'pesters'
-pesters.rule = r'[.]pesters (snooze|dismiss) (\S+)'
+pesters.rule = r'[.]pesters (snooze|dismiss|remove) (\S+)'
 
 def admin_stop(phenny, input):
     '''Usage: ".pesters stop <pesterer> to <pesteree>" to stop a pester from <pesterer> to <pesteree>. This functions is for *admins only*.'''

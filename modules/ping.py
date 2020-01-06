@@ -18,7 +18,7 @@ emptyHellos = False
 #temporaryMessage = "  If you're a GSoC student, check out http://wiki.apertium.org/wiki/Top_tips_for_GSOC_applications"
 temporaryMessage = None
 
-greetings = ('Hi', 'Hey', 'Hello', 'What\'s kicking', 'What\'s the good word', 'Top of the morning', 'Yo', 'What up', 'Sup', "What's hanging", "In the hood", "Kaixo", "Zer moduz", "Сәлем", "Қалың қалай", "Salom", "Привет", "No bugs is good bugs", "Mitä kuuluu", "حالت چطوره", "როგორა ხარ", "ինչպե՞ս ես", "сайн байна уу", "कैसे हो", "Como vai", "Nasılsın", "Ворчӏами")
+greetings = ('Hi', 'Hey', 'Hello', 'What\'s kicking', 'What\'s the good word', 'Top of the morning', 'Yo', 'What up', 'Sup', "What's hanging", "In the hood", "Kaixo", "Zer moduz", "Сәлем", "Қалың қалай", "Salom", "Привет", "No bugs is good bugs", "Mitä kuuluu", "حالت چطوره", "როგორა ხარ", "ինչպե՞ս ես", "сайн байна уу", "कैसे हो", "Como vai", "Nasılsın", "Ворчӏами", "Բարև", "Ողջույն", "Բարև Ձեզ", "Ինչպե՞ս եք", "Ինչպե՞ս են Ձեր գործերը", "Sveiki", "Zdravo", "Γειά σου", "გამარჯობა", "Вітання", "Saluton", "Здравейте", "Сәлеметсіз бе", "Hola", "Як ти", "Здраво", "Πώς είσαι", "Как ты", "Здравствуй")
 
 def countGuest(phenny, nick):
     global_filename = db_path(phenny, 'guests')

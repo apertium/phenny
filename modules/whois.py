@@ -53,9 +53,22 @@ class Record:
         self.realname = datum[7]
         self.location = datum[8]
 
+def all_of(items):
+    if len(items) == 0:
+        return 'nothing'
+    elif len(items) == 1:
+        return items[0]
+    elif len(items) == 2:
+        return '{} and {}'.format(items[0], items[1])
+    else:
+        response = ''
+        for item in items[:len(items)-1]:
+            response += '{}, '.format(item)
+        response += 'and {}'.format(items[len(items)-1])
+        return response
+
 def whois(phenny, input):
-    '''.whois <nick> - get whois for nick;
-.whois only accepts irc nicks; to search by github username, wiki username, or gci/gsoc name, see .whoislookup'''
+    '''.whois <nick> - get info for registered nick; set data with .whoisset (see .help whoisset); admins or nick owners can drop with .whoisdrop <nick> '''
     bynick = True
     try:
         if len(input.group().split(' ', 1)) < 2:
@@ -63,6 +76,10 @@ def whois(phenny, input):
             return 0
 
         text = input.group().split(' ', 1)[1]
+        if text == phenny.nick:
+            phenny.say('{} (Wondrous Guardian of {}) | IRC (all timezones) | now'.format(phenny.nick, all_of(phenny.channels)))
+            return 0
+
         with DatabaseCursor(phenny.whois_db) as cursor:
             make_table(cursor)
             cursor.execute('select * from users')
@@ -97,7 +114,11 @@ def whois(phenny, input):
                 if results:
                     user = results[0]
                 else:
-                    phenny.say('Hmm... {} is not in the database. Apparently, s/he has not registered.'.format(text))
+                    try:
+                        seen_string = ' They were last seen {}.'.format(seen.seen(text, phenny)['ago'])
+                    except seen.NotSeenError:
+                        seen_string = ''
+                    phenny.say('Hmm... {} is not in the database. Apparently, they have not registered.{}'.format(text, seen_string))
                     return 0
 
         if user.timezone is None:

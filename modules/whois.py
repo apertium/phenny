@@ -76,7 +76,7 @@ def whois(phenny, input):
             return 0
 
         text = input.group().split(' ', 1)[1]
-        if text == phenny.nick:
+        if text.lower() == phenny.nick.lower():
             phenny.say('{} (Wondrous Guardian of {}) | IRC (all timezones) | now'.format(phenny.nick, all_of(phenny.channels)))
             return 0
 

@@ -101,7 +101,7 @@ def pester(phenny, input):
 pester.rule = r'(.*)'
 
 def pesters(phenny, input):
-    '''Usage: ".pesters snooze <person pestering you>" to 'snooze' a pester; ".pesters remove <person pestering you>" to stop pestered by a pester; ".pesters dismiss <person you are pestering>" to stop pestering someone.'''
+    '''Usage: ".pesters snooze <person pestering you>" to 'snooze' a pester; ".pesters remove <person pestering you>" to stop being pestered by someone; ".pesters dismiss <person you are pestering>" to stop pestering someone.'''
     pesters.conn = sqlite3.connect(phenny.pester_db)
     c = pesters.conn.cursor()
     inputnick = input.nick.casefold()

@@ -115,7 +115,7 @@ def pesters_snooze(phenny, input):
         phenny.say(input.nick + ': Pester snoozed. Pester will recur in ' + str(phenny.config.pester_after_dismiss) + ' minutes.')
 
     pesters_snooze.conn.commit()
-pesters_snooze.name = 'pesters'
+pesters_snooze.name = 'pesters snooze'
 pesters_snooze.rule = r'[.]pesters snooze (\S+)'
 
 def pesters_dismiss(phenny, input):

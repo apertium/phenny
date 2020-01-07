@@ -100,10 +100,10 @@ def pester(phenny, input):
         pass
 pester.rule = r'(.*)'
 
-def pesters(phenny, input):
-    '''Usage: ".pesters snooze <person pestering you>" to 'snooze' a pester; ".pesters remove <person pestering you>" to stop being pestered by someone; ".pesters dismiss <person you are pestering>" to stop pestering someone.'''
-    pesters.conn = sqlite3.connect(phenny.pester_db)
-    c = pesters.conn.cursor()
+def pesters_snooze(phenny, input):
+    '''Usage: ".pesters snooze <person pestering you>" to 'snooze' a pester;'''
+    pesters_snooze.conn = sqlite3.connect(phenny.pester_db)
+    c = pesters_snooze.conn.cursor()
     inputnick = input.nick.casefold()
     pesterernick = input.group(1).casefold()
 
@@ -114,12 +114,12 @@ def pesters(phenny, input):
         c.execute('''UPDATE to_pester SET dismissed=? WHERE pesteree=? AND pesterer=?''', [current_time, inputnick, pesterernick])
         phenny.say(input.nick + ': Pester snoozed. Pester will recur in ' + str(phenny.config.pester_after_dismiss) + ' minutes.')
 
-    pesters.conn.commit()
-pesters.name = 'pesters'
-pesters.rule = r'[.]pesters snooze (\S+)'
+    pesters_snooze.conn.commit()
+pesters_snooze.name = 'pesters'
+pesters_snooze.rule = r'[.]pesters snooze (\S+)'
 
 def pesters_dismiss(phenny, input):
-    '''Usage: ".pesters snooze <person pestering you>" to 'snooze' a pester; ".pesters remove <person pestering you>" to stop being pestered by someone; ".pesters dismiss <person you are pestering>" to stop pestering someone.'''
+    '''Usage: ".pesters (dismiss|remove|delete|rm|del) from <person pestering you>" to stop being pestered by someone; ".pesters (dismiss|remove|delete|rm|del) to <person you are pestering>" to stop pestering someone.'''
     pesters_dismiss.conn = sqlite3.connect(phenny.pester_db)
     c = pesters_dismiss.conn.cursor()
     inputnick = input.nick.casefold()
@@ -141,7 +141,7 @@ def pesters_dismiss(phenny, input):
 
     pesters_dismiss.conn.commit()
 pesters_dismiss.name = 'pesters'
-pesters_dismiss.rule = r'[.]pesters (snooze|dismiss|remove|delete|rm|del) (from|to) (\S+)'
+pesters_dismiss.rule = r'[.]pesters (dismiss|remove|delete|rm|del) (from|to) (\S+)'
 
 def admin_stop(phenny, input):
     '''Usage: ".pesters stop <pesterer> to <pesteree>" to stop a pester from <pesterer> to <pesteree>. This functions is for *admins only*.'''

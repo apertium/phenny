@@ -12,7 +12,7 @@ import random
 from collections import Counter
 from modules import caseless_list
 from tools import GrumbleError, read_db, write_db
-from modules.alias import *
+from modules.alias import loadAliases, aliasGroupFor
 
 maximum = 4
 

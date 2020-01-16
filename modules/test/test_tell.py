@@ -18,10 +18,10 @@ class TestTell(unittest.TestCase):
         self.input2 = MagicMock()
         tell.setup(self.phenny)
 
-    def create_alias(self, alias, input):
-        self.input.group = lambda x: ['', 'add', alias][x]
+    def create_alias(self, aliasName, input):
+        self.input.group = lambda x: ['', 'add', aliasName][x]
         alias.alias(self.phenny, input)
-        alias.aliasPairMerge(self.phenny, input.nick, alias)
+        alias.aliasPairMerge(self.phenny, input.nick, aliasName)
 
     def create_reminder(self, teller):
         timenow = datetime.datetime.utcnow().strftime('%d %b %Y %H:%MZ')
@@ -34,9 +34,9 @@ class TestTell(unittest.TestCase):
         aliases = ['tester', 'testing', 'testmaster']
         self.phenny.reminders = {}
 
-        for person in aliases:
-            self.create_alias(person, self.input)
-            self.create_reminder(person)
+        for aliasName in aliases:
+            self.create_alias(aliasName, self.input)
+            self.create_reminder(aliasName)
 
         tell.messageAlert(self.phenny, self.input)
 
@@ -49,8 +49,8 @@ class TestTell(unittest.TestCase):
 
         aliases = ['tester', 'testing', 'testmaster']
 
-        for person in aliases:
-            self.create_alias(person, self.input)
+        for aliasName in aliases:
+            self.create_alias(aliasName, self.input)
 
         aliases.insert(0,'Testsworth')
 
@@ -69,13 +69,13 @@ class TestTell(unittest.TestCase):
         self.input.nick = 'Testsworth'
         alias.nick_aliases = []
         aliases = ['tester', 'testing', 'testmaster']
-        for person in aliases:
-            self.create_alias(person, self.input)
+        for aliasName in aliases:
+            self.create_alias(aliasName, self.input)
 
         self.input2.nick = 'Happy'
         aliases2 = ['joyful', 'ecstatic', 'euphoric', 'blissful']
-        for person in aliases2:
-            self.create_alias(person, self.input2)
+        for aliasName in aliases2:
+            self.create_alias(aliasName, self.input2)
 
         alias.aliasPairMerge(self.phenny, 'Testsworth', 'Happy')
 

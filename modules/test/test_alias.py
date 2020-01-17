@@ -12,6 +12,7 @@ class TestAlias(unittest.TestCase):
     def setUp(self):
         self.phenny = MagicMock()
         self.input = MagicMock()
+        self.input2 = MagicMock()
         self.phenny.nick = 'phenny'
         self.phenny.config.host = 'irc.freenode.net'
 
@@ -45,6 +46,26 @@ class TestAlias(unittest.TestCase):
 
         aligroup = alias.aliasGroupFor('Testsworth')
         self.assertTrue(aliases == aligroup)
+
+    def test_aliasPairMerge(self):
+        self.input.nick = 'Testsworth'
+        alias.nick_aliases = []
+        aliases = ['tester', 'testing', 'testmaster']
+        for aliasName in aliases:
+            self.create_alias(aliasName, self.input)
+
+        self.input2.nick = 'Happy'
+        aliases2 = ['joyful', 'ecstatic', 'euphoric', 'blissful']
+        for aliasName in aliases2:
+            self.create_alias(aliasName, self.input2)
+
+        alias.aliasPairMerge(self.phenny, 'Testsworth', 'Happy')
+
+        aliases.insert(0,'Testsworth')
+        aliases2.insert(0,'Happy')
+        joined = aliases + aliases2
+
+        self.assertTrue(joined in alias.nick_aliases)
 
     def test_alias_noadded(self):
         self.input.nick = 'Testsworth'

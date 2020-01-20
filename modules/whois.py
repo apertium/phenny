@@ -33,7 +33,7 @@ def make_table(cursor):
 def setup(self):
     self.whois_db = db_path(self, 'whois')
 
-    connection = sqlite3.connect(self.greeting_db)
+    connection = sqlite3.connect(self.whois_db)
     cursor = connection.cursor()
 
     make_table(cursor)
@@ -149,7 +149,7 @@ whois.example = '.whois user'
 
 
 def text_or_none(string):
-    if string is 'x':
+    if string == 'x':
         return None
     else:
         return string

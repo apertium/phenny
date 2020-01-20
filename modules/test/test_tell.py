@@ -28,6 +28,15 @@ class TestTell(unittest.TestCase):
         tell.f_remind(self.phenny, self.input, 'ask')
         self.phenny.reply.assert_called_once_with('That nickname is too long.')
 
+    def test_fremind_tellself(self):
+        self.input.nick = 'Testsworth'
+        self.create_alias('tests', self.input)
+
+        self.input.groups = lambda: ['tests', 'eat a cake']
+
+        tell.f_remind(self.phenny, self.input, 'ask')
+        self.phenny.say.assert_called_once_with('You can ask yourself that.')
+
     def test_fremind_edgecase(self):
         self.input.nick = 'Testsworth'
         self.input.groups = lambda: ['me', 'eat a cake']
@@ -94,13 +103,4 @@ class TestTell(unittest.TestCase):
         responses = {'I\'ll pass that on when tests is around.', 'yeah, yeah', 'yeah, sure, whatever'}
         out = self.phenny.reply.call_args[0][0]
         self.assertTrue(out in responses)
-        
-    def test_fremind_tellself(self):
-        self.input.nick = 'Testsworth'
-        self.create_alias('tests', self.input)
-
-        self.input.groups = lambda: ['tests', 'eat a cake']
-
-        tell.f_remind(self.phenny, self.input, 'ask')
-        self.phenny.say.assert_called_once_with('You can ask yourself that.')
 """

@@ -12,7 +12,7 @@ import random
 from collections import Counter
 from modules import caseless_list
 from tools import GrumbleError, read_db, write_db
-from modules.alias import *
+from modules import alias
 
 maximum = 4
 
@@ -27,7 +27,7 @@ def dumpReminders(self):
 
 def setup(self):
     loadReminders(self)
-    loadAliases(self)
+    alias.loadAliases(self)
 
 def f_remind(phenny, input, verb):
     teller = input.nick
@@ -35,7 +35,7 @@ def f_remind(phenny, input, verb):
     # @@ Multiple comma-separated tellees? Cf. Terje, #swhack, 2006-04-15
     tellee, msg = input.groups()
 
-    aliases = aliasGroupFor(teller)
+    aliases = alias.aliasGroupFor(teller)
 
     tellee_original = tellee.rstrip('.,:;')
     tellee = tellee_original.lower()
@@ -106,7 +106,7 @@ def message(phenny, input):
     if not input.sender.startswith('#'): return
 
     tellee = input.nick
-    aliases = caseless_list(aliasGroupFor(tellee))
+    aliases = caseless_list(alias.aliasGroupFor(tellee))
     channel = input.sender
 
     reminders = []
@@ -137,7 +137,7 @@ message.priority = 'low'
 message.thread = False
 
 def messageAlert(phenny, input):
-    aliases = aliasGroupFor(input.nick)
+    aliases = alias.aliasGroupFor(input.nick)
     remkeys = set(map(str.lower, phenny.reminders.keys()))
     if any((alias.lower() in remkeys) for alias in aliases):
         phenny.say(input.nick + ': You have messages. Say something, and I\'ll read them out.')

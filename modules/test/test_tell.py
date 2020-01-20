@@ -5,7 +5,7 @@ Tests for phenny's tell.py
 import unittest
 import datetime
 from mock import MagicMock
-from modules import tell
+from modules import tell, alias
 
 class TestTell(unittest.TestCase):
 
@@ -17,6 +17,11 @@ class TestTell(unittest.TestCase):
         self.input = MagicMock()
         tell.setup(self.phenny)
 
+    def create_alias(self, aliasName, input):
+        self.input.group = lambda x: ['', 'add', aliasName][x]
+        alias.alias(self.phenny, input)
+        alias.aliasPairMerge(self.phenny, input.nick, aliasName)
+
     def create_reminder(self, teller):
         timenow = datetime.datetime.utcnow().strftime('%d %b %Y %H:%MZ')
         self.phenny.reminders[teller] = [(teller, 'do', timenow, 'something')]
@@ -25,7 +30,13 @@ class TestTell(unittest.TestCase):
         self.input.sender = '#testsworth'
         self.input.nick = 'Testsworth'
 
-        self.create_reminder(self.input.nick)
+        aliases = ['tester', 'testing', 'testmaster']
+        self.phenny.reminders = {}
+
+        for aliasName in aliases:
+            self.create_alias(aliasName, self.input)
+            self.create_reminder(aliasName)
+
         tell.messageAlert(self.phenny, self.input)
 
         text = ': You have messages. Say something, and I\'ll read them out.'
@@ -38,8 +49,18 @@ class TestTell(unittest.TestCase):
         tell.f_remind(self.phenny, self.input, 'ask')
         self.phenny.reply.assert_called_once_with('That nickname is too long.')
 
+    def test_fremind_tellself(self):
+        self.input.nick = 'Testsworth'
+        self.create_alias('tests', self.input)
+
+        self.input.groups = lambda: ['tests', 'eat a cake']
+
+        tell.f_remind(self.phenny, self.input, 'ask')
+        self.phenny.say.assert_called_once_with('You can ask yourself that.')
+
     def test_fremind_valid(self):
         self.input.nick = 'Testsworth'
+        alias.nick_aliases = []
         self.input.groups = lambda: ['tests', 'eat a cake']
 
         tell.f_remind(self.phenny, self.input, 'ask')
@@ -56,6 +77,7 @@ class TestTell(unittest.TestCase):
 
     def test_ftell(self):
         self.input.nick = 'Testsworth'
+        alias.nick_aliases = []
         self.input.groups = lambda: ['tests', 'eat a cake']
 
         tell.f_tell(self.phenny, self.input)
@@ -65,6 +87,7 @@ class TestTell(unittest.TestCase):
 
     def test_fask(self):
         self.input.nick = 'Testsworth'
+        alias.nick_aliases = []
         self.input.groups = lambda: ['tests', 'eat a cake']
 
         tell.f_tell(self.phenny, self.input)

@@ -5,7 +5,7 @@ Tests for phenny's alias.py
 import unittest
 import datetime
 from mock import MagicMock
-from modules import alias
+from modules import alias as aliasmod
 
 class TestAlias(unittest.TestCase):
 

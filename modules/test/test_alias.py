@@ -21,10 +21,6 @@ class TestAlias(unittest.TestCase):
         alias.c_alias(self.phenny, input)
         alias.aliasPairMerge(self.phenny, input.nick, aliasName)
 
-    def create_reminder(self, teller):
-        timenow = datetime.datetime.utcnow().strftime('%d %b %Y %H:%MZ')
-        self.phenny.reminders[teller] = [(teller, 'do', timenow, 'something')]
-
     def test_aliasGroupFor_multiple(self):
         self.input.nick = 'Testsworth'
         alias.nick_aliases = []

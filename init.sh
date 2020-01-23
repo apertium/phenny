@@ -43,7 +43,7 @@ stop_bot() {
 restart_bot() {
         stop_bot
         if [ $? -gt 0 ]; then
-            exit 1
+            echo "WARNING: STOPPING BOT FAILED"
         fi
         times=0
         while [ $(ps -e | grep -c $(cat /var/run/$BOT.pid)) != 0 ]; do

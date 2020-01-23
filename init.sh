@@ -33,6 +33,26 @@ start_bot() {
 
 stop_bot() {
     start-stop-daemon -K -p /var/run/$BOT.pid
+    if [ $? -gt 0 ]; then
+        echo "WARNING: STOPPING BOT FAILED"
+    fi
+    times=0
+    while [ $(ps -e | grep -c $(cat /var/run/$BOT.pid)) != 0 ]; do
+        sleep 1
+        times=$(($times+1))
+        if [ $times >= 60 ]; then
+            kill -9 $(cat /var/run/$BOT.pid)
+        fi
+    done
+    times=0
+    while [ $(ps -e | grep -c $(cat /var/run/$BOT.pid)) != 0 ]; do
+        sleep 1
+        times=$(($times+1))
+        if [ $times >= 15 ]; then
+	    echo "ERROR: $BOT did not stop"
+            SUCCESS=1
+        fi
+    done
     SUCCESS=$?
     if [ $SUCCESS -gt 0 ]; then
         echo "ERROR: Couldn't stop $BOT"
@@ -43,25 +63,9 @@ stop_bot() {
 restart_bot() {
         stop_bot
         if [ $? -gt 0 ]; then
-            echo "WARNING: STOPPING BOT FAILED"
+            echo "WARNING: bot may still be running; restarting anyway in 5 seconds, ^C to cancel"
+	    sleep 5
         fi
-        times=0
-        while [ $(ps -e | grep -c $(cat /var/run/$BOT.pid)) != 0 ]; do
-            sleep 1
-            times=$(($times+1))
-            if [ $times >= 60 ]; then
-                kill -9 $(cat /var/run/$BOT.pid)
-            fi
-        done
-        times=0
-        while [ $(ps -e | grep -c $(cat /var/run/$BOT.pid)) != 0 ]; do
-            sleep 1
-            times=$(($times+1))
-            if [ $times >= 15 ]; then
-                echo "ERROR: $BOT did not stop"
-                exit 1
-            fi
-        done
         start_bot
         if [ $? -gt 0 ]; then
             exit 1

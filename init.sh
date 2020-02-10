@@ -40,7 +40,7 @@ stop_bot() {
     while [ "$(ps -e | grep -c $(cat /var/run/$BOT.pid))" != 0 ]; do
         sleep 1
         times=$(($times+1))
-        if [ "$times" >= 60 ]; then
+        if [ ${times-0} -ge 60 ]; then
             kill -9 $(cat /var/run/$BOT.pid)
         fi
     done
@@ -48,7 +48,7 @@ stop_bot() {
     while [ "$(ps -e | grep -c $(cat /var/run/$BOT.pid))" != 0 ]; do
         sleep 1
         times=$(($times+1))
-        if [ "$times" >= 15 ]; then
+        if [ ${times} -ge 15 ]; then
 	    echo "ERROR: $BOT did not stop"
             SUCCESS=1
         fi

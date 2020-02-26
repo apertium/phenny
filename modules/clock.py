@@ -25,6 +25,24 @@ logger = logging.getLogger('phenny')
 
 r_local = re.compile(r'\([a-z]+_[A-Z]+\)')
 
+def find_safe(cell, tag):
+    # There was an issue with crashes, caused by
+    # cells not containing links. Attempting
+    # to fix through testing whether cell has
+    # a link inside of it, otherwise just get text.
+
+    if len(cell.findall('a')) == 0:
+        target = cell
+    else:
+        target = cell.find('a')
+
+    return target.text
+
+def find_index_regex(column, regex):
+    # Used regex as mentioned in the pull-request review
+    current_regex = re.compile(regex)
+
+    return column.index(next(filter(current_regex.match, column)))
 
 def get_offsets(phenny, key):
     offsets = []
@@ -180,9 +198,11 @@ def scrape_wiki_time_zone_abbreviations(doc):
             if column == column_names.index('Abbr.'):
                 code = cell.text
             elif column == column_names.index('Name'):
-                name = cell.find('a').text
+                name = find_safe(cell, 'a')
             elif column == column_names.index('UTC offset'):
-                offset = cell.find('a').text[3:]
+                # Make sure to strip the UTC off the offset for processing purposes
+                offset = find_safe(cell, 'a')[3:]
+
                 offset = offset.replace('−', '-') # hyphen -> minus
 
                 if offset.find(':') > 0:
@@ -219,12 +239,14 @@ def scrape_wiki_tz_database_time_zones(doc):
         column = 0
 
         for cell in row.findall('td'):
-            if column == column_names.index('TZ'):
+            # issue with finding the column, fixing
+            if column == find_index_regex(column_names, "(^| )TZ( |$)"):
                 text = cell.find('a').text
                 text = text.replace('_', ' ').replace('−', '-')
 
                 name = text.split('/')[-1]
-            elif column == column_names.index('UTC offset'):
+            # used to be UTC offset but I think complete names are necessary
+            elif column == find_index_regex(column_names, "(^| )UTC offset( |$)"):
                 text = cell.find('a').text
                 text = text.replace('_', ' ').replace('−', '-')
 

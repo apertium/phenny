@@ -29,14 +29,14 @@ def aliasGroupFor(nick1):
     return [nick1]
 
 def aliasPairMerge(phenny, nick1, nick2):
-    #Merges the alias group that nick1 is in with the one nick2 is in
-    #The resulting group is stored in nick_aliases
+    # Merges the alias group that nick1 is in with the one nick2 is in
+    # The resulting group is stored in nick_aliases
     group1 = aliasGroupFor(nick1)
-    if len(group1) > 1: #group is in nick_aliases
+    if len(group1) > 1: # group is in nick_aliases
         nick_aliases.remove(group1)
 
     group2 = aliasGroupFor(nick2)
-    if len(group2) > 1: #group is in nick_aliases
+    if len(group2) > 1: # group is in nick_aliases
         nick_aliases.remove(group2)
 
     group1.extend(group2)
@@ -45,7 +45,7 @@ def aliasPairMerge(phenny, nick1, nick2):
 
     dumpAliases(phenny)
 
-def alias(phenny, raw):
+def c_alias(phenny, raw):
     if raw.group(1) :
         if raw.group(1) == 'add':
             nick1 = raw.nick
@@ -85,7 +85,7 @@ def alias(phenny, raw):
     else:
         phenny.reply("Usage: .alias add <nick>, .alias list <nick>?, .alias remove")
 
-alias.rule = r'\.alias(?:\s(\S+))?(?:\s(\S+))?'
+c_alias.rule = r'\.alias(?:\s(\S+))?(?:\s(\S+))?'
 
 def loadAliases(self):
     try:

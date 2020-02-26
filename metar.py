@@ -90,7 +90,9 @@ class Weather(object):
 
     def describe_wind(self):
         if self.wind_speed is not None:
-            if self.wind_speed < 1:
+            if self.wind_speed < 0:
+                return "unknown"
+            elif self.wind_speed < 1:
                 return "calm"
             elif self.wind_speed < 4:
                 return "light air"

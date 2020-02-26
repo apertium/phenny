@@ -32,7 +32,7 @@ def help(phenny, input):
             phenny.say(phenny.doc[command][0].strip())
             if phenny.doc[command][1]: 
                 phenny.say('e.g. ' + phenny.doc[command][1])
-        elif any(func.name == command.name for command in commands):
+        elif any(func.name == command for func in commands):
             phenny.say("Sorry, I don't know how to use that command.")
         else:
             phenny.say("Sorry, I don't know that command.")

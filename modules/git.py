@@ -320,7 +320,10 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                     messages.append(template.format(repo, user, number, url))
                 else:
                     template = '{:}: {:} * review comment {:} on pull request #{:}: {:} {:}'
-                    blacklist_pull_request_comment_users = config.blacklist_pull_request_comment_users
+                    try:
+                        blacklist_pull_request_comment_users = config.blacklist_pull_request_comment_users
+                    except AttributeError:
+                        blacklist_pull_request_comment_users = ()
                     if user not in blacklist_pull_request_users:
                         messages.append(truncate(
                             data['comment']['body'],

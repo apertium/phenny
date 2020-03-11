@@ -6,6 +6,7 @@ apy.py - Apertium APy Module
 
 import re
 import urllib.request
+import urllib
 import json
 import web
 from tools import GrumbleError
@@ -113,6 +114,15 @@ apertium_translate.commands = ['t']
 apertium_translate.example = '.t en-es|es-fr en-ca I like pie'
 apertium_translate.priority = 'high'
 
+def apertium_web_translate(phenny, input):
+    text = input.group().split(' ', 2)
+    pair = urllib.parse.quote_plus(text[1])
+    url = urllib.parse.quote_plus(text[2])
+    phenny.say('Translated page at https://apertium.org/index.eng.html?dir={}&qP={}#webpageTranslation'.format(pair, url))
+apertium_web_translate.name = 'tweb'
+apertium_web_translate.commands = ['tweb']
+apertium_web_translate.example = '.tweb eng-spa https://scoopgracie.com/'
+apertium_web_translate.priority = 'high'
 
 def apertium_listlangs(phenny, input):
     '''Lists languages available for translation from/to.'''

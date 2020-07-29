@@ -14,7 +14,7 @@ core modules have been ported, removed, or replaced.
 
 ## Requirements
 * Python 3.5+
-* [python-requests](http://docs.python-requests.org/en/latest/)
+* [python-requests](https://requests.readthedocs.io/)
 
 ## Installation
 1. Run `./phenny` - this creates a default config file

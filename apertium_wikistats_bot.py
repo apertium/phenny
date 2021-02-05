@@ -17,8 +17,8 @@ import xml.etree.ElementTree as etree
 import datetime
 import autocoverage
 
-wikiURL = 'http://wiki.apertium.org/wiki/'
-apiURL = 'http://wiki.apertium.org/w/api.php'
+wikiURL = 'https://wiki.apertium.org/wiki/'
+apiURL = 'https://wiki.apertium.org/w/api.php'
 statsURL = 'http://apertium.projectjj.com/stats-service/apertium-%s/?async=false'
 githubBlobUrl = 'https://raw.githubusercontent.com/apertium/%s/master/%s'
 githubCommitUrl = 'https://raw.githubusercontent.com/apertium/%s/%s/%s'
@@ -225,17 +225,28 @@ def editPage(pageTitle, pageContents, editToken):
 
 def login(loginName, password):
     try:
-        payload = {'action': 'login', 'format': 'json', 'lgname': loginName, 'lgpassword': password}
+        payload = {'action': 'query', 'meta': 'tokens', 'format': 'json', 'type': 'login'}
         authResult = s.post(apiURL, params=payload)
-        authToken = json.loads(authResult.text)['login']['token']
-        logging.debug('Auth token: %s' % authToken)
+        loginToken = json.loads(authResult.text)['query']['tokens']['logintoken']
+        logging.debug('Login token: %s' % loginToken)
 
-        payload = {'action': 'login', 'format': 'json', 'lgname': loginName, 'lgpassword': password, 'lgtoken': authToken}
-        authResult = s.post(apiURL, params=payload)
+        #payload = {'action': 'login', 'format': 'json', 'lgname': loginName, 'lgpassword': password, 'lgtoken': loginToken}
+        queryParams = {'action': 'login', 'format': 'json'}
+        dataParams = {'lgname': loginName, 'lgpassword': password, 'lgtoken': loginToken}
+        authResult = s.post(apiURL, params=queryParams, data=dataParams)
+        #logging.debug(authResult.text)
+        #if (json.loads(authResult.text)['login']['token']=="Success"):
+        #    authToken = loginToken
+        #authToken = json.loads(authResult.text)['login']['token']
+
+        #payload = {'action': 'login', 'format': 'json', 'lgname': loginName, 'lgpassword': password, 'lgtoken': authToken}
+        #authResult = s.post(apiURL, params=payload)
         if not json.loads(authResult.text)['login']['result'] == 'Success':
             logging.critical('Failed to login as %s: %s' % (loginName, json.loads(authResult.text)['login']['result']))
         else:
             logging.info('Login as %s succeeded' % loginName)
+            authToken = loginToken
+            logging.debug('Auth token: %s' % authToken)
             return authToken
     except Exception as e:
         logging.critical('Failed to login: %s' % e)

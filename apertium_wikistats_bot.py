@@ -19,7 +19,7 @@ import autocoverage
 
 wikiURL = 'https://wiki.apertium.org/wiki/'
 apiURL = 'https://wiki.apertium.org/w/api.php'
-statsURL = 'http://apertium.projectjj.com/stats-service/apertium-%s/?async=false'
+statsURL = 'https://apertium.org/stats-service/apertium-%s/?async=false'
 githubBlobUrl = 'https://raw.githubusercontent.com/apertium/%s/master/%s'
 githubCommitUrl = 'https://raw.githubusercontent.com/apertium/%s/%s/%s'
 

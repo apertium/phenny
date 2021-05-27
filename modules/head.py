@@ -125,8 +125,8 @@ def gettitle(phenny, input, uri):
         uri = 'http://' + uri
     uri = uri.replace('#!', '?_escaped_fragment_=')
 
-    if uri.startswith('http://wiki.apertium.org/wiki/'):
-        item = uri[len('http://wiki.apertium.org/wiki/'):]
+    if uri.startswith('https://wiki.apertium.org/wiki/'):
+        item = uri[len('https://wiki.apertium.org/wiki/'):]
         return apertium_wiki.awik(phenny, re.match(r'(blahblah)?(.*)()', item))
     if re.match(r'https?://en.wiktionary.org/wiki/(.*)', uri):
         item = re.match(r'https?://en.wiktionary.org/wiki/(.*)', uri).group(1)

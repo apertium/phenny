@@ -16,7 +16,7 @@ class TestClock(unittest.TestCase):
     def setUp(self):
         self.phenny = MagicMock()
         self.phenny.nick = 'phenny'
-        self.phenny.config.host = 'irc.freenode.net'
+        self.phenny.config.host = 'irc.oftc.net'
 
         self.input = MagicMock()
         self.input.nick = 'Testsworth'

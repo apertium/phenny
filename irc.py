@@ -288,7 +288,7 @@ class TestBot(Bot):
 
 def main(): 
     bot = TestBot('testbot007', 'testbot007', ['#wadsworth'])
-    bot.run('irc.freenode.net')
+    bot.run('irc.oftc.net')
     print(__doc__)
 
 if __name__=="__main__": 

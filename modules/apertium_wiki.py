@@ -12,9 +12,9 @@ import wiki
 import web
 
 endpoints = {
-    'api': 'http://wiki.apertium.org/api.php?action=query&list=search&srlimit=1&format=json&srsearch={0}',
-    'url': 'http://wiki.apertium.org/wiki/{0}',
-    'logs': 'https://tinodidriksen.com/pisg/freenode/logs/',
+    'api': 'https://wiki.apertium.org/api.php?action=query&list=search&srlimit=1&format=json&srsearch={0}',
+    'url': 'https://wiki.apertium.org/wiki/{0}',
+    'logs': 'https://tinodidriksen.com/pisg/OFTC/logs/',
 }
 
 

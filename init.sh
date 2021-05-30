@@ -24,6 +24,9 @@ USER="begiak"
 
 start_bot() {
     echo starting $BOT
+    if [ -f "$LOGFILE" ]; then
+	mv "$LOGFILE" "$LOGFILE.`date +%Y-%m-%d`"
+    fi;
     start-stop-daemon -S -c $USER -p /var/run/$BOT.pid -m -d `dirname $EXEC` -b --startas /bin/bash -- -c "exec $EXEC $ARGS > $LOGFILE 2>&1"
     SUCCESS=$?
     if [ "$SUCCESS" -gt 0 ]; then
@@ -58,6 +61,8 @@ stop_bot() {
     SUCCESS=$?
     if [ "$SUCCESS" -gt 0 ]; then
         echo "ERROR: Couldn't stop $BOT"
+    else
+        mv "$LOGFILE" "$LOGFILE.`date +%Y-%m-%d`"
     fi
     return $SUCCESS
 }

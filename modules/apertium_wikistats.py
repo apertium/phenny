@@ -61,7 +61,7 @@ def awikstats(phenny, input):
                 return
 
             try:
-                urllib.request.urlopen('http://wiki.apertium.org/wiki/Apertium-' + lang)
+                urllib.request.urlopen('https://wiki.apertium.org/wiki/Apertium-' + lang)
             except urllib.error.HTTPError:
                 phenny.say('%s: No wiki for specified language!' % input.nick)
                 return
@@ -77,7 +77,7 @@ def awikstats(phenny, input):
             try:
                 out = stdout.splitlines()[-1].decode('utf-8').strip()
                 if out.startswith('Coverage:'):
-                    phenny.msg(input.nick, '%s - http://wiki.apertium.org/wiki/Apertium-%s/stats' % (out, lang))
+                    phenny.msg(input.nick, '%s - https://wiki.apertium.org/wiki/Apertium-%s/stats' % (out, lang))
                 else:
                     for line in stderr.splitlines():
                         phenny.msg(input.nick, line)

@@ -13,7 +13,7 @@ class TestGreeting(unittest.TestCase):
         self.phenny = MagicMock()
         self.input = MagicMock()
         self.phenny.nick = 'phenny'
-        self.phenny.config.host = 'irc.freenode.net'
+        self.phenny.config.host = 'irc.oftc.net'
 
         logger.setup(self.phenny)
         greeting.setup(self.phenny)
@@ -51,5 +51,5 @@ class TestGreeting(unittest.TestCase):
 
         greeting.greeting(self.phenny, self.input)
 
-        hint = "Please consider removing [m] from your IRC nick. See http://wiki.apertium.org/wiki/IRC/Matrix#Remove_.5Bm.5D_from_your_IRC_nick for details. Reply .dismiss to prevent this message from appearing again."
+        hint = "Please consider removing [m] from your IRC nick. See https://wiki.apertium.org/wiki/IRC/Matrix#Remove_.5Bm.5D_from_your_IRC_nick for details. Reply .dismiss to prevent this message from appearing again."
         self.phenny.msg.assert_called_once_with(self.input.nick, self.input.nick + ": " + hint)

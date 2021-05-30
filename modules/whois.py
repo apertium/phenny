@@ -151,7 +151,7 @@ def whois(phenny, input):
             say_username('GCI/GSOC', user.wiki, None, phenny)
 
         if user.wiki is not None:
-            say_username('Apertium Wiki', user.wiki, 'http://wiki.apertium.org/wiki/User:{}', phenny)
+            say_username('Apertium Wiki', user.wiki, 'https://wiki.apertium.org/wiki/User:{}', phenny)
 
         if user.github is not None:
             say_username('GitHub', user.github, 'https://github.com/{}', phenny)

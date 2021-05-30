@@ -34,4 +34,4 @@ notifications:
 # The irc channel is encrypted for apertium/phenny, so build notifications from forks won't show up on the IRC channel
 # Encrypt with:
 # $ gem install --user-install travis
-# $ ~/.gem/ruby/*/bin/travis encrypt -r apertium/phenny 'chat.freenode.net#apertium'
+# $ ~/.gem/ruby/*/bin/travis encrypt -r apertium/phenny 'irc.oftc.net#apertium'

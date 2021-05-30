@@ -27,7 +27,7 @@ def begiak(phenny, input):
     """.about, .info, .begiak - my autobiography"""
     phenny.say("Hi! I'm Begiak, Apertium's IRC bot.")
     phenny.say("I like to sit around on #apertium and be helpful by letting everyone know about Git commits (and a few other things), and by responding to commands.")
-    phenny.say("Check out http://wiki.apertium.org/wiki/Begiak for more info.")
+    phenny.say("Check out https://wiki.apertium.org/wiki/Begiak for more info.")
 begiak.commands = ['begiak', 'about', 'info']
 begiak.priority = 'high'
 begiak.example = '.begiak'

@@ -14,7 +14,7 @@ class TestHead(unittest.TestCase):
 
     def setUp(self):
         self.phenny = MagicMock(nick='phenny')
-        self.phenny.config.host = 'irc.freenode.net'
+        self.phenny.config.host = 'irc.oftc.net'
 
         head.setup(self.phenny)
         self.input = MagicMock(sender='#phenny', nick='tester')

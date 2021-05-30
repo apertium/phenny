@@ -15,7 +15,7 @@ def help(phenny, input):
     try:
         helpurl = phenny.config.helpurl
     except AttributeError:
-        helpurl = "http://wiki.apertium.org/wiki/Begiak"
+        helpurl = "https://wiki.apertium.org/wiki/Begiak"
 
     commands = [func for priority, commands in phenny.commands.items()
             for regex, funcs in commands.items() for func in funcs]

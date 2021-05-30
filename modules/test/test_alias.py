@@ -14,7 +14,7 @@ class TestAlias(unittest.TestCase):
         self.input = MagicMock()
         self.input2 = MagicMock()
         self.phenny.nick = 'phenny'
-        self.phenny.config.host = 'irc.freenode.net'
+        self.phenny.config.host = 'irc.oftc.net'
 
     def create_alias(self, aliasName, input):
         self.input.group = lambda x: ['', 'add', aliasName][x]

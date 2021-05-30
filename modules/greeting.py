@@ -41,7 +41,7 @@ def greeting(phenny, input):
             opted_out_of_m.append(row[0])
 
     if "[m]" in input.nick and not input.nick in opted_out_of_m:
-        hint = "Please consider removing [m] from your IRC nick. See http://wiki.apertium.org/wiki/IRC/Matrix#Remove_.5Bm.5D_from_your_IRC_nick for details. Reply .dismiss to prevent this message from appearing again."
+        hint = "Please consider removing [m] from your IRC nick. See https://wiki.apertium.org/wiki/IRC/Matrix#Remove_.5Bm.5D_from_your_IRC_nick for details. Reply .dismiss to prevent this message from appearing again."
         phenny.msg(input.nick, input.nick + ": " + hint)
 
     if input.sender.casefold() not in phenny.config.greetings.keys():

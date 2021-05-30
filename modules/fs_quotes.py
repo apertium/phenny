@@ -47,13 +47,13 @@ from modules import more
 
 topics = {"particles": "\"particle\" stands for \"defeat\" -spectie",
 	"installing apertium": "try \"installing apertium on <operating system>\"",
-	"installing apertium on ubuntu": "http://wiki.apertium.org/wiki/Apertium_on_Ubuntu",
-	"installing apertium on linux": "http://wiki.apertium.org/wiki/Apertium_on_Ubuntu",
-	"installing apertium on windows": "http://wiki.apertium.org/wiki/Apertium_on_Windows",
-	"google summer of code": "http://wiki.apertium.org/wiki/Google_Summer_of_Code",
-	"gsoc": "http://wiki.apertium.org/wiki/Google_Summer_of_Code",
-	"spectie": "http://wiki.apertium.org/wiki/User:Francis_Tyers",
-	"firespeaker": "http://wiki.apertium.org/wiki/User:Firespeaker",
+	"installing apertium on ubuntu": "https://wiki.apertium.org/wiki/Apertium_on_Ubuntu",
+	"installing apertium on linux": "https://wiki.apertium.org/wiki/Apertium_on_Ubuntu",
+	"installing apertium on windows": "https://wiki.apertium.org/wiki/Apertium_on_Windows",
+	"google summer of code": "https://wiki.apertium.org/wiki/Google_Summer_of_Code",
+	"gsoc": "https://wiki.apertium.org/wiki/Google_Summer_of_Code",
+	"spectie": "https://wiki.apertium.org/wiki/User:Francis_Tyers",
+	"firespeaker": "https://wiki.apertium.org/wiki/User:Firespeaker",
 	"zfe": "http://quotes.firespeaker.org/?who=zfe"
 	}
 

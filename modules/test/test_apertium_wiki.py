@@ -25,7 +25,7 @@ class TestApertiumWiki(unittest.TestCase):
             url_text = wiki.format_term(self.term)
 
         self.input.group = lambda x: [None, None, self.text, None][x]
-        self.url = 'http://wiki.apertium.org/wiki/%s' % url_text
+        self.url = 'https://wiki.apertium.org/wiki/%s' % url_text
 
     def check_snippet(self, output):
         self.assertIn(self.url, output)

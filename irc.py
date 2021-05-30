@@ -149,6 +149,7 @@ class Bot(asynchat.async_chat):
 
         self.proto.nick(self.nick)
         self.proto.user(self.user, '+iw', self.name)
+        logger.info("SASL stuff completed")
 
     def handle_close(self): 
         self.close()

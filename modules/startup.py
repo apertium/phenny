@@ -58,9 +58,11 @@ def startup(phenny, input):
         logger.info(phenny.config.serverpass)
 
     if hasattr(phenny.config, 'password'): 
+        logger.info("identifying with nickserv...")
         phenny.msg('NickServ', 'IDENTIFY %s' % phenny.config.password)
-    else:
-        afterauth(phenny, input)
+        logger.info("sent message to nickserv...")
+    
+    afterauth(phenny, input)
 
 startup.rule = r'(.*)'
 startup.event = '251'

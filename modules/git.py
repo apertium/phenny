@@ -456,8 +456,20 @@ auto_start.rule = '(.*)'
 auto_start.event = 'JOIN'
 auto_start.thread = False
 
+def manual_start(phenny, input):
+    phenny.reply("gonna try to setup_server and see if it crashes")
+    phenny.teardown()
+    setup_server(phenny)
+
+manual_start.name = "manual_start"
+manual_start.rule = ".manualstart"
+manual_start.thread = False
+
 
 def teardown(phenny):
+    phenny.say("TEARING DOWN SERVER!")
+    lock.release()
+    thread.stop()
     close_socket()
 
 

@@ -339,7 +339,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 repo_fullname = data['repository']['full_name']
                 fork = data['repository']['fork']
 
-                if ref != 'master' or fork:
+                if (ref != 'master' and ref != 'main') or fork:
                     try:
                         channels = config.branch_channels[repo_fullname][ref]
                     except:

@@ -11,7 +11,7 @@ class TestApertiumWiki(unittest.TestCase):
     def setUp(self):
         self.phenny = MagicMock()
         self.input = MagicMock()
-        self.phenny.channels = ["#apertium"]
+        self.phenny.channels = ['#apertium']
         self.term = None
         self.section = None
 
@@ -35,7 +35,7 @@ class TestApertiumWiki(unittest.TestCase):
 
     @catch_timeout
     def test_awik(self):
-        self.term = "Apertium Turkic"
+        self.term = 'Apertium Turkic'
         self.prepare()
 
         apertium_wiki.awik(self.phenny, self.input)
@@ -46,8 +46,8 @@ class TestApertiumWiki(unittest.TestCase):
 
     @catch_timeout
     def test_awik_fragment(self):
-        self.term = "Apertium Turkic"
-        self.section = "Translation pairs"
+        self.term = 'Apertium Turkic'
+        self.section = 'Translation pairs'
         self.prepare()
 
         apertium_wiki.awik(self.phenny, self.input)
@@ -58,32 +58,32 @@ class TestApertiumWiki(unittest.TestCase):
 
     @catch_timeout
     def test_awik_invalid(self):
-        self.term = "Apertium Turkic"
-        self.section = "Doner"
+        self.term = 'Apertium Turkic'
+        self.section = 'Doner'
         self.prepare()
 
         apertium_wiki.awik(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
 
-        message = "No '%s' section found." % self.section
+        message = 'No \'%s\' section found.' % self.section
         self.assertEqual(out, '"%s" - %s' % (message, self.url))
 
     @catch_timeout
     def test_awik_none(self):
-        self.term = "Ajgoajh"
+        self.term = 'Ajgoajh'
         self.prepare()
 
         apertium_wiki.awik(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
 
-        expected = "Can't find anything in the Apertium Wiki for \"%s\"."
+        expected = expected = 'Can\'t find anything in the Apertium Wiki for "%s".'
         self.assertEqual(out, expected % self.text)
 
     def test_logs_today(self):
         self.input.group = lambda x: [None, 'today'][x]
         apertium_wiki.logs(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
-        string_check = "Log at " in out
+        string_check = 'Log at ' in out
 
         if string_check:
             url = out[7:]
@@ -94,7 +94,7 @@ class TestApertiumWiki(unittest.TestCase):
         self.input.group = lambda x: [None, 'yesterday'][x]
         apertium_wiki.logs(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
-        string_check = "Log at " in out
+        string_check = 'Log at ' in out
 
         if string_check:
             url = out[7:]
@@ -105,7 +105,7 @@ class TestApertiumWiki(unittest.TestCase):
         self.input.group = lambda x: [None, 'last monday'][x]
         apertium_wiki.logs(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
-        string_check = "Log at " in out
+        string_check = 'Log at ' in out
 
         if string_check:
             url = out[7:]
@@ -117,7 +117,7 @@ class TestApertiumWiki(unittest.TestCase):
         self.input.group = lambda x: [None, '10/23/2018'][x]
         apertium_wiki.logs(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
-        string_check = "Log at " in out
+        string_check = 'Log at ' in out
 
         if string_check:
             url = out[7:]
@@ -129,7 +129,7 @@ class TestApertiumWiki(unittest.TestCase):
         self.input.group = lambda x: [None, '99/99/9999'][x]
         apertium_wiki.logs(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
-        string_check = "Log at " in out
+        string_check = 'Log at ' in out
 
         if string_check:
             url = out[7:]

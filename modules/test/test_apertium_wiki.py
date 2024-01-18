@@ -76,7 +76,7 @@ class TestApertiumWiki(unittest.TestCase):
         apertium_wiki.awik(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
 
-        expected = expected = 'Can\'t find anything in the Apertium Wiki for "%s".'
+        expected = 'Can\'t find anything in the Apertium Wiki for "%s".'
         self.assertEqual(out, expected % self.text)
 
     def test_logs_today(self):

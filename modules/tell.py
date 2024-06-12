@@ -29,11 +29,8 @@ def setup(self):
     loadReminders(self)
     alias.loadAliases(self)
 
-def f_remind(phenny, input, verb):
+def f_remind(phenny, tellee, msg, verb, input):
     teller = input.nick
-
-    # @@ Multiple comma-separated tellees? Cf. Terje, #swhack, 2006-04-15
-    tellee, msg = input.groups()
 
     aliases = alias.aliasGroupFor(teller)
 
@@ -71,14 +68,21 @@ def f_remind(phenny, input, verb):
     dumpReminders(phenny)
 
 def f_tell(phenny, input):
-    f_remind(phenny, input, 'tell')
+    phenny.say('{}: `begiak: ask`/`begiak: tell` is deprecated. Please use `.ask` or `.tell` in the future.'.format(input.nick))
+    f_remind(phenny, input.group()[0], input.groups()[1], 'tell', input)
 f_tell.rule = ('$nick', ['tell'], r'(\S+) (.*)')
 f_tell.thread = False
 
 def f_ask(phenny, input):
-    f_remind(phenny, input, 'ask')
+    phenny.say('{}: `begiak: ask`/`begiak: tell` is deprecated. Please use `.ask` or `.tell` in the future.'.format(input.nick))
+    f_remind(phenny, input.group()[0], input.groups()[1], 'ask', input)
 f_ask.rule = ('$nick', ['ask'], r'(\S+) (.*)')
 f_ask.thread = False
+
+def f_tell_dot(phenny, input):
+    f_remind(phenny, input.group().split(' ')[1], ' '.join(input.group().split(' ')[2:]), input.group().split(' ')[0][1:], input)
+f_tell_dot.commands = ['tell', 'inform', 'alert', 'notify', 'ask'] 
+f_tell_dot.thread = False
 
 def formatReminder(r, tellee, recipient=None):
     if not recipient:

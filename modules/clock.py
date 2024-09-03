@@ -240,16 +240,17 @@ def scrape_wiki_tz_database_time_zones(doc):
 
     for row in rows[1:]:
         column = 0
+        name = ''
 
         for cell in row.findall('td'):
             # issue with finding the column, fixing
-            if column == find_index_regex(column_names, "(^| )TZ( |$)"):
+            if column == find_index_regex(column_names, "(^| )TZ identifier( |$)"):
                 text = cell.find('a').text
                 text = text.replace('_', ' ').replace('−', '-')
 
                 name = text.split('/')[-1]
             # used to be UTC offset but I think complete names are necessary
-            elif column == find_index_regex(column_names, "(^| )UTC offset( |$)"):
+            elif column == find_index_regex(column_names, "(^| )SDT( |$)"):
                 text = cell.find('a').text
                 text = text.replace('_', ' ').replace('−', '-')
 
@@ -260,7 +261,7 @@ def scrape_wiki_tz_database_time_zones(doc):
 
             column += 1
 
-        if '+' in name or '-' in name:
+        if '+' in name or '-' in name or not name:
             continue
 
         data[name.upper()] = float(text)

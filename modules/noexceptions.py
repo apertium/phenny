@@ -14,7 +14,7 @@ def noexceptions(phenny, input):
    response = "NO EXCEPTIONS, %s!"
    phenny.say(response % whouser)
 
-noexceptions.rule = r'.*(?i)((no|any|most|some|other|many|lot of|few|several|certain|никак.*|нет) (exception|исключени)).*$'
+noexceptions.rule = r'(?i).*((no|any|most|some|other|many|lot of|few|several|certain|никак.*|нет) (exception|исключени)).*$'
 noexceptions.priority = 'low'
 
 def harglebargleP(phenny, input):
@@ -34,7 +34,7 @@ def bargle(phenny, input):
    if input != "hargle bargle" and input != "harglebargle":
       phenny.say("bargle!")
 
-bargle.rule = r'.*(?i)(hargle)((?![\s]*bargle).)*$'
+bargle.rule = r'(?i).*(hargle)((?![\s]*bargle).)*$'
 bargle.priority = 'low'
 
 def hargle(phenny, input):
@@ -42,7 +42,7 @@ def hargle(phenny, input):
    if input != "hargle bargle" and input != "harglebargle":
       phenny.say("HARGLE BARGLE!")
 
-hargle.rule = r'((?!hargle[\s]*).)*(?i)(bargle).*$'
+hargle.rule = r'(?i)((?!hargle[\s]*).)*(bargle).*$'
 hargle.priority = 'low'
 
 
@@ -53,7 +53,7 @@ def harglebargle(phenny, input):
 
 harglebargle.example = '.harglebargle firespeaker'
 harglebargle.priority = 'low'
-harglebargle.rule = r'.*(?i)(hargle[\s]*bargle).*$'
+harglebargle.rule = r'(?i).*(hargle[\s]*bargle).*$'
 
 if __name__ == '__main__':
    print(__doc__.strip())
@@ -62,7 +62,7 @@ def udmurt(phenny, input):
    """expresses joy over mention of Udmurt"""
    phenny.say("\o/ \o/ \o/ U D M U R T \o/ \o/ \o/")
 
-udmurt.rule = r'.*(?i)(udmurt).*$'
+udmurt.rule = r'(?i).*(udmurt).*$'
 udmurt.priority = 'low'
 
 def particles(phenny, input):
@@ -74,7 +74,7 @@ def particles(phenny, input):
    else:
       phenny.say("%s: %s" % (whouser, message))
 
-particles.rule = r'.*(?i)(particle|частиц|partikkel|pcle).*$'
+particles.rule = r'(?i).*(particle|частиц|partikkel|pcle).*$'
 particles.priority = 'low'
 
 def unsupervised(phenny, input):
@@ -86,7 +86,7 @@ def unsupervised(phenny, input):
    else:
       phenny.say("%s: %s" % (whouser, message))
 
-unsupervised.rule = r'.*(?i)(unsupervi(s|z)ed).*$'
+unsupervised.rule = r'(?i).*(unsupervi(s|z)ed).*$'
 unsupervised.priority = 'low'
 
 def nightnight(phenny, input):
@@ -98,7 +98,7 @@ def nightnight(phenny, input):
    else:
       phenny.say("%s, %s!" % (message, whouser))
 
-nightnight.rule = r'(.* )?(?i)nn(\.|\!|)$'
+nightnight.rule = r'(?i)(.* )?nn(\.|\!|)$'
 nightnight.priority = 'low'
 
 def uderp(phenny, input):
@@ -110,5 +110,5 @@ def uderp(phenny, input):
    else:
       phenny.say("%s, %s!" % (message, whouser))
 
-uderp.rule = r'.*(?i)(u_dep|u_derp)$'
+uderp.rule = r'(?i).*(u_dep|u_derp)$'
 uderp.priority = 'low'

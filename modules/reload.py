@@ -7,7 +7,8 @@ Licensed under the Eiffel Forum License 2.
 http://inamidst.com/phenny/
 """
 
-import imp
+import importlib.util
+import importlib.machinery
 import os
 import sys
 import time
@@ -41,7 +42,10 @@ def f_reload(phenny, input):
         return phenny.reply('Found %s, but not the source file' % name)
 
     module_control(phenny, module, 'teardown')
-    module = imp.load_source(name, path)
+    loader = importlib.machinery.SourceFileLoader(name, path)
+    spec = importlib.util.spec_from_file_location(name, path, loader=loader)
+    module = importlib.util.module_from_spec(spec)
+    loader.exec_module(module)
     phenny.modules[name] = module
     module_control(phenny, module, 'setup')
 

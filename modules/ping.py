@@ -22,7 +22,7 @@ greetings = ('Hi', 'Hey', 'Hello', 'What\'s kicking', 'What\'s the good word', '
 
 def countGuest(phenny, nick):
     global_filename = db_path(phenny, 'guests')
-    if not os.path.exists(global_filename): 
+    if not os.path.exists(global_filename):
         try: f = open(global_filename, 'w')
         except OSError: pass
         f.write('')
@@ -37,7 +37,7 @@ def countGuest(phenny, nick):
 def getGuests(phenny, input):
     if input.admin:
         global_filename = db_path(phenny, 'guests')
-        if not os.path.exists(global_filename): 
+        if not os.path.exists(global_filename):
             try: f = open(global_filename, 'r')
             except OSError: pass
             f.close()
@@ -55,7 +55,7 @@ getGuests.priority = 'low'
 getGuests.thread = False
 
 
-def hello(phenny, input): 
+def hello(phenny, input):
     global temporaryMessage
     global emptyHellos
     global greetings
@@ -76,13 +76,13 @@ def hello(phenny, input):
 
 #hello.rule = r'(?i)(hi|hello|hey|what\'s kickin[\'g]*|how you been|what\'s (.*)good(.*)|top o[\'f]* the mornin[\'g]*|what\'s hangin[\'g]*|yo|in the hood|in da hood|kaixo|zer moduz|с[әа]л[еао]м|wb) $nickname[ \t]*$'
 #strings = "(?i)(hi|hello|hey|what\'s kickin[\'g]*|how you been|what\'s (.*)good(.*)|top o[\'f]* the mornin[\'g]*|what\'s hangin[\'g]*|yo|in the hood|in da hood|kaixo|zer moduz|с[әа]л[еао]м|s[ae]l[ao]m|wb)"
-hello.rule = r'(?:$nickname[,:]* )?(?i)(hi|hello|hey|what\'s kickin[\'g]*|how you been|what\'s (.*)good(.*)|what\'s up|sup|(?:top o[\'f]* the )?mornin[\'g]*|what\'s hangin[\'g]*|yo|in the hood|in da hood|kaixo|zer moduz|с[әа]л[еао]м|s[ae]l[ao]m|wb|mitä kuuluu|როგორა ხარ|ինչպե՞ս ես|сайн байна уу|कैसे हो|como vai|привет|salut|n(?:в)орчӏами|nasılsın(?:ız)?)(?:[,]* $nickname)?[ \t!\.\?]*$'
+hello.rule = r'(?i)(?:$nickname[,:]* )?(hi|hello|hey|what\'s kickin[\'g]*|how you been|what\'s (.*)good(.*)|what\'s up|sup|(?:top o[\'f]* the )?mornin[\'g]*|what\'s hangin[\'g]*|yo|in the hood|in da hood|kaixo|zer moduz|с[әа]л[еао]м|s[ae]l[ao]m|wb|mitä kuuluu|როგორა ხარ|ինչպե՞ս ես|сайн байна уу|कैसे हो|como vai|привет|salut|n(?:в)орчӏами|nasılsın(?:ız)?)(?:[,]* $nickname)?[ \t!\.\?]*$'
 
-def interjection(phenny, input): 
+def interjection(phenny, input):
     phenny.say(input.nick + '!')
 interjection.rule = r'$nickname!'
 interjection.priority = 'high'
 interjection.thread = False
 
-if __name__ == '__main__': 
+if __name__ == '__main__':
     print(__doc__.strip())

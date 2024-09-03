@@ -8,3 +8,4 @@ coverage
 google-api-python-client
 sympy
 python-coveralls
+pyasynchat==1.0.4

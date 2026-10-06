@@ -440,7 +440,11 @@ def setup_server(phenny):
             return
 
         MyHandler.phenny = phenny
-        httpd = PortReuseTCPServer(("", PORT), MyHandler)
+        try:
+            httpd = PortReuseTCPServer(("", PORT), MyHandler)
+        except OSError as e:
+            logger.error("Could not start git hook server on port %s: %s", PORT, e)
+            return
         thread = Thread(target=httpd.serve_forever)
         thread.daemon = True
         thread.start()

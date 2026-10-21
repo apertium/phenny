@@ -26,7 +26,7 @@ class TestHs(unittest.TestCase):
         self.input.group.return_value = 'marchany'
         hs.hs(self.phenny, self.input)
         pattern = re.compile(
-            '^.* - http://search\.vt\.edu/search/person\.html\?person=\d+$',
+            r'^.* - http://search\.vt\.edu/search/person\.html\?person=\d+$',
             flags=re.UNICODE)
         out = self.phenny.reply.call_args[0][0]
         self.assertRegex(out, pattern)
@@ -36,7 +36,7 @@ class TestHs(unittest.TestCase):
         self.input.group.return_value = 'john'
         hs.hs(self.phenny, self.input)
         pattern = re.compile(
-            '^Multiple results found; try http://search\.vt\.edu/search/people\.html\?q=.*$',
+            r'^Multiple results found; try http://search\.vt\.edu/search/people\.html\?q=.*$',
             flags=re.UNICODE)
         out = self.phenny.reply.call_args[0][0]
         self.assertRegex(out, pattern)

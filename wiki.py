@@ -17,7 +17,7 @@ abbrs = [
 ] + list('ABCDEFGHIJKLMNOPQRSTUVWXYZ') + list('abcdefghijklmnopqrstuvwxyz')
 no_abbr = ''.join('(?<! ' + abbr + ')' for abbr in abbrs)
 breaks = re.compile('(%s)+' % '|'.join([
-    no_abbr + '[.!?](?:[ \n]|\[[0-9]+\]|$)',
+    no_abbr + '[.!?](?:[ \n]|\\[[0-9]+\\]|$)',
     '。', '｡', '．', '！', '？',
 ]))
 

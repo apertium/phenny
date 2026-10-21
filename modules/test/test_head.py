@@ -31,8 +31,9 @@ class TestHead(unittest.TestCase):
 
         mock_head.assert_called_once_with('https://vtluug.org')
         out = self.phenny.reply.call_args[0][0]
-        m = re.match('^200, text/html, utf-8, \d{4}\-\d{2}\-\d{2} '\
-                '\d{2}:\d{2}:\d{2} UTC, 1000 bytes, [0-9\.]+ s$', out, flags=re.UNICODE)
+        m = re.match((r'^200, text/html, utf-8, \d{4}\-\d{2}\-\d{2} ' +
+                      r'\d{2}:\d{2}:\d{2} UTC, 1000 bytes, [0-9\.]+ s$'),
+                     out, flags=re.UNICODE)
         self.assertTrue(m)
 
     def test_head_404(self, mock_head):

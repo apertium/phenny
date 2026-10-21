@@ -129,7 +129,7 @@ def scrape_wiki_codes_convert(doc):
         code = etree.tostring(row.findall('td')[4]).decode('utf-8')
         code = etree.fromstring(code[code.find('<a'):code.find('</a>')+4]).text
         if iso3code:
-            r = re.match("(.*) \+ .*", iso3code)
+            r = re.match(r"(.*) \+ .*", iso3code)
             if r:
                 iso3code = r.group(1)
             data[iso3code] = code

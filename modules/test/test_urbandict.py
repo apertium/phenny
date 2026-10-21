@@ -21,7 +21,7 @@ class TestUrbandict(unittest.TestCase):
         self.input.group.return_value = word
         urbandict.urbandict(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
-        m = re.match('^.* - http://www\.urbandictionary\.com/define\.php\?term=.*$',
+        m = re.match(r'^.* - http://www\.urbandictionary\.com/define\.php\?term=.*$',
                      out, flags=re.UNICODE)
         self.assertTrue(m)
 

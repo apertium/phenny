@@ -60,7 +60,7 @@ if __name__ == '__main__':
 
 def udmurt(phenny, input):
    """expresses joy over mention of Udmurt"""
-   phenny.say("\o/ \o/ \o/ U D M U R T \o/ \o/ \o/")
+   phenny.say(r"\o/ \o/ \o/ U D M U R T \o/ \o/ \o/")
 
 udmurt.rule = r'(?i).*(udmurt).*$'
 udmurt.priority = 'low'
@@ -103,7 +103,7 @@ nightnight.priority = 'low'
 
 def uderp(phenny, input):
    """when people talk about #u_dep"""
-   message = random.choice(['\o/ UD \o/', '（。々°） #u_dep', 'ᕕ(ᐛ)ᕗ #u_dep', 'universal derpendencies!', 'treegrams ftw!'])
+   message = random.choice([r'\o/ UD \o/', '（。々°） #u_dep', 'ᕕ(ᐛ)ᕗ #u_dep', 'universal derpendencies!', 'treegrams ftw!'])
    whouser = input.nick
    if not whouser:
       phenny.say(message)

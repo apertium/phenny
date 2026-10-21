@@ -317,7 +317,7 @@ npl.priority = 'high'
 
 
 def time_zone_convert(phenny, input_txt, to_user=None):
-    format_regex = re.compile("(\d*)([a-zA-Z\s,-]*)\sin\s([a-zA-z\s]*)")
+    format_regex = re.compile(r"(\d*)([a-zA-Z\s,-]*)\sin\s([a-zA-z\s]*)")
     if not input_txt:
         phenny.reply(tz.__doc__.strip())
         return

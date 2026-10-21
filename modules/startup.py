@@ -13,7 +13,7 @@ import time
 
 logger = logging.getLogger('phenny')
 
-def setup(phenny): 
+def setup(phenny):
     logger.info("Setting up phenny")
     # by clsn
     phenny.data = {}
@@ -31,7 +31,7 @@ def setup(phenny):
             timer = threading.Timer(refresh_delay, close, ())
             phenny.data['startup.setup.timer'] = timer
             phenny.data['startup.setup.timer'].start()
-            phenny.proto.ping(phenny.config.host)
+            phenny.ping(phenny.config.host)
         phenny.data['startup.setup.pingloop'] = pingloop
 
         def pong(phenny, input):
@@ -53,15 +53,15 @@ def startup(phenny, input):
     if phenny.data.get('startup.setup.pingloop'):
         phenny.data['startup.setup.pingloop']()
 
-    if hasattr(phenny.config, 'serverpass'): 
-        phenny.proto.pass_(phenny.config.serverpass)
+    if hasattr(phenny.config, 'serverpass'):
+        phenny.pass_(phenny.config.serverpass)
         logger.info(phenny.config.serverpass)
 
-    if hasattr(phenny.config, 'password'): 
+    if hasattr(phenny.config, 'password'):
         logger.info("identifying with nickserv...")
         phenny.msg('NickServ', 'IDENTIFY %s' % phenny.config.password)
         logger.info("sent message to nickserv...")
-    
+
     afterauth(phenny, input)
 
 startup.rule = r'(.*)'
@@ -73,8 +73,8 @@ def afterauth(phenny, input):
 
     logger.info('authed')
     # Cf. http://swhack.com/logs/2005-12-05#T19-32-36
-    for channel in phenny.channels: 
-        phenny.proto.join(channel)
+    for channel in phenny.channels:
+        phenny.join(channel)
         logger.info(channel)
 
     afterauth.event = None
@@ -84,5 +84,5 @@ afterauth.event = 'NOTICE'
 afterauth.priority = 'high'
 afterauth.thread = False
 
-if __name__ == '__main__': 
+if __name__ == '__main__':
     print(__doc__.strip())

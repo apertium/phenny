@@ -77,7 +77,7 @@ def greeting(phenny, input):
 
                     help_text = "You will need to register your nick with NickServ. Type /msg NickServ HELP for information on getting started with this."
                     phenny.msg(input.nick, help_text)
-                    phenny.proto.notice(input.nick, help_text)
+                    phenny.notice(input.nick, help_text)
 
                 phenny.greeting_count[nick] += 1
 

@@ -7,13 +7,14 @@ Licensed under the Eiffel Forum License 2.
 http://inamidst.com/phenny/
 """
 
+import asyncio
 import importlib
-import irc
 import logging
 import os
 import re
 import sys
 import threading
+import time
 import traceback
 import tools
 from tools import GrumbleError, decorate, rephrase_errors
@@ -52,14 +53,32 @@ def module_control(phenny, module, func):
     logger.error("Error during %s of %s module:\n%s" % (func, name, desc))
     return False
 
-class Phenny(irc.Bot):
+class Origin(object):
+    source = re.compile(r'([^!]*)!?([^@]*)@?(.*)')
+
+    def __init__(self, bot, source, args):
+        if not source:
+            source = ""
+        match = Origin.source.match(source)
+        self.nick, self.user, self.host = match.groups()
+
+        if len(args) > 1:
+            target = args[1]
+        else: target = None
+
+        mappings = {bot.nick: self.nick, None: None}
+        self.sender = mappings.get(target, target)
+
+class Phenny:
     def __init__(self, config):
-        args = (config.nick, config.name, config.channels, config.password)
-        irc.Bot.__init__(self, *args)
         self.config = config
         self.doc = {}
         self.stats = {}
+        self.nick = config.nick
+        self.channels = config.channels or []
         self.setup()
+        self.sending = threading.RLock()
+        self.stack = []
 
     def setup(self):
         self.variables = {}
@@ -111,6 +130,121 @@ class Phenny(irc.Bot):
             logger.warning("Couldn't find any modules")
 
         self.bind_commands()
+
+    def run(self, host, port=6667, ssl=False, ipv6=False, ca_certs=None,
+            ssl_context=None):
+        asyncio.run(self.main_loop(host, port, ssl))
+
+    def write(self, args, text=None):
+        def safe(arg):
+            if isinstance(arg, str):
+                arg = arg.encode('utf-8')
+            return re.sub(b' ?[\r\n]+', b' ', arg)
+        line = b' '.join([safe(arg) for arg in args])
+        if text:
+            line += b' :' + safe(text)
+        self.sending.acquire()
+        print('OUT:', line)
+        self.writer.write(line + b'\r\n')
+        self.sending.release()
+
+    def msg(self, recipient, text, target=None):
+        if target:
+            text = target + ': ' + text
+
+        # Cf. http://swhack.com/logs/2006-03-01#T19-43-25
+        if isinstance(text, str):
+            try: text = text.encode('utf-8')
+            except UnicodeEncodeError as error:
+                logger.error(str(error))
+                text = error.__class__ + ': ' + str(error)
+        if isinstance(recipient, str):
+            try: recipient = recipient.encode('utf-8')
+            except UnicodeEncodeError as error:
+                logger.error(str(error))
+                return
+
+        # Split long messages
+        if len(text) > tools.max_message_length:
+            for message in tools.break_up(text, max_count=3):
+                self.msg(recipient, message)
+            return
+
+        # No messages within the last 3 seconds? Go ahead!
+        # Otherwise, wait so it's been at least 0.8 seconds + penalty
+        if self.stack:
+            elapsed = time.time() - self.stack[-1][0]
+            if elapsed < 3:
+                penalty = float(max(0, len(text) - 50)) / 70
+                wait = 0.8 + penalty
+                if elapsed < wait:
+                    time.sleep(wait - elapsed)
+
+        # Loop detection
+        messages = [m[1:3] for m in self.stack[-10:]]
+        if messages.count((recipient, text)) >= 3:
+            text = '...'
+            if messages.count((recipient, text)) >= 3:
+                self.sending.release()
+                return
+
+        self.write(('PRIVMSG', recipient), text)
+        self.stack.append((time.time(), recipient, text))
+        self.stack = self.stack[-10:]
+
+    def handle_line(self, line):
+        print('IN:', line)
+        try:
+            line = line.decode('utf-8')
+        except UnicodeDecodeError:
+            line = line.decode('iso-8859-1')
+
+        if line.startswith(':'):
+            source, line = line[1:].split(' ', 1)
+        else:
+            source = None
+
+        if ' :' in line:
+            middle, trailing = line.split(' :', 1)
+            middle = middle.split()
+            args = tuple(middle + [trailing])
+            text = trailing
+        else:
+            middle, trailing = line.split(), None
+            args = tuple(middle)
+            text = ''
+
+        origin = Origin(self, source, args)
+        print(f'\t{origin.nick=}, {origin.user=}, {origin.host=}, {origin.sender=}, {args=}, {text=}')
+        self.dispatch(origin, args, text.rstrip())
+
+        if args[0] == 'PING':
+            self.write(('PONG', args[-1]))
+
+    def error(self, report):
+        logger.error(str(traceback.format_exc()))
+
+    async def main_loop(self, host, port, ssl):
+        self.reader, self.writer = await asyncio.open_connection(
+            host, port, ssl=ssl)
+
+        self.write(('NICK', self.config.nick))
+        self.write(('USER', self.config.nick, '+iw', self.config.name))
+        if hasattr(self.config, 'password'):
+            self.write(('PRIVMSG', 'NickServ'),
+                       'IDENTIFY %s' % self.config.password)
+        for channel in self.config.channels:
+            self.write(('JOIN', channel))
+
+        while True:
+            line = await self.reader.readline()
+            if not line:
+                break
+            self.handle_line(line)
+
+        self.writer.close()
+        await self.writer.wait_closed()
+        logger.info('Closed!')
 
     def register(self, module):
         # This is used by reload.py, hence it being methodised
@@ -294,6 +428,48 @@ class Phenny(irc.Bot):
                             self.stats[(func.name, source)] += 1
                         except KeyError:
                             self.stats[(func.name, source)] = 1
+
+    def join(self, channels, keys=None):
+        if isinstance(channels, list):
+            self.join(','.join(channels), keys)
+            return
+        if keys:
+            if isinstance(keys, list):
+                self.join(channels, ','.join(keys))
+                return
+            self.write(('JOIN', channels, keys))
+        else:
+            self.write(('JOIN', channels))
+
+    def nick(self, nickname):
+        self.write(('NICK', nickname))
+
+    def notice(self, msgtarget, message):
+        self.write(('NOTICE', msgtarget), message)
+
+    def part(self, channels, message=None):
+        if isinstance(channels, list):
+            self.part(','.join(channels), keys)
+            return
+        self.write(('PART', channels), message)
+
+    def pass_(self, password):
+        self.write(('PASS', password))
+
+    def ping(self, server1, server2=None):
+        self.write(('PING', server1), server2)
+
+    def pong(self, server1, server2=None):
+        self.write(('PONG', server1), server2)
+
+    def privmsg(self, msgtarget, message):
+        self.write(('PRIVMSG', msgtarget), message)
+
+    def quit(self, message=None):
+        self.write(('QUIT'), message)
+
+    def user(self, user, mode, realname):
+        self.write(('USER', user, mode, '_'), realname)
 
 if __name__ == '__main__':
     print(__doc__)

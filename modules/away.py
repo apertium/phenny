@@ -11,7 +11,6 @@ statuses = {"alan": "boom bitchezzzz"}
 def whereis(phenny, input):
 	"""Tells you nick's current status."""
 	whereis_nick = input.split(" ")[1]
-	print(input + " --> " + whereis_nick)
 	if (whereis_nick.casefold() in list(statuses.keys())):
 		phenny.reply(whereis_nick + " said: " + statuses[whereis_nick.casefold()])
 	else:
@@ -48,5 +47,5 @@ back.priority = 'low'
 back.thread = False
 
 
-if __name__ == '__main__': 
+if __name__ == '__main__':
     print(__doc__.strip())

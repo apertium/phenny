@@ -5,7 +5,7 @@ Author - mandarj
 """
 
 import os, sqlite3
-from datetime import datetime
+from datetime import datetime, UTC
 from modules import caseless_list
 from tools import db_path
 
@@ -26,7 +26,7 @@ def start_pester(phenny, input):
 
     c.execute('''SELECT * FROM to_pester WHERE pesteree=? AND pesterer=?''', [pesternick, inputnick])
     if c.fetchall() == []:
-        current_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        current_time = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
         c.execute('''INSERT INTO to_pester VALUES(?,?,?,?,?,?);''', [pesternick, inputnick, input.group(2), current_time, "", current_time])
         start_pester.conn.commit()
         msg = input.nick + ": I will start pestering " + input.group(1) + " " + input.group(2)
@@ -67,7 +67,7 @@ def pester(phenny, input):
             for pesterer in pesterers:
                 c.execute('''SELECT dismissed FROM to_pester WHERE pesteree=? AND pesterer=? AND reason=?''', (inputnick, pesterer, reason))
                 last_dismissed = c.fetchall()[0][0]
-                current_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+                current_time = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
                 c.execute('''SELECT created FROM to_pester WHERE pesteree=? AND pesterer=? AND reason=?''', (inputnick, pesterer, reason))
                 created_str = c.fetchall()[0][0]
                 if last_dismissed == "":
@@ -77,7 +77,7 @@ def pester(phenny, input):
                         last_pestered = datetime.strptime(last_pester_str, "%Y-%m-%d %H:%M:%S")
                     except ValueError:
                         pass
-                    delta = last_pestered - datetime.utcnow()
+                    delta = last_pestered - datetime.now(UTC)
                     difference = delta.total_seconds() / 60 # in minutes
                     if abs(difference) > phenny.config.minutes_to_pester:
                         msg = input.nick + ': (' + created_str + ') ' + pesterer + ' pesters you ' + reason
@@ -87,7 +87,7 @@ def pester(phenny, input):
                         pester.conn.commit()
                 else:
                     dismissed = datetime.strptime(last_dismissed, "%Y-%m-%d %H:%M:%S")
-                    delta = dismissed - datetime.utcnow()
+                    delta = dismissed - datetime.now(UTC)
                     difference = delta.total_seconds() / 60 # in minutes
                     if abs(difference) > phenny.config.pester_after_dismiss:
                         msg = input.nick + ': (' + created_str + ') ' + pesterer + ' pesters you ' + reason
@@ -107,7 +107,7 @@ def pesters_snooze(phenny, input):
     inputnick = input.nick.casefold()
     pesterernick = input.group(1).casefold()
 
-    current_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    current_time = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
     if c.execute('''SELECT * FROM to_pester WHERE pesteree=? AND pesterer=?''', [inputnick, pesterernick]).fetchall() == []:
         phenny.say(input.nick + ': You are not being pestered by ' + input.group(1))
     else:

@@ -114,16 +114,11 @@ class TestApertiumWiki(unittest.TestCase):
             self.assertTrue(string_check and out_check)
 
     def test_logs_good_date(self):
-        self.input.group = lambda x: [None, '10/23/2018'][x]
+        self.input.group = lambda x: [None, '10/23/2025'][x]
         apertium_wiki.logs(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
-        string_check = 'Log at ' in out
-
-        if string_check:
-            url = out[7:]
-            day_query = str(date(2018, 10, 23))
-            out_check = day_query in out
-        self.assertTrue(string_check and out_check)
+        self.assertIn('Log at ', out)
+        self.assertIn('2025-10-23', out)
 
     def test_logs_bad_date(self):
         self.input.group = lambda x: [None, '99/99/9999'][x]
@@ -141,5 +136,5 @@ class TestApertiumWiki(unittest.TestCase):
         self.input.group = lambda x: [None, None][x]
         apertium_wiki.logs(self.phenny, self.input)
         out = self.phenny.say.call_args[0][0]
-
-        self.assertTrue(('Log at ' in out) and (not out.endswith('.log')))
+        self.assertIn('Log at ', out)
+        self.assertNotRegex(out, r'\.log$')

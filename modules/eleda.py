@@ -40,7 +40,7 @@ def follow(phenny, input):
     try:
         apy_url = self.phenny.config.APy_url
     except:
-        apy_url = "http://apy.projectjj.com"
+        apy_url = 'https://beta.apertium.org/apy'
 
     response = json.loads(web.get(apy_url + '/listPairs'))
     pairs = response["responseData"]

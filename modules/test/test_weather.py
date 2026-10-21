@@ -64,7 +64,7 @@ class TestWeather(unittest.TestCase):
 
     @catch_timeout
     def test_notfound(self):
-        self.input.group.return_value = 'Hell'
+        self.input.group.return_value = 'Hell, Mars'
         weather.f_weather(self.phenny, self.input)
-        self.phenny.say.called_once_with('#phenny',
-                "No NOAA data available for that location.")
+        self.phenny.say.assert_called_once_with(
+            "No NOAA data available for that location.")

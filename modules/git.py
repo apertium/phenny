@@ -472,8 +472,10 @@ manual_start.thread = False
 
 def teardown(phenny):
     phenny.say("TEARING DOWN SERVER!")
-    lock.release()
-    thread.stop()
+    if lock.locked():
+        lock.release()
+    if thread is not None:
+        thread.join(timeout=0)
     close_socket()
 
 

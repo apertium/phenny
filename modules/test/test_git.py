@@ -40,7 +40,7 @@ class TestGit(unittest.TestCase):
         self.input.group = lambda x: [None, 'status'][x]
         git.gitserver(self.phenny, self.input)
         out = self.phenny.reply.call_args[0][0]
-        self.assertTrue("Server is down" in out) 
+        self.assertIn("Server is down", out)
 
     def test_gitserver_status_up(self):
         self.input.admin = False
@@ -49,7 +49,7 @@ class TestGit(unittest.TestCase):
         git.gitserver(self.phenny, self.input)
         out = self.phenny.reply.call_args[0][0]
         git.httpd = None
-        self.assertTrue("Server is up" in out)
+        self.assertIn("Server is up", out)
 
     def test_gitserver_status_down_admin(self):
         git.teardown(self.phenny)
@@ -57,7 +57,7 @@ class TestGit(unittest.TestCase):
         self.input.group = lambda x: [None, 'status'][x]
         git.gitserver(self.phenny, self.input)
         out = self.phenny.reply.call_args[0][0]
-        self.assertTrue("Server is down" in out) 
+        self.assertIn("Server is down", out)
 
     def test_gitserver_status_up_admin(self):
         self.input.admin = True
@@ -66,7 +66,7 @@ class TestGit(unittest.TestCase):
         git.gitserver(self.phenny, self.input)
         out = self.phenny.reply.call_args[0][0]
         git.httpd = None
-        self.assertTrue("Server is up" in out)
+        self.assertIn("Server is up", out)
 
     def test_gitserver_stop_on(self):
         self.input.admin = True
@@ -81,7 +81,8 @@ class TestGit(unittest.TestCase):
         git.teardown(self.phenny)
         git.gitserver(self.phenny, self.input)
         out = self.phenny.reply.call_args[0][0]
-        self.assertTrue("Server is already down" in out and not git.httpd) 
+        self.assertIn("Server is already down", out)
+        self.assertFalse(git.httpd)
 
     def test_gitserver_start_on(self):
         self.input.admin = True
@@ -89,7 +90,8 @@ class TestGit(unittest.TestCase):
         git.setup_server(self.phenny)
         git.gitserver(self.phenny, self.input)
         out = self.phenny.reply.call_args[0][0]
-        self.assertTrue("Server is already up" in out and git.httpd)
+        self.assertIn("Server is already up", out)
+        self.assertTrue(git.httpd)
 
     def test_gitserver_start_off(self):
         self.input.admin = True
@@ -103,5 +105,4 @@ class TestGit(unittest.TestCase):
         git.to_commit(self.phenny, self.input)
         out = self.phenny.reply.call_args[0][0]
         real_url = "https://github.com/apertium/lttoolbox/commit/93dd6c960b6e55d70db6f6704b1304e0e4101d49"
-        self.assertTrue(real_url in out)
-
+        self.assertIn(real_url, out)

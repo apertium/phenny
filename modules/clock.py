@@ -237,20 +237,22 @@ def scrape_wiki_tz_database_time_zones(doc):
     rows = table.find('tbody').findall('tr')
 
     column_names = [cell.text_content().strip().replace('*', '') for cell in rows[0].findall('th')]
+    ident_column = find_index_regex(column_names, "(^| )TZ identifier( |$)")
+    utc_offset_column = find_index_regex(column_names, "(^| )UTC offset±hh:mm( |$)")
 
-    for row in rows[1:]:
+    for row in rows[2:]:
         column = 0
         name = ''
 
         for cell in row.findall('td'):
             # issue with finding the column, fixing
-            if column == find_index_regex(column_names, "(^| )TZ identifier( |$)"):
+            if column == ident_column:
                 text = cell.find('a').text
                 text = text.replace('_', ' ').replace('−', '-')
 
                 name = text.split('/')[-1]
             # used to be UTC offset but I think complete names are necessary
-            elif column == find_index_regex(column_names, "(^| )SDT( |$)"):
+            elif column == utc_offset_column:
                 text = cell.find('a').text
                 text = text.replace('_', ' ').replace('−', '-')
 
@@ -301,6 +303,7 @@ def npl(phenny, input):
     client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     client.sendto(b'\x1b' + 47 * b'\0', ('ntp1.npl.co.uk', 123))
     data, address = client.recvfrom(1024)
+    client.close()
     if data:
         buf = struct.unpack('B' * 48, data)
         d = dec('0.0')
@@ -309,7 +312,7 @@ def npl(phenny, input):
         d -= dec(2208988800)
         a, b = str(d).split('.')
         f = '%Y-%m-%d %H:%M:%S'
-        result = datetime.datetime.fromtimestamp(d).strftime(f) + '.' + b[:6]
+        result = datetime.datetime.fromtimestamp(int(d)).strftime(f) + '.' + b[:6]
         phenny.say(result + ' - ntp1.npl.co.uk')
     else: phenny.say('No data received, sorry')
 npl.commands = ['npl']

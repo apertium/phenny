@@ -38,7 +38,7 @@ class TestClock(unittest.TestCase):
         clock.f_time(self.phenny, self.input)
         msgs = [
             "Acre Time: Sat, 02 Jun 2012 17:04:11",
-            "ASEAN Common Time: Sun, 03 Jun 2012 04:34:11",
+            "ASEAN Common Time: Sun, 03 Jun 2012 06:04:11",
             "ACT: Sun, 03 Jun 2012 08:04:11"
         ]
         self.phenny.reply.assert_called_once_with('; '.join(msgs), target=None)

@@ -18,7 +18,7 @@ class TestTell(unittest.TestCase):
         tell.setup(self.phenny)
 
     def create_reminder(self, teller):
-        timenow = datetime.datetime.utcnow().strftime('%d %b %Y %H:%MZ')
+        timenow = datetime.datetime.now(datetime.UTC).strftime('%d %b %Y %H:%MZ')
         self.phenny.reminders[teller] = [(teller, 'do', timenow, 'something')]
 
     def test_messageAlert(self):
@@ -57,9 +57,9 @@ class TestTell(unittest.TestCase):
         self.assertTrue(out in responses)
 
     def test_formatreminder(self):
-        dt = datetime.datetime.utcnow().strftime('%d %b %Y %H:%MZ')
+        dt = datetime.datetime.now(datetime.UTC).strftime('%d %b %Y %H:%MZ')
         ret = tell.formatReminder(['tests', 'ask', dt, 'to eat cake'], 'Testsworth', None)
 
-        dt = dt[len(datetime.datetime.utcnow().strftime('%d %b')) + 1:]
-        dt = dt.replace(datetime.datetime.utcnow().strftime('%Y '), '')
+        dt = dt[len(datetime.datetime.now(datetime.UTC).strftime('%d %b')) + 1:]
+        dt = dt.replace(datetime.datetime.now(datetime.UTC).strftime('%Y '), '')
         self.assertTrue(ret == 'Testsworth: %s <tests> ask Testsworth to eat cake' % dt)

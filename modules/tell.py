@@ -40,25 +40,25 @@ def f_remind(phenny, input, verb):
     tellee_original = tellee.rstrip('.,:;')
     tellee = tellee_original.lower()
 
-    if len(tellee) > 20: 
+    if len(tellee) > 20:
         return phenny.reply('That nickname is too long.')
 
-    timenow = datetime.datetime.utcnow().strftime('%d %b %Y %H:%MZ')
+    timenow = datetime.datetime.now(datetime.UTC).strftime('%d %b %Y %H:%MZ')
 
-    if tellee in aliases: 
+    if tellee in aliases:
         phenny.say('You can %s yourself that.' % verb)
     elif not tellee in (teller.lower(), phenny.nick.lower(), 'me'): # @@
         # @@ <deltab> and year, if necessary
         warn = False
-        if tellee_original not in phenny.reminders: 
+        if tellee_original not in phenny.reminders:
             phenny.reminders[tellee_original] = [(teller, verb, timenow, msg)]
-        else: 
-            # if len(phenny.reminders[tellee]) >= maximum: 
+        else:
+            # if len(phenny.reminders[tellee]) >= maximum:
             #     warn = True
             phenny.reminders[tellee_original].append((teller, verb, timenow, msg))
         # @@ Stephanie's augmentation
         response = "I'll pass that on when %s is around." % tellee_original
-        # if warn: response += (" I'll have to use a pastebin, though, so " + 
+        # if warn: response += (" I'll have to use a pastebin, though, so " +
         #                              "your message may get lost.")
 
         rand = random.random()
@@ -85,8 +85,8 @@ def formatReminder(r, tellee, recipient=None):
         recipient = tellee
     teller, verb, dt, msg = r
     template = "%s: %s <%s> %s %s %s"
-    today = datetime.datetime.utcnow().strftime('%d %b')
-    year = datetime.datetime.utcnow().strftime('%Y ')
+    today = datetime.datetime.now(datetime.UTC).strftime('%d %b')
+    year = datetime.datetime.now(datetime.UTC).strftime('%Y ')
     if dt.startswith(today):
         dt = dt[len(today)+1:]
     if year in dt:
@@ -102,7 +102,7 @@ def getReminders(phenny, channel, key, recipient):
     except KeyError: phenny.msg(channel, 'Er...')
     return lines
 
-def message(phenny, input): 
+def message(phenny, input):
     if not input.sender.startswith('#'): return
 
     tellee = input.nick
@@ -112,25 +112,25 @@ def message(phenny, input):
     reminders = []
     remkeys = list(reversed(sorted(phenny.reminders.keys())))
     for remkey in remkeys:
-        if not remkey.endswith('*') or remkey.endswith(':'): 
+        if not remkey.endswith('*') or remkey.endswith(':'):
             if remkey.casefold() in aliases:
                 reminders.extend(getReminders(phenny, channel, remkey, tellee))
-        elif tellee.casefold().startswith(remkey.casefold().rstrip('*:')): 
+        elif tellee.casefold().startswith(remkey.casefold().rstrip('*:')):
             reminders.extend(getReminders(phenny, channel, remkey, tellee))
 
-    for line in reminders[:maximum]: 
+    for line in reminders[:maximum]:
         if "**pm**" in line:
             line = line.replace("**pm**", "")
             phenny.msg(tellee, line)
         else:
             phenny.say(line)
 
-    if reminders[maximum:]: 
+    if reminders[maximum:]:
         phenny.say('Further messages sent privately')
-        for line in reminders[maximum:]: 
+        for line in reminders[maximum:]:
             phenny.msg(tellee, line)
 
-    if len(list(phenny.reminders.keys())) != remkeys: 
+    if len(list(phenny.reminders.keys())) != remkeys:
         dumpReminders(phenny)
 message.rule = r'(.*)'
 message.priority = 'low'
@@ -205,5 +205,5 @@ Usage: ".tells" for a summary of queued reminders; ".tells [show ]<nick/num>" fo
         phenny.reply("You don't have any tells queued.")
 tells.rule = r'\.tells(?:\s(rm|del|show|[\d\w]+)(?:\s([\d\w]+))?)?$'
 
-if __name__ == '__main__': 
+if __name__ == '__main__':
     print(__doc__.strip())

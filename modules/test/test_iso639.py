@@ -45,6 +45,8 @@ class TestISO639(unittest.TestCase):
         cls.phenny.config.host = 'irc.fakeserver.net'
         cls.phenny.nick = 'fakebot'
 
+        iso639.setup(cls.phenny)
+
     def reset_mock(self, *mocks):
         for mock in mocks:
             mock.reset_mock()

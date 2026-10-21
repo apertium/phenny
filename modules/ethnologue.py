@@ -107,7 +107,7 @@ def ethnologue(phenny, input):
         try:
             resp = web.get(url)
         except web.HTTPError as e:
-            phenny.say('Oh noes! Ethnologue responded with ' + str(e.code) + ' ' + e.msg)
+            phenny.say('Oh noes! Ethnologue responded with ' + str(e.response.status_code) + ' ' + e.response.reason)
             return
         h = html.document_fromstring(resp)
 

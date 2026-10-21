@@ -209,7 +209,7 @@ retrieve_commit_svn.rule = ('$nick', 'info(?: +(.*))')
 def pollsvn(phenny, input):
     global global_revisions, global_filename
     results = False
-    print("POLLING")
+    #print("POLLING")
     pollers = {}
     #phenny.say("OLD REVISION NUMBERS: " + str(global_revisions))
     for repo in phenny.config.svn_repositories:
@@ -245,7 +245,7 @@ def pollsvn(phenny, input):
                 if len(global_revisions) > 0:
                     print("dumping revisions")
                     dumpRevisions(global_filename, global_revisions)
-    print("POLLED")
+    #print("POLLED")
     return results
 
 

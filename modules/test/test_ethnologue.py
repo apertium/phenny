@@ -12,9 +12,9 @@ class TestEthnologue(unittest.TestCase):
         self.input.nick = "tester"
 
     def test_shorten_num(self):
-        self.assertTrue(ethno.shorten_num(994) == '994')
-        self.assertTrue(ethno.shorten_num(99999348) == '100M')
-        self.assertTrue(ethno.shorten_num(999348) == '999.3K')
+        self.assertEqual(ethno.shorten_num(994), '994')
+        self.assertEqual(ethno.shorten_num(99999348), '100M')
+        self.assertEqual(ethno.shorten_num(999348), '999.3K')
 
     def test_write_ethnologue_codes(self):
         raw = MagicMock()

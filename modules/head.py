@@ -19,6 +19,11 @@ from modules import apertium_wiki
 from modules import wikipedia
 from modules import wiktionary
 
+APERTIUM_URLS = [
+    r'.*\bapertium\.(org|com)(/.*)?',
+    r'.*\bapertium\.projectjj\.com(/.*)?',
+    r'.*\bgithub\.com/apertium(/.*)?'
+]
 
 # seconds until a URL title will be repeated if said multiple times
 TITLE_MAX_REPEAT_TIME = 300
@@ -107,6 +112,10 @@ def snarfuri(phenny, input):
         oldtime = phenny.recent_titles[uri]
 
         if nowtime - oldtime < TITLE_MAX_REPEAT_TIME:
+            return
+
+    for pat in APERTIUM_URLS:
+        if re.match(pat, uri):
             return
 
     phenny.recent_titles[uri] = nowtime

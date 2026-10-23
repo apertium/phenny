@@ -20,6 +20,12 @@ from modules import wikipedia
 from modules import wiktionary
 from bot import command, event
 
+APERTIUM_URLS = [
+    r'.*\bapertium\.(org|com)(/.*)?',
+    r'.*\bapertium\.projectjj\.com(/.*)?',
+    r'.*\bgithub\.com/apertium(/.*)?'
+]
+
 # seconds until a URL title will be repeated if said multiple times
 TITLE_MAX_REPEAT_TIME = 300
 
@@ -107,6 +113,10 @@ def note_and_snarf_uri(phenny, msg):
         oldtime = phenny.recent_titles[uri]
 
         if nowtime - oldtime < TITLE_MAX_REPEAT_TIME:
+            return
+
+    for pat in APERTIUM_URLS:
+        if re.match(pat, uri):
             return
 
     phenny.recent_titles[uri] = nowtime

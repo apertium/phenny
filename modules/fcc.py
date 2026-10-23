@@ -7,11 +7,13 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 from tools import GrumbleError
 import web
 import json
+from bot import command
 
-def fcc(phenny, input):
+@command('fcc')
+def fcc(phenny, msg):
     """.fcc <callsign> - Look up a callsign issued by the FCC."""
 
-    callsign = input.group(2)
+    callsign = msg.command_args
     if not callsign:
         phenny.say(".fcc <callsign> - Look up a callsign issued by the FCC.")
         return
@@ -26,7 +28,6 @@ def fcc(phenny, input):
     response = "{0} - {1} - {2}".format(data['current']['callsign'],
             data['name'], data['otherInfo']['ulsUrl'])
     phenny.say(response)
-fcc.rule = (['fcc'], r'(.*)')
 
 if __name__ == '__main__':
     print(__doc__.strip())

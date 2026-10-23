@@ -5,6 +5,7 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
 
 import random
+from bot import command
 STRONG_YES = [
             '45 seconds full throttle',
             'It is certain',
@@ -39,16 +40,13 @@ NONCOMMITAL = [
 
 QUOTES = STRONG_YES + TENTATIVE_YES + NEGATIVE + NONCOMMITAL
 
+@command('8ball', example='.8ball is begiak amazing?')
 def eightball(phenny, input):
     """.8ball - Magic 8-ball."""
-
 
     # black magic
     quote = random.choice(QUOTES)
     phenny.reply(quote)
-eightball.commands = ['8ball']
-eightball.name = '8ball'
-eightball.example = '.8ball is begiak amazing?'
 
 if __name__ == '__main__':
     print(__doc__.strip())

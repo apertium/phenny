@@ -16,6 +16,7 @@ import logging
 import math
 import random
 import time
+from bot import command, keyword
 
 logger = logging.getLogger('phenny')
 
@@ -40,59 +41,66 @@ def decrease_hunger(current_hunger, food_value):
     else: # linear increase
         return current_hunger + food_value
 
-def botsnack(phenny, input):
+hunger = 50
+last_tick = time.time()
+coolingdown = False
+
+@command('botsnack')
+def botsnack(phenny, msg):
     """.botsnack - Feed me a bot snack."""
+
+    global hunger, last_tick, coolingdown
 
     now = time.time()
 
     # 0. Handle cooldown.
     #    Check if the cooldown period has elapsed, if not, then
     #    ignore this invocation. Else reset to the default state
-    if botsnack.coolingdown:
-        if now - botsnack.coolingstarted > botsnack.coolingperiod:
+    if coolingdown:
+        if now - coolingstarted > coolingperiod:
             logger.debug("cooling down over, reseting")
-            botsnack.coolingdown = False
-            botsnack.hunger = 50.0
-            botsnack.last_tick = now
+            coolingdown = False
+            hunger = 50.0
+            last_tick = now
         else:
-            logger.debug("cooling down! %s < %s" %(now - botsnack.coolingstarted, botsnack.coolingperiod))
+            logger.debug("cooling down! %s < %s" %(now - coolingstarted, coolingperiod))
             return # ignore!
 
     # 1. Time has has passed, so the bot has gotten
     #    hungry. Lets increase his/her hunger proportionate
     #    to the amount of time that has passeed.
-    delta = now - botsnack.last_tick
-    old_hunger = botsnack.hunger
+    delta = now - last_tick
+    old_hunger = hunger
 
-    botsnack.hunger = increase_hunger(old_hunger, delta)
+    hunger = increase_hunger(old_hunger, delta)
 
-    logger.debug("hunger was %s, increased to %s" %(old_hunger, botsnack.hunger))
+    logger.debug("hunger was %s, increased to %s" %(old_hunger, hunger))
 
-    botsnack.last_tick = now
+    last_tick = now
 
     # 2. Eat some food. Send resposne
 
-    old_hunger = botsnack.hunger
-    botsnack.hunger = decrease_hunger(old_hunger, random.uniform(1,5))
-    logger.debug("hunger was %s, decreased to %s" %(old_hunger, botsnack.hunger))
+    old_hunger = hunger
+    hunger = decrease_hunger(old_hunger, random.uniform(1,5))
+    logger.debug("hunger was %s, decreased to %s" %(old_hunger, hunger))
 
-    if botsnack.hunger > 95: # special case to prevent abuse
+    if hunger > 95: # special case to prevent abuse
         phenny.say("Too much food!")
         phenny.do("explodes")
-        botsnack.coolingperiod = random.uniform(3,10)*60
-        botsnack.coolingstarted = now
-        botsnack.coolingdown = True
-    elif botsnack.hunger > 90:
+        coolingperiod = random.uniform(3,10)*60
+        coolingstarted = now
+        coolingdown = True
+    elif hunger > 90:
         messages = ["I don't think this will fit...", "Ugh, no more please", "Seriously, I can't eat anymore!", "/me shudders but downs the snack anyways"]
-    elif botsnack.hunger > 70:
+    elif hunger > 70:
         messages = ["Thanks, but that's enough", "If you insist"]
-    elif botsnack.hunger > 50:
+    elif hunger > 50:
         messages = ["Om nom nom", "Delicious, thanks!", "Yummy!", "Wow! That's delicious"]
-    elif botsnack.hunger > 30:
+    elif hunger > 30:
         messages = ["That really hit the spot!", "/me smacks lips", "Mmmmm!"]
-    elif botsnack.hunger > 10:
+    elif hunger > 10:
         messages = ["Awww yea, that was tasty", "/me munches rudely"]
-    elif botsnack.hunger > 1:
+    elif hunger > 1:
         messages = ["/me noms furiously", "I really needed that!"]
     else:
         messages = ["I'M STARVING. GIVE ME MORE!", "/me gnaws ravenously on the snack with a starved look"]
@@ -103,20 +111,16 @@ def botsnack(phenny, input):
     else:
         phenny.say(msg)
 
-botsnack.commands = ['botsnack']
-botsnack.priority = 'low'
-botsnack.hunger = 50.0
-botsnack.last_tick = time.time()
-botsnack.coolingdown = False
-
-def botslap(phenny, input):
+@command(['botslap', 'botsmack'])
+def botslap(phenny, msg):
     """tell me I'm being a bad bot"""
     messages = ["hides in corner", "eats own hat", "apologises", "stares at feet", "points at zfe", "didn't do anything", "doesn't deserve this", "hates you guys", "did it on purpose", "is an inconsistent sketchy little bot", "scurries off"]
     phenny.do(random.choice(messages))
 
-botslap.commands = ['botslap', 'botsmack']
-botslap.rule = r'''^(?:(?:$nickname[ ,:]?)\s+(you suck|I hate you|you ruin everything|you spoil all [themyour]*fun|bad|wtf|lame| [youare']*?stupid|silly)\s*$)|(?:.*?(you suck|I hate you|you ruin everything|you spoil all [themyour]*fun|bad|wtf|lame|[youare']*?stupid|silly)(?:[, ]? $nickname))'''
-botsnack.priority = 'low'
+@keyword(r'''^(?:(?:$nickname[ ,:]?)\s+(you suck|I hate you|you ruin everything|you spoil all [themyour]*fun|bad|wtf|lame| [youare']*?stupid|silly)\s*$)|(?:.*?(you suck|I hate you|you ruin everything|you spoil all [themyour]*fun|bad|wtf|lame|[youare']*?stupid|silly)(?:[, ]?))''')
+def botslap2(phenny, msg):
+    if phenny.nick in msg.text:
+        botslap(phenny, msg)
 
 if __name__ == '__main__':
     print(__doc__.strip())

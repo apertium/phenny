@@ -18,7 +18,7 @@ from web import REQUEST_TIMEOUT
 from modules import apertium_wiki
 from modules import wikipedia
 from modules import wiktionary
-
+from bot import command, event
 
 # seconds until a URL title will be repeated if said multiple times
 TITLE_MAX_REPEAT_TIME = 300
@@ -28,9 +28,10 @@ def setup(self):
     self.recent_titles = {}
 
 
-def head(phenny, input):
+@command('head', example='.head http://www.w3.org/')
+def head(phenny, msg):
     """Provide HTTP HEAD information."""
-    uri = input.group(1)
+    uri = msg.group(1)
     uri = (uri or '')
     if ' ' in uri:
         uri, header = uri.rsplit(' ', 1)
@@ -39,7 +40,7 @@ def head(phenny, input):
 
     if not uri and hasattr(phenny, 'last_seen_uri'):
         try:
-            uri = phenny.last_seen_uri[input.sender]
+            uri = phenny.last_seen_uri[msg.sender]
         except KeyError:
             return phenny.say('?')
 
@@ -82,24 +83,23 @@ def head(phenny, input):
         else:
             msg = 'There was no %s header in the response.' % header
             phenny.say(msg)
-head.commands = ['head']
-head.example = '.head http://www.w3.org/'
 
 
 r_title = re.compile(r'(?ims)<title[^>]*>(.*?)</title\s*>')
 r_entity = re.compile(r'&[A-Za-z0-9#]+;')
-r_url = r'((?:(?:https?:(?://)?)|w{3})[a-zA-Z0-9-._+]+(?::[0-9]+)?(?:/[a-zA-Z0-9-+_~/.,;&=?!#%]+?)?)\)?(?:$|\s+|(?:[.,:;](?: |$)))'
+r_url = re.compile(r'((?:(?:https?:(?://)?)|w{3})[a-zA-Z0-9-._+]+(?::[0-9]+)?(?:/[a-zA-Z0-9-+_~/.,;&=?!#%]+?)?)\)?(?:$|\s+|(?:[.,:;](?: |$)))')
 
-def noteuri(phenny, input):
-    uri = input.group(1)
+@event('*')
+def note_and_snarf_uri(phenny, msg):
+    if 'PRIVMSG' not in msg.args:
+        return
+    m = r_url.search(msg.text)
+    if not m:
+        return
+    uri = m.group(1)
     if not hasattr(phenny, 'last_seen_uri'):
         phenny.last_seen_uri = {}
-    phenny.last_seen_uri[input.sender] = uri
-noteuri.rule = r'.*?' + r_url
-noteuri.priority = 'low'
-
-def snarfuri(phenny, input):
-    uri = input.group(2)
+    phenny.last_seen_uri[msg.sender] = uri
 
     nowtime = time.time()
 
@@ -111,16 +111,12 @@ def snarfuri(phenny, input):
 
     phenny.recent_titles[uri] = nowtime
 
-    title = gettitle(phenny, input, uri)
+    title = gettitle(phenny, uri)
 
     if title:
-        phenny.msg(input.sender, title)
-snarfuri.rule = r'([^\.].*?)?' + r_url
-snarfuri.priority = 'low'
-snarfuri.thread = True
+        phenny.msg(msg.sender, title)
 
-
-def gettitle(phenny, input, uri):
+def gettitle(phenny, uri):
     if not ':' in uri:
         uri = 'http://' + uri
     uri = uri.replace('#!', '?_escaped_fragment_=')

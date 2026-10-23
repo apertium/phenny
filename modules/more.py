@@ -6,6 +6,7 @@ Author - mandarj
 
 import sqlite3
 from tools import break_up, calling_module, DatabaseCursor, db_path, max_message_length
+from bot import command, event
 
 def setup(self):
     self.more_db = db_path(self, 'more')
@@ -50,19 +51,21 @@ def add_messages(phenny, target, messages, tag=None):
         values = [(target, message, tag) for message in messages]
         cursor.executemany("INSERT INTO more (target, message, tag) VALUES (?, ?, ?)", values)
 
-def joinAlert(phenny, input):
-    if count_more(phenny, input.nick):
+@event('JOIN')
+def joinAlert(phenny, msg):
+    if count_more(phenny, msg.nick):
         phenny.reply('You have queued messages. Type ".more", and I\'ll read them out.')
-joinAlert.event = 'JOIN'
-joinAlert.rule = r'.*'
 
-def more(phenny, input):
+@command('more')
+def more(phenny, msg):
     ''''.more [N] [tag]' shows queued messages.
     Optional N: number of messages to show
     Optional tag: which messages to show (usually a module name)'''
 
-    count = int(input.group(1)) if input.group(1) else 1
-    tag = input.group(2)
+    count, tag = (msg.command_args_list + ['1', ''])[:2]
+    if not count.isdigit():
+        return
+    count = int(count)
 
     if count_more(phenny, input.nick, tag):
         show_more(phenny, input.nick, count, tag)
@@ -73,9 +76,6 @@ def more(phenny, input):
             phenny.reply("Only admins can use .more on channels.")
     else:
         phenny.reply("No more queued messages")
-
-more.name = 'more'
-more.rule = r'[.]more(?: ([1-9][0-9]*))?(?: (\S+))?'
 
 def count_more(phenny, target, tag=None):
     target = target.casefold()

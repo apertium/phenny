@@ -11,6 +11,8 @@ import datetime as dt
 import wiki
 import web
 
+from bot import command
+
 endpoints = {
     'api': 'https://wiki.apertium.org/api.php?action=query&list=search&srlimit=1&format=json&srsearch={0}',
     'url': 'https://wiki.apertium.org/wiki/{0}',
@@ -35,39 +37,19 @@ def apertium_wiki(phenny, origterm, to_nick=None):
     else:
         phenny.say(truncate(snippet, '"{}" - ' + url))
 
-
-def awik(phenny, input):
+@command('awik', priority='high', example='.awik Begiak or .awik Begiak -> nick or nick: .awik Begiak')
+def awik(phenny, msg):
     """Search for something on Apertium wiki or
     point another user to a page on Apertium wiki (supports pointing)"""
-    origterm = input.group(2)
-    to_nick = input.group(3)
-
-    if not origterm:
+    if not msg.command_args:
         phenny.say('Perhaps you meant ".wik Zen"?')
         return
+    apertium_wiki(phenny, msg.command_args, to_nick=msg.command_point)
 
-    apertium_wiki(phenny, origterm, to_nick=to_nick)
-
-
-awik.rule = r'\.(awik)\s(.*)'
-awik.example = '.awik Begiak or .awik point nick Begiak or .awik Begiak -> nick' ' or nick: .awik Begiak'
-awik.priority = 'high'
-awik.point = True
-
-
-def awik2(phenny, input):
-    nick, _, __, lang, origterm = input.groups()
-    apertium_wiki(phenny, origterm, nick)
-
-
-awik2.rule = r'(\S*)(:|,)\s\.(awik)(\.[a-z]{2,3})?\s(.*)'
-awik2.example = 'svineet: .awik Begiak'
-awik2.priority = 'high'
-
-
-def logs(phenny, input):
+@command(['log', 'logs'], priority='low', example='.logs, .logs last wednesday, .logs 10/12/2018')
+def logs(phenny, msg):
     """ Shows logs URL. """
-    date_query = input.group(1)
+    date_query = msg.command_args
 
     if date_query:
         date_query = date_query.lower().strip()
@@ -101,9 +83,3 @@ def logs(phenny, input):
                 raise ValueError  # case in which date does not have log
         except ValueError:
             phenny.say("I didn't understand that. Please use a date in the form MM/DD/YYYY.")
-
-
-
-logs.commands = ['logs', 'log']
-logs.priority = 'low'
-logs.example = '.logs, .logs last wednesday, .logs 10/12/2018'

@@ -14,6 +14,7 @@ import re
 from tools import truncate
 from modules import more
 import logging
+from bot import command
 
 logger = logging.getLogger('phenny')
 
@@ -140,7 +141,8 @@ def last_message(phenny, ml):
 
 syntax = 'Syntax: .{0} poll; .{0} last; .{0} last [{1}]'
 
-def list_report(phenny, input):
+@command(['mailinglist', 'ml'], thread=True)
+def list_report(phenny, msg):
     """.mailinglist poll - poll for new mailing list messages
     .mailinglist last <list>? - get the latest message in a list or all lists"""
 
@@ -150,18 +152,18 @@ def list_report(phenny, input):
 
     valid_syntax = False
 
-    if input.group(2):
-        if input.group(2) == "poll":
+    if msg.command_args:
+        if msg.command_args_list[0].lower() == 'poll':
             phenny.reply('Ok, polling.')
 
             if not check_mail(phenny):
                 phenny.reply('Sorry, no unread mailing list messages.')
 
             valid_syntax = True
-        elif input.group(2) == "last":
-            if input.group(3):
-                if input.group(3) in phenny.config.mailing_lists:
-                    phenny.reply(last_message(phenny, input.group(3)))
+        elif msg.command_args_list[0].lower() == 'last':
+            if len(msg.command_args_list) > 1:
+                if msg.command_args_list[1] in phenny.config.mailing_lists:
+                    phenny.reply(last_message(phenny, msg.command_args_list[1]))
                     valid_syntax = True
             else:
                 for i in phenny.config.mailing_lists:
@@ -171,9 +173,4 @@ def list_report(phenny, input):
 
     if not valid_syntax:
         names = sorted(phenny.config.mailing_lists.keys())
-        phenny.reply(syntax.format(input.group(1), ', '.join(names)))
-
-list_report.name = "mailing list reporter"
-list_report.rule = r'.(mailinglist|ml)(?:\s(poll|last(?:\s([\w-]+))?))?'
-list_report.priority = 'medium'
-list_report.thread = True
+        phenny.reply(syntax.format(msg.command, ', '.join(names)))

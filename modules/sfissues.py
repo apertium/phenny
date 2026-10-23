@@ -1,4 +1,5 @@
 import feedparser
+from bot import keyword
 
 def get_headlines(rss_url):
     tickets = []
@@ -7,14 +8,15 @@ def get_headlines(rss_url):
         tickets.append(ticket_item['title'])
     return tickets
 
-def bugs(phenny, input):
+@keyword('.*bugs!.*')
+def bugs(phenny, msg):
+    if phenny.nick not in msg.text:
+        return
     messages = []
     rep_messages = []
-    url = phenny.config.sf_issues_url 
+    url = phenny.config.sf_issues_url
     messages.extend(get_headlines(url))
     for items in messages:
         if items[0] != '#':
             rep_messages.append(items)
-    phenny.say('{}: {}'.format(input.nick, ', '.join(rep_messages)))
-
-bugs.rule = ('$nick', 'bugs!')
+    phenny.say('{}: {}'.format(msg.nick, ', '.join(rep_messages)))

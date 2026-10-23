@@ -5,6 +5,7 @@ import sqlite3
 import time
 from threading import Lock, Thread
 from tools import DatabaseCursor, db_path
+from bot import command, event
 
 lock = Lock()
 users = set()
@@ -31,8 +32,9 @@ def setup(self):
     cursor.close()
     connection.close()
 
-def greeting(phenny, input):
-    with lock: users.add(input.nick)
+@event('JOIN')
+def greeting(phenny, msg):
+    with lock: users.add(msg.nick)
     with DatabaseCursor(phenny.greeting_db) as cursor:
         cursor.execute('select nick from opted_out')
         rows = cursor.fetchall()
@@ -40,29 +42,29 @@ def greeting(phenny, input):
         for row in rows:
             opted_out_of_m.append(row[0])
 
-    if "[m]" in input.nick and not input.nick in opted_out_of_m:
+    if "[m]" in msg.nick and not msg.nick in opted_out_of_m:
         hint = "Please consider removing [m] from your IRC nick. See https://wiki.apertium.org/wiki/IRC/Matrix#Remove_.5Bm.5D_from_your_IRC_nick for details. Reply .dismiss to prevent this message from appearing again."
-        phenny.msg(input.nick, input.nick + ": " + hint)
+        phenny.msg(msg.nick, msg.nick + ": " + hint)
 
-    if input.sender.casefold() not in phenny.config.greetings.keys():
+    if msg.sender.casefold() not in phenny.config.greetings.keys():
         return
 
     time.sleep(phenny.config.greet_delay)
 
-    if input.nick not in users:
+    if msg.nick not in users:
         return
 
-    greetingmessage = phenny.config.greetings[input.sender.casefold()]
-    greetingmessage = greetingmessage.replace("%name", input.nick)
-    greetingmessage = greetingmessage.replace("%channel", input.sender)
+    greetingmessage = phenny.config.greetings[msg.sender.casefold()]
+    greetingmessage = greetingmessage.replace("%name", msg.nick)
+    greetingmessage = greetingmessage.replace("%channel", msg.sender)
 
-    nick = input.nick.casefold()
+    nick = msg.nick.casefold()
 
     with DatabaseCursor(phenny.greeting_db) as cursor:
         cursor.execute("SELECT * FROM special_nicks WHERE nick = ?", (nick,))
 
         try:
-            phenny.msg(input.nick, input.nick + ": " + str(cursor.fetchone()[0]))
+            phenny.msg(msg.nick, msg.nick + ": " + str(cursor.fetchone()[0]))
             return
         except TypeError:
             pass
@@ -76,106 +78,72 @@ def greeting(phenny, input):
                     phenny.greeting_count[nick] = 0
 
                     help_text = "You will need to register your nick with NickServ. Type /msg NickServ HELP for information on getting started with this."
-                    phenny.msg(input.nick, help_text)
-                    phenny.notice(input.nick, help_text)
+                    phenny.msg(msg.nick, help_text)
+                    phenny.notice(msg.nick, help_text)
 
                 phenny.greeting_count[nick] += 1
 
                 if math.log2(phenny.greeting_count[nick]) % 1 == 0:
-                    phenny.msg(input.nick, greetingmessage)
+                    phenny.msg(msg.nick, greetingmessage)
 
-greeting.event = "JOIN"
-greeting.priority = 'low'
-greeting.rule = r'(.*)'
+@event('QUIT')
+def quitting(phenny, msg):
+    with lock: users.discard(msg.nick)
 
-def quitting(phenny, input):
-    with lock: users.discard(input.nick)
+@event('PART')
+def parting(phenny, msg):
+    with lock: users.discard(msg.nick)
 
-quitting.event = "QUIT"
-quitting.rule = r'(.*)'
+@event('KICK')
+def kicked(phenny, msg):
+    with lock: users.discard(msg.args[2])
 
-def parting(phenny, input):
-    with lock: users.discard(input.nick)
-
-parting.event = "PART"
-parting.rule = r'(.*)'
-
-def kicked(phenny, input):
-    with lock: users.discard(input.args[2])
-
-kicked.event = "KICK"
-kicked.rule = r'(.*)'
-
-def nickchange(phenny, input):
+@event('NICK')
+def nickchange(phenny, msg):
     with lock:
-        users.discard(input.nick)
-        users.add(input.args[1])
+        users.discard(msg.nick)
+        users.add(msg.args[1])
 
-nickchange.event = "NICK"
-nickchange.rule = r'(.*)'
-
-def greeting_add(phenny, input):
-    if not input.admin:
-        phenny.reply("You have insufficient privelleges to use this command.")
+@command('greeting', admin=True)
+def greeting(phenny, msg):
+    if ' ' not in msg.command_args:
         return
+    mode, name = msg.command_args.split(' ', 1)
+    if mode.lower() == 'add':
+        if ' ' not in name:
+            return
+        name, message = name.split(' ', 1)
+        sqlite_data = {
+            'channel': msg.sender,
+            'nick': name.lower(),
+            'message': message,
+        }
+        with DatabaseCursor(phenny.greeting_db) as cursor:
+            cursor.execute(
+                '''insert or replace into special_nicks
+                (channel, nick, message)
+                values(:channel, :nick, :message);''', sqlite_data)
+            cursor.execute('update special_nicks set message=:message where channel=:channel and nick=:nick', sqlite_data)
 
-    if input.group(2) is None:
-        phenny.reply("You haven't specified a name and message.")
-        return
-    elif len(input.group(2).split(" ")) < 2:
-        phenny.reply("You haven't specified a message.")
-        return
+        phenny.reply("Successfully added " + name + " to the special greetings list.")
+    elif mode.lower == 'del':
+        with DatabaseCursor(phenny.greeting_db) as cursor:
+            cursor.execute("DELETE FROM special_nicks WHERE nick = ? AND channel = ?", (name.lower(), msg.sender))
 
-    sqlite_data = {
-        'channel': input.sender,
-        'nick': input.group(2).split(" ")[0].casefold(),
-        'message': input.group(2).split(" ", 1)[1]
-    }
+            phenny.reply("Successfully deleted " + name + " from the special greetings list.")
 
-    with DatabaseCursor(phenny.greeting_db) as cursor:
-        cursor.execute('''insert or replace into special_nicks
-                          (channel, nick, message)
-                          values(:channel, :nick, :message);''', sqlite_data)
-        cursor.execute('update special_nicks set message=:message where channel=:channel and nick=:nick', sqlite_data)
-
-    phenny.reply("Successfully added " + input.group(2).split(" ", 1)[0] + " to the special greetings list.")
-
-greeting_add.rule = (['greeting add'], r'(.*)')
-greeting_add.name = 'greeting add'
-greeting_add.priority = 'low'
-
-def greeting_del(phenny, input):
-    if not input.admin:
-        phenny.reply("You have insufficient privelleges to use this command.")
-        return
-
-    if input.group(2) == None:
-        phenny.reply ("You haven't specified a name.")
-        return
-
-    with DatabaseCursor(phenny.greeting_db) as cursor:
-        cursor.execute("DELETE FROM special_nicks WHERE nick = ? AND channel = ?", (input.group(2).split(" ")[0].casefold(), input.sender))
-
-    phenny.reply("Successfully deleted " + input.group(2).split(" ", 1)[0] + " from the special greetings list.")
-greeting_del.rule = (['greeting del'], r'(.*)')
-greeting_del.name = 'greeting del'
-greeting_del.priority = 'low'
-
-def dismiss(phenny, input):
+@command('dismiss')
+def dismiss(phenny, msg):
     try:
         with DatabaseCursor(phenny.greeting_db) as cursor:
             cursor.execute(
                 'insert into opted_out (nick) values (?)',
-                (input.nick,)
+                (msg.nick,)
             )
         phenny.say('I won\'t tell you again.')
     except Exception as e:
         phenny.say('Sorry, an error occurred.')
         raise e
-
-dismiss.commands = ['dismiss']
-dismiss.priority = 'medium'
-
 
 if __name__ == '__main__':
     print(__doc__.strip())

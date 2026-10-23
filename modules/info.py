@@ -7,9 +7,12 @@ Licensed under the Eiffel Forum License 2.
 http://inamidst.com/phenny/
 """
 
+from bot import command, COMMANDS
+import collections
 
-def help(phenny, input):
-    command = input.group(1)
+@command(['help', 'command'])
+def help(phenny, msg):
+    command = msg.command_args
 
     # work out a help URL to display
     try:
@@ -20,7 +23,7 @@ def help(phenny, input):
     commands = [func for priority, commands in phenny.commands.items()
             for regex, funcs in commands.items() for func in funcs]
 
-    if input.sender.startswith('#'):
+    if msg.sender.startswith('#'):
         # channels get a brief message instead
         phenny.say(
             "Hey there, I'm a friendly bot for #apertium. Say \".help\" "
@@ -28,16 +31,18 @@ def help(phenny, input):
             "page at {helpurl}.".format(helpurl=helpurl))
     elif command:
         command = command.lower()
-        if command in phenny.doc:
-            phenny.say(phenny.doc[command][0].strip())
-            if phenny.doc[command][1]: 
-                phenny.say('e.g. ' + phenny.doc[command][1])
-        elif any(func.name == command for func in commands):
-            phenny.say("Sorry, I don't know how to use that command.")
+        if command in COMMANDS:
+            func = COMMANDS[command]
+            if func.__doc__:
+                phenny.say(func.__doc__.strip())
+                if hasattr(func, 'example'):
+                    phenny.say('e.g. ' + func.example)
+            else:
+                phenny.say("Sorry, I don't know how to use that command.")
         else:
             phenny.say("Sorry, I don't know that command.")
     else:
-        command_names = ', '.join(sorted(command.name for command in commands))
+        command_names = ', '.join(sorted(COMMANDS.keys()))
         phenny.say(
             "Hey there, I'm a friendly bot! Here are the commands I "
             "recognize: {commands}".format(commands=command_names))
@@ -49,56 +54,41 @@ def help(phenny, input):
             "talk to my owner, {owner}.".format(
             helpurl=helpurl,
             owner=phenny.config.owner))
-help.rule = (['help', 'command'], r'(.*)')
-help.priority = 'low'
 
-
-def stats(phenny, input): 
+@command('stats')
+def stats(phenny, msg):
     """Show information on command usage patterns."""
-    commands = {}
-    users = {}
-    channels = {}
+    commands = collections.Counter()
+    users = collections.Counter()
+    channels = collections.Counter()
 
-    ignore = set(['startup', 'message', 'noteuri', 'logger',
-        'snarfuri', 'measure', 'messageAlert'])
-    for (name, user), count in list(phenny.stats.items()): 
+    ignore = set(['startup', 'message', 'note_and_snarf_uri', 'logger',
+        'checkMessages', 'measure', 'messageAlert'])
+    for (name, user), count in list(phenny.stats.items()):
         if name in ignore: continue
         if not user: continue
+        if user == phenny.nick: continue
 
-        if not user.startswith('#'): 
-            try: users[user] += count
-            except KeyError: users[user] = count
-        else: 
-            try: commands[name] += count
-            except KeyError: commands[name] = count
-
-            try: channels[user] += count
-            except KeyError: channels[user] = count
-
-    comrank = sorted([(b, a) for (a, b) in commands.items()], reverse=True)
-    userank = sorted([(b, a) for (a, b) in users.items()], reverse=True)
-    charank = sorted([(b, a) for (a, b) in channels.items()], reverse=True)
+        if not user.startswith('#'):
+            users[user] += count
+        else:
+            commands[name] += count
+            channels[user] += count
 
     # most heavily used commands
     creply = 'most used commands: '
-    for count, command in comrank[:10]: 
-        creply += '%s (%s), ' % (command, count)
-    phenny.say(creply.rstrip(', '))
+    creply += ', '.join('%s (%s)' % x for x in commands.most_common(10))
+    phenny.say(creply)
 
     # most heavy users
     reply = 'power users: '
-    for count, user in userank[:10]: 
-        reply += '%s (%s), ' % (user, count)
-    phenny.say(reply.rstrip(', '))
+    reply += ', '.join('%s (%s)' % x for x in users.most_common(10))
+    phenny.say(reply)
 
     # most heavy channels
     chreply = 'power channels: '
-    for count, channel in charank[:3]: 
-        chreply += '%s (%s), ' % (channel, count)
-    phenny.say(chreply.rstrip(', '))
-stats.commands = ['stats']
-stats.priority = 'low'
-
+    chreply += ', '.join('%s (%s)' % x for x in channels.most_common(3))
+    phenny.say(chreply)
 
 if __name__ == '__main__':
     print(__doc__.strip())

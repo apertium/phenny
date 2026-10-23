@@ -19,6 +19,7 @@ import urllib.parse
 from modules import more
 from tools import generate_report, PortReuseTCPServer, truncate
 import web
+from bot import event, command
 
 logger = logging.getLogger('phenny')
 
@@ -449,26 +450,19 @@ def setup_server(phenny):
         thread.daemon = True
         thread.start()
 
-
-def auto_start(phenny, input):
-    if input.nick != phenny.nick:
+@event('JOIN')
+def auto_start(phenny, msg):
+    if msg.nick != phenny.nick:
         return
 
     if phenny.config.githook_autostart:
         setup_server(phenny)
-auto_start.rule = '(.*)'
-auto_start.event = 'JOIN'
-auto_start.thread = False
 
+@command('manualstart')
 def manual_start(phenny, input):
     phenny.reply("gonna try to setup_server and see if it crashes")
     phenny.teardown()
     setup_server(phenny)
-
-manual_start.name = "manual_start"
-manual_start.rule = ".manualstart"
-manual_start.thread = False
-
 
 def teardown(phenny):
     phenny.say("TEARING DOWN SERVER!")
@@ -478,8 +472,8 @@ def teardown(phenny):
         thread.join(timeout=0)
     close_socket()
 
-
-def gitserver(phenny, input):
+@command('gitserver')
+def gitserver(phenny, msg):
     '''Control git server. Possible commands are:
         .gitserver status (all users)
         .gitserver start (admins only)
@@ -487,8 +481,8 @@ def gitserver(phenny, input):
 
     global httpd
 
-    command = input.group(1).strip()
-    if input.admin:
+    command = msg.command_args
+    if phenny.is_admin(msg.nick):
         # we're admin
         # everwhere below, 'httpd' being None indicates that the server is not
         # running at the moment
@@ -518,18 +512,14 @@ def gitserver(phenny, input):
                              "(Only admins can shut it down)"))
         else:
             phenny.reply("Usage '.gitserver [status]'")
-# command metadata and invocation
-gitserver.name = "gitserver"
-gitserver.rule = ('.gitserver', '(.*)')
-gitserver.thread = False
 
-
-def to_commit(phenny, input):
+@command('to_commit')
+def to_commit(phenny, msg):
     api = "https://api.github.com/search/commits?q=%s"
     # currently experimental API
     headers = { "Accept": "application/vnd.github.cloak-preview" }
 
-    sha = input.group(1)
+    sha = msg.command_args
     commit_json = web.get(api % sha, headers=headers)
     data = json.loads(commit_json)
 
@@ -537,9 +527,6 @@ def to_commit(phenny, input):
     html_url = item["html_url"]
 
     phenny.reply(html_url)
-to_commit.name = "to_commit"
-to_commit.rule = '!commit ([0-9a-f]{7,40})'
-
 
 def get_commit_info(phenny, repo, sha):
     '''Get commit information for a given repository and commit identifier.'''
@@ -580,10 +567,9 @@ def get_commit_info(phenny, repo, sha):
     return (author, comment, modified_paths, added_paths, removed_paths,
             rev, date), url
 
-
-def get_recent_commit(phenny, input):
-    '''Get recent commit information for each repository Begiak monitors. This
-    command is called as 'begiak: recent'.'''
+@command('recent_commits', thread=True)
+def get_recent_commit(phenny, msg):
+    '''Get recent commit information for each repository Begiak monitors.'''
 
     for repo in phenny.config.git_repositories:
         html = web.get(phenny.config.git_repositories[repo] + '/commits')
@@ -594,25 +580,18 @@ def get_recent_commit(phenny, input):
         # the URL is truncated so that it has at least 6 sha characters
         url = url[:url.rfind('/') + 7]
         phenny.say(truncate(msg, '{} ' + url))
-# command metadata and invocation
-get_recent_commit.rule = ('$nick', 'recent')
-get_recent_commit.priority = 'medium'
-get_recent_commit.thread = True
 
-
-def retrieve_commit(phenny, input):
+@command('commit_info')
+def retrieve_commit(phenny, msg):
     '''Retreive commit information for a given repository and revision. This
     command is called as 'begiak: info <repo> <rev>'.'''
 
-    # get repo and rev with regex
-    data = input.group(1).split(' ')
-
-    if len(data) != 2:
+    if len(msg.command_args_list) != 2:
         phenny.reply("Invalid number of parameters.")
         return
 
-    repo = data[0]
-    rev = data[1]
+    repo = msg.command_args_list[0]
+    rev = msg.command_args_list[1]
 
     if repo in phenny.config.svn_repositories:
         # we don't handle SVN; see modules/svnpoller.py for that
@@ -630,5 +609,3 @@ def retrieve_commit(phenny, input):
     # the URL is truncated so that it has at least 6 sha characters
     url = url[:url.rfind('/') + 7]
     phenny.say(truncate(msg, '{} ' + url))
-# command metadata and invocation
-retrieve_commit.rule = ('$nick', 'info(?: +(.*))')

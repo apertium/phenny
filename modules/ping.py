@@ -9,6 +9,7 @@ import random
 import re
 import os
 from tools import db_path
+from bot import command, every_message
 
 # if emptyHellos is True, respond to anyone sending a greeting to no one
 # if emptyHellos is False, don't respond unless addressed
@@ -34,55 +35,45 @@ def countGuest(phenny, nick):
     with open(global_filename, 'w') as dbFile:
         dbFile.write(','.join(guests))
 
-def getGuests(phenny, input):
-    if input.admin:
-        global_filename = db_path(phenny, 'guests')
-        if not os.path.exists(global_filename):
-            try: f = open(global_filename, 'r')
-            except OSError: pass
-            f.close()
-        guests = {}
-        with open(global_filename, 'r') as dbFile:
-            guests = set(dbFile.read().strip().split(','))
-        phenny.say(str(guests))
-    else:
-        phenny.reply("That is an admin-only command.")
+@command('getGuests', admin=True)
+def getGuests(phenny, msg):
+    global_filename = db_path(phenny, 'guests')
+    if not os.path.exists(global_filename):
+        try: f = open(global_filename, 'r')
+        except OSError: pass
+        f.close()
+    guests = {}
+    with open(global_filename, 'r') as dbFile:
+        guests = set(dbFile.read().strip().split(','))
+    phenny.say(str(guests))
 
+@every_message
+def hello(phenny, msg):
+    m = re.search(r'(?i)(?:$nickname[,:]* )?(hi|hello|hey|what\'s kickin[\'g]*|how you been|what\'s (.*)good(.*)|what\'s up|sup|(?:top o[\'f]* the )?mornin[\'g]*|what\'s hangin[\'g]*|yo|in the hood|in da hood|kaixo|zer moduz|с[әа]л[еао]м|s[ae]l[ao]m|wb|mitä kuuluu|როგორა ხარ|ինչպե՞ս ես|сайн байна уу|कैसे हो|como vai|привет|salut|n(?:в)орчӏами|nasılsın(?:ız)?)(?:[,]* $nickname)?[ \t!\.\?]*$'.replace('$nickname', re.escape(phenny.nick)), msg.text)
+    if not m:
+        return
 
-getGuests.name = 'getGuests'
-getGuests.commands = ['getGuests']
-getGuests.priority = 'low'
-getGuests.thread = False
-
-
-def hello(phenny, input):
     global temporaryMessage
     global emptyHellos
     global greetings
 
     nickname = phenny.nick
     greeting = random.choice(greetings)
-    if not re.search(nickname, input) and temporaryMessage is not None:
+    if phenny.nick not in msg.text and temporaryMessage is not None:
         punctuation = random.choice(('.', '!', ';'))
-        phenny.say(greeting + ' ' + input.nick + punctuation +temporaryMessage)
-        countGuest(phenny, input.nick)
+        phenny.say(greeting + ' ' + msg.nick + punctuation +temporaryMessage)
+        countGuest(phenny, msg.nick)
     elif emptyHellos:
         punctuation = random.choice(('', '!'))
-        phenny.say(greeting + ' ' + input.nick + punctuation)
-    elif re.search(nickname, input):
+        phenny.say(greeting + ' ' + msg.nick + punctuation)
+    elif phenny.nick in msg.text:
         punctuation = random.choice(('', '!'))
-        phenny.say(greeting + ' ' + input.nick + punctuation)
+        phenny.say(greeting + ' ' + msg.nick + punctuation)
 
-
-#hello.rule = r'(?i)(hi|hello|hey|what\'s kickin[\'g]*|how you been|what\'s (.*)good(.*)|top o[\'f]* the mornin[\'g]*|what\'s hangin[\'g]*|yo|in the hood|in da hood|kaixo|zer moduz|с[әа]л[еао]м|wb) $nickname[ \t]*$'
-#strings = "(?i)(hi|hello|hey|what\'s kickin[\'g]*|how you been|what\'s (.*)good(.*)|top o[\'f]* the mornin[\'g]*|what\'s hangin[\'g]*|yo|in the hood|in da hood|kaixo|zer moduz|с[әа]л[еао]м|s[ae]l[ao]m|wb)"
-hello.rule = r'(?i)(?:$nickname[,:]* )?(hi|hello|hey|what\'s kickin[\'g]*|how you been|what\'s (.*)good(.*)|what\'s up|sup|(?:top o[\'f]* the )?mornin[\'g]*|what\'s hangin[\'g]*|yo|in the hood|in da hood|kaixo|zer moduz|с[әа]л[еао]м|s[ae]l[ao]m|wb|mitä kuuluu|როგორა ხარ|ինչպե՞ս ես|сайн байна уу|कैसे हो|como vai|привет|salut|n(?:в)орчӏами|nasılsın(?:ız)?)(?:[,]* $nickname)?[ \t!\.\?]*$'
-
-def interjection(phenny, input):
-    phenny.say(input.nick + '!')
-interjection.rule = r'$nickname!'
-interjection.priority = 'high'
-interjection.thread = False
+@every_message
+def interjection(phenny, msg):
+    if phenny.nick + '!' in msg.text:
+        phenny.say(msg.nick + '!')
 
 if __name__ == '__main__':
     print(__doc__.strip())

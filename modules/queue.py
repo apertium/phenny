@@ -9,6 +9,7 @@ import logging
 from modules import caseless_equal
 from modules import more
 from tools import GrumbleError, read_db, write_db
+from bot import command
 
 logger = logging.getLogger('phenny')
 
@@ -91,17 +92,18 @@ def get_indices(phenny, raw, queue_name, queue):
     indices = map(lambda x: get_index(phenny, x, queue_name, queue), raw)
     return tuple(indices)
 
-def queue(phenny, input):
+@command('queue')
+def queue(phenny, msg):
     """.queue- queue management."""
 
-    if not input.group(1):
+    if not msg.command_args:
         phenny.reply('Commands: ' + '; '.join(commands))
         return
 
-    command = input.group(1).lower()
+    command = msg.command_args_list[0].lower()
 
     if command == 'display':
-        search = input.group(2)
+        search = (msg.command_args_list + [None])[1]
 
         if not search:
             # there was no queue name given, display all of their names
@@ -121,13 +123,13 @@ def queue(phenny, input):
             # there was only one possible queue
             queue_name = queue_names[0]
             queue = phenny.queue_data[queue_name]
-            more.add_messages(phenny, input.sender, print_queue(queue_name, queue))
+            more.add_messages(phenny, msg.sender, print_queue(queue_name, queue))
             return
 
         for q in queue_names:
-            if caseless_equal(q.split(':')[0], input.nick) and caseless_equal(q[len(input.nick)+1:], search):
+            if caseless_equal(q.split(':')[0], msg.nick) and caseless_equal(q[len(msg.nick)+1:], search):
                 # current user owns queue with exact name
-                more.add_messages(phenny, input.sender, print_queue(q, phenny.queue_data[q]))
+                more.add_messages(phenny, msg.sender, print_queue(q, phenny.queue_data[q]))
                 return
             elif q[q.find(':')+1:] != search:
                 # filter queues with exact name
@@ -137,25 +139,25 @@ def queue(phenny, input):
             # only one user owns queue with exact name
             queue_name = queue_names[0]
             queue = phenny.queue_data[queue_name]
-            more.add_messages(phenny, input.sender, print_queue(queue_name, queue))
+            more.add_messages(phenny, msg.sender, print_queue(queue_name, queue))
         else:
             # the name was ambiguous, show a list of queues
             phenny.reply('Did you mean: ' + ', '.join(queue_names) + '?')
 
     elif command == 'new':
-        if not input.group(2):
+        if len(msg.command_args_list) == 1:
             phenny.reply('Syntax: .queue new <name> <item1>, <item2> ...')
             return
 
-        queue_name = input.nick + ':' + input.group(2)
-        owner = input.nick
+        queue_name = msg.nick + ':' + msg.command_args_list[1]
+        owner = msg.nick
 
         if queue_name in phenny.queue_data:
             phenny.reply('You already have a queue with that name! Pick a new name or delete the old one.')
             return
 
-        if input.group(3):
-            queue = input.group(3).split(',')
+        if len(msg.command_args_list) > 2:
+            queue = ','.join(msg.command_args_list[2:]).split(',')
             queue = list(map(lambda x: x.strip(), queue))
             phenny.queue_data[queue_name] = {'owner': owner, 'queue': queue}
             write_db(phenny, 'queue', phenny.queue_data)
@@ -167,17 +169,17 @@ def queue(phenny, input):
             phenny.reply('Empty queue {} created.'.format(queue_name))
 
     elif command in ['delete', 'remove', 'del', 'rm']:
-        if not input.group(2):
+        if len(msg.command_args_list) == 1:
             phenny.reply('Syntax: .queue delete <name>')
             return
 
-        queue_name, queue = get_queue(phenny.queue_data, input.group(2), input.nick)
+        queue_name, queue = get_queue(phenny.queue_data, msg.command_args_list[1], msg.nick)
 
         if not queue_name:
             phenny.reply('That queue wasn\'t found!')
             return
 
-        if not (caseless_equal(input.nick, queue['owner']) or input.admin):
+        if not (caseless_equal(msg.nick, queue['owner']) or msg.admin):
             phenny.reply('You aren\'t authorized to do that!')
             return
 
@@ -185,66 +187,64 @@ def queue(phenny, input):
         write_db(phenny, 'queue', phenny.queue_data)
         phenny.reply('Queue {} deleted.'.format(queue_name))
 
-    elif get_queue(phenny.queue_data, input.group(1), input.nick)[0]:
+    elif get_queue(phenny.queue_data, msg.command_args_list[0], msg.nick)[0]:
         # queue-specific commands
-        command = input.group(2).lower()
-        queue_name, queue = get_queue(phenny.queue_data, input.group(1), input.nick)
+        command = (msg.command_args_list + [None])[1]
+        queue_name, queue = get_queue(phenny.queue_data, msg.command_args_list[0], msg.nick)
 
         if not command:
-            more.add_messages(phenny, input.sender, print_queue(queue_name, queue))
+            more.add_messages(phenny, msg.sender, print_queue(queue_name, queue))
             return
 
         if command == 'random':
             phenny.reply('%s is the lucky one.' % repr(random.choice(queue['queue'])))
             return
 
-        if not (caseless_equal(queue['owner'], input.nick) or input.admin):
+        if not (caseless_equal(queue['owner'], msg.nick) or msg.admin):
             phenny.reply('You aren\'t the owner of this queue!')
             return
 
         if command == 'add':
-            if not input.group(3):
+            if len(msg.command_args_list) == 2:
                 phenny.reply('Syntax: .queue <name> add <item1>, <item2> ...')
                 return
 
-            new_queue = input.group(3).split(',')
-            new_queue = list(map(lambda x: x.strip(), new_queue))
+            new_queue = ','.join(msg.command_args_list[2:]).split(',')
             queue['queue'] += new_queue
             write_db(phenny, 'queue', phenny.queue_data)
-            more.add_messages(phenny, input.sender, print_queue(queue_name, queue))
+            more.add_messages(phenny, msg.sender, print_queue(queue_name, queue))
         elif command == 'swap':
-            if not input.group(3):
+            if len(msg.command_args_list) == 2:
                 phenny.reply('Syntax: .queue <name> swap <index/item1>, <index/item2>')
                 return
 
             try:
-                id1, id2 = get_indices(phenny, input.group(3), queue_name, queue)
+                id1, id2 = get_indices(phenny, msg.command_args_list[2], queue_name, queue)
             except ValueError:
                 return
 
             queue['queue'][id1], queue['queue'][id2] = queue['queue'][id2], queue['queue'][id1]
             write_db(phenny, 'queue', phenny.queue_data)
-            more.add_messages(phenny, input.sender, print_queue(queue_name, queue))
+            more.add_messages(phenny, msg.sender, print_queue(queue_name, queue))
         elif command in ['move', 'mv']:
-            if not (input.group(3) and ',' in input.group(3)):
-                phenny.reply('Syntax: .queue <name> move <source_index/item>, <target_index/item>')
+            if len(msg.command_args_list) != 4:
+                phenny.reply('Syntax: .queue <name> move <source_index/item> <target_index/item>')
                 return
 
             try:
-                id1, id2 = get_indices(phenny, input.group(3), queue_name, queue)
+                id1, id2 = get_indices(phenny, ','.join(msg.command_args_list[2:]), queue_name, queue)
             except ValueError:
                 return
 
             queue['queue'].insert(id2, queue['queue'].pop(id1))
             write_db(phenny, 'queue', phenny.queue_data)
-            more.add_messages(phenny, input.sender, print_queue(queue_name, queue))
+            more.add_messages(phenny, msg.sender, print_queue(queue_name, queue))
         elif command == 'replace':
-            if not (input.group(3) and ',' in input.group(3)):
-                phenny.reply('Syntax: .queue <name> replace <index/item>, <new_item>')
+            if len(msg.command_args_list) != 4:
+                phenny.reply('Syntax: .queue <name> replace <index/item> <new_item>')
                 return
 
-            old, new = input.group(3).split(',')
-            old = old.strip()
+            old, new = msg.command_args[2:]
 
             try:
                 old_id = int(old)
@@ -256,56 +256,54 @@ def queue(phenny, input):
 
             queue['queue'][old_id] = new.strip()
             write_db(phenny, 'queue', phenny.queue_data)
-            more.add_messages(phenny, input.sender, print_queue(queue_name, queue))
+            more.add_messages(phenny, msg.sender, print_queue(queue_name, queue))
         elif command in ['remove', 'delete', 'del', 'rm']:
-            if not input.group(3):
+            if len(msg.command_args_list) == 2:
                 phenny.reply('Syntax: .queue <name> remove <item>')
                 return
 
-            item = input.group(3)
+            item = msg.command_args_list[2]
 
             if item in queue['queue']:
                 queue['queue'].remove(item)
                 write_db(phenny, 'queue', phenny.queue_data)
-                more.add_messages(phenny, input.sender, print_queue(queue_name, queue))
+                more.add_messages(phenny, msg.sender, print_queue(queue_name, queue))
             elif search_queue(queue['queue'], item):
                 queue['queue'].pop(search_queue(queue['queue'], item))
                 write_db(phenny, 'queue', phenny.queue_data)
-                more.add_messages(phenny, input.sender, print_queue(queue_name, queue))
+                more.add_messages(phenny, msg.sender, print_queue(queue_name, queue))
             else:
                 phenny.reply('{} not found in {}'.format(item, queue_name))
         elif command == 'pop':
             try:
                 queue['queue'].pop(0)
                 write_db(phenny, 'queue', phenny.queue_data)
-                more.add_messages(phenny, input.sender, print_queue(queue_name, queue))
+                more.add_messages(phenny, msg.sender, print_queue(queue_name, queue))
             except IndexError:
                 phenny.reply('That queue is already empty.')
         elif command == 'reassign':
-            if not input.group(3):
+            if len(msg.command_args_list) == 2:
                 phenny.reply('Syntax: .queue <name> reassign <nick>')
                 return
 
             phenny.queue_data.pop(queue_name)
-            new_owner = input.group(3)
+            new_owner = msg.command_args_list[2]
             queue_name = new_owner + queue_name[queue_name.index(':'):]
             phenny.queue_data[queue_name] = {'owner': new_owner, 'queue': queue['queue']}
             write_db(phenny, 'queue', phenny.queue_data)
-            more.add_messages(phenny, input.sender, print_queue(queue_name, queue))
+            more.add_messages(phenny, msg.sender, print_queue(queue_name, queue))
         elif command in ['rename', 'ren']:
-            if not input.group(3):
+            if len(msg.command_args_list) == 2:
                 phenny.reply('Syntax: .queue <name> rename <new_name>')
                 return
 
             phenny.queue_data.pop(queue_name)
-            queue_name = queue['owner'] + ':' + input.group(3)
+            queue_name = queue['owner'] + ':' + msg.command_args_list[2]
             phenny.queue_data[queue_name] = queue
             write_db(phenny, 'queue', phenny.queue_data)
-            more.add_messages(phenny, input.sender, print_queue(queue_name, queue))
+            more.add_messages(phenny, msg.sender, print_queue(queue_name, queue))
     else:
-        if input.group(3):
+        if len(msg.command_args_list) > 2:
             phenny.reply('That\'s not a command. Commands: ' + '; '.join(commands))
         else:
             phenny.reply('That queue wasn\'t found!')
-
-queue.rule = r'\.queue(?:\s([\w:]+))?(?:\s([\w:]+))?(?:\s(.*))?'

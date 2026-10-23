@@ -11,6 +11,7 @@ import re
 import web
 import json
 import re, urllib.request, urllib.parse, urllib.error
+from bot import command
 
 uri = 'https://en.wiktionary.org/wiki/{0}?printable=yes'
 wikiapi = 'https://en.wiktionary.org/w/api.php?action=query&titles={0}&prop=revisions&rvprop=content&format=json'
@@ -170,42 +171,28 @@ def wikitionary_lookup(phenny, word, to_user=None, suggests=True):
             phenny.say("Couldn't find any definitions for %s." % word)
 
 
-def w(phenny, input):
+@command('w', example='.w bailiwick')
+def w(phenny, msg):
     """Look up a word on Wiktionary. (supports pointing)"""
-    if not input.group(2):
+    if not msg.command_args:
         return phenny.reply("Nothing to define.")
-    word = input.group(2)
-    to_nick = input.group(3)
+    word = msg.command_args
+    to_nick = msg.command_point
 
     wikitionary_lookup(phenny, word, to_user=to_nick)
 
-w.rule = r'\.(w)\s(.*)'
-w.example = '.w bailiwick'
-w.point = True
-
-
-def w2 (phenny, input):
-    nick, _, __, lang, word = input.groups()
-    wikitionary_lookup(phenny, word, to_user=nick)
-
-
-w2.rule = r'(\S*)(:|,)\s\.(w)(\.[a-z]{2,3})?\s(.*)'
-w2.example = 'svineet: .w Seppuku'
-
-
-def ety(phenny, input):
+@command('ety', example='.ety bailiwick')
+def ety(phenny, msg):
     """Find the etymology of a word."""
-    if not input.group(1):
+    if not msg.command_args:
         return phenny.reply("Nothing to define.")
-    word = input.group(1)
+    word = msg.command_args
     ety_val = ''
     ety_val = etymology(phenny, word)
     if not ety_val or ety_val == word + ' .':
         phenny.say("Couldn't get any etymology for %s." % word)
         return
     phenny.say(text(ety_val))
-ety.commands = ['ety']
-ety.example = '.ety bailiwick'
 
 if __name__ == '__main__':
     print(__doc__.strip())

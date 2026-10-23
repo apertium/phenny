@@ -112,6 +112,12 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         '''Handles POST requests for all hooks.'''
         receive_time = time.time()
 
+        if 'X-GitHub-Event' not in self.headers:
+            logger.debug('Discarding non-Github payload; headers: '+str(self.headers))
+            self.send_response(400)
+            self.end_headers()
+            return
+
         try:
             # read and decode data
             logger.debug('payload received; headers: '+str(self.headers))
@@ -133,7 +139,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             self.send_response(400)
             self.end_headers()
 
-            for channel in self.phenny.config.channels:
+            for admin in self.phenny.config.admins:
                 self.phenny.msg(channel, 'Webhook received malformed payload')
 
             return
@@ -461,7 +467,7 @@ def auto_start(phenny, msg):
 @command('manualstart')
 def manual_start(phenny, input):
     phenny.reply("gonna try to setup_server and see if it crashes")
-    phenny.teardown()
+    teardown(phenny)
     setup_server(phenny)
 
 def teardown(phenny):

@@ -26,7 +26,7 @@ def all_modules(file):
 __all__ = all_modules(__file__)
 
 
-class Watcher(object): 
+class Watcher(object):
     # Cf. http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/496735
     def __init__(self):
         self.child = os.fork()
@@ -48,8 +48,8 @@ class Watcher(object):
         self.kill()
         sys.exit()
 
-def run_phenny(config): 
-    if hasattr(config, 'delay'): 
+def run_phenny(config):
+    if hasattr(config, 'delay'):
         delay = config.delay
     else:
         delay = 20
@@ -59,10 +59,11 @@ def run_phenny(config):
         p = bot.Phenny(config)
         p.use_sasl = config.sasl
 
-        ssl_context = p.get_ssl_context(config.ca_certs)
+        #ssl_context = p.get_ssl_context(config.ca_certs)
 
-        if config.ssl_cert and config.ssl_key:
-            ssl_context.load_cert_chain(config.ssl_cert, config.ssl_key)
+        #if config.ssl_cert and config.ssl_key:
+        #    ssl_context.load_cert_chain(config.ssl_cert, config.ssl_key)
+        ssl_context = None
 
         p.run(config.host, config.port, config.ssl, config.ipv6, None,
               ssl_context)
@@ -72,7 +73,7 @@ def run_phenny(config):
     except Exception as error:
         logger.warning(str(error) + ' (in __init__.py)')
 
-    while True: 
+    while True:
         try:
             connect()
         except KeyboardInterrupt:
@@ -84,7 +85,7 @@ def run_phenny(config):
         logger.warning('Disconnected. Reconnecting in %s seconds...' % delay)
         time.sleep(delay)
 
-def run(config): 
+def run(config):
     t = threading.Thread(target=run_phenny, args=(config,))
     if hasattr(t, 'run'):
         t.run()

@@ -1,42 +1,32 @@
 import unittest
-from mock import MagicMock, Mock
-from modules import away
+from modules.test.command_test import CommandTest
 
-class TestQueue(unittest.TestCase):
-
-    def setUp(self):
-        self.phenny = MagicMock()
-        self.input = MagicMock()
-        self.input.count.return_value = 0 # Mock Attribute to provide the messages
-        self.input.nick = 'Testseen'
+class TestQueue(CommandTest, unittest.TestCase):
+    modules = ['away']
 
     def testWhereIs(self):
-        self.input = "whereis Testwhereis"
-        away.whereis(self.phenny, self.input)
-        self.phenny.reply.assert_called_once_with('Sorry, Testwhereis seems to be AWOL...')
+        self.check_response(
+            '.whereis Testwhereis', nick='blah',
+            expected='blah: Sorry, Testwhereis seems to be AWOL...')
 
     def testAway(self):
-        away.away(self.phenny, self.input)
-        self.input = "whereis Testseen"
-        away.whereis(self.phenny, self.input)
-        self.phenny.reply.assert_called_once_with("Testseen said: I'm away right now")
+        self.run_message('.away', nick='Testseen')
+        self.check_response('.whereis Testseen', nick='test',
+                            expected="test: Testseen said: I'm away right now")
 
     def testBack(self):
-        away.back(self.phenny, self.input)
-        self.input = "whereis Testseen"
-        away.whereis(self.phenny, self.input)
-        self.phenny.reply.assert_called_once_with("Testseen said: I'm around at the minute")
+        self.run_message('.back', nick='Testseen')
+        self.check_response('.whereis Testseen', nick='test',
+                            expected="test: Testseen said: I'm around at the minute")
 
     def testAwayBack(self):
-        away.away(self.phenny, self.input)
-        away.back(self.phenny, self.input)
-        self.input = "whereis Testseen"
-        away.whereis(self.phenny, self.input)
-        self.phenny.reply.assert_called_once_with("Testseen said: I'm around at the minute")
+        self.run_message('.away', nick='Testseen')
+        self.run_message('.back', nick='Testseen')
+        self.check_response('.whereis Testseen', nick='test',
+                            expected="test: Testseen said: I'm around at the minute")
 
     def testBackAway(self):
-        away.back(self.phenny, self.input)
-        away.away(self.phenny, self.input)
-        self.input = "whereis Testseen"
-        away.whereis(self.phenny, self.input)
-        self.phenny.reply.assert_called_once_with("Testseen said: I'm away right now")
+        self.run_message('.back', nick='Testseen')
+        self.run_message('.away', nick='Testseen')
+        self.check_response('.whereis Testseen', nick='test',
+                            expected="test: Testseen said: I'm away right now")

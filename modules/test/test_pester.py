@@ -1,18 +1,10 @@
 import unittest
-from mock import MagicMock
-from modules import pester
+from modules.test.command_test import CommandTest
 
-class TestPester(unittest.TestCase):
-    def setUp(self):
-        self.phenny = MagicMock()
-        self.phenny.nick = 'phenny'
-
-        self.input = MagicMock()
-        self.input.nick = "tester"
-        pester.setup(self.phenny)
+class TestPester(CommandTest, unittest.TestCase):
+    modules = ['pester']
 
     def test_startpester(self):
-        self.input.group = lambda x: ['', 'testuser', 'to study'][x]
-
-        pester.start_pester(self.phenny, self.input)
-        self.phenny.say.assert_called_once_with("tester: I will start pestering testuser to study")
+        self.check_response(
+            '.pester testuser to study', nick='tester',
+            expected='tester: I will start pestering testuser to study')

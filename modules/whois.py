@@ -12,6 +12,7 @@ import modules.seen as seen
 from threading import Lock, Thread
 from tools import DatabaseCursor, db_path
 from modules import caseless_list
+from bot import command
 
 lock = Lock()
 users = set()
@@ -73,15 +74,16 @@ def say_username(site, username, page_template, phenny):
     else:
         phenny.say('{}: {}'.format(site, username))
 
-def whois(phenny, input):
+@command('whois')
+def whois(phenny, msg):
     '''.whois <nick> - get info for registered nick; set data with .whoisset (see .help whoisset); admins or nick owners can drop with .whoisdrop <nick> '''
     bynick = True
     try:
-        if len(input.group().split(' ', 1)) < 2:
+        if not msg.command_args:
             phenny.say('usage: .whois <query>')
-            return 0
+            return
 
-        text = input.group().split(' ', 1)[1]
+        text = msg.command_args
         if text.lower() == phenny.nick.lower():
             phenny.say('{} (Wondrous Guardian of {}) | IRC (all timezones) | now'.format(phenny.nick, all_of(phenny.channels)))
             return 0
@@ -110,7 +112,7 @@ def whois(phenny, input):
 
             if user == None:
                 #can't find by nick; try by other things
-                text = input.group().split(' ', 1)[1]
+                text = msg.command_args
                 results = []
                 for entry in data:
                     e = [ text.lower() in record.lower() for record in [entry.nick, entry.github, entry.wiki, entry.gciname, entry.realname] if record is not None]
@@ -142,7 +144,7 @@ def whois(phenny, input):
             seen_string = ' | {}'.format(seen.seen(user.nick, phenny)['ago'])
         except seen.NotSeenError:
             seen_string = ''
-    
+
         realnamestring = ( ' ({})'.format(user.realname) if user.realname is not None else '')
 
         phenny.say('{}{}{}{}'.format(user.nick, realnamestring, locstring, seen_string))
@@ -159,19 +161,15 @@ def whois(phenny, input):
     except Exception as e:
         phenny.say('Sorry, an error occurred.')
         raise e
-whois.commands = ['whois']
-whois.priority = 'medium'
-whois.example = '.whois user'
-
 
 def text_or_none(string):
-    if string is 'x':
+    if string == 'x':
         return None
     else:
         return string
 
-
-def whoisset(phenny, input):
+@command('whoisset', example='.whoisset scoopgracie ScoopGracie utc-8:00 "Scoop Gracie" "Oregon, USA"')
+def whoisset(phenny, msg):
     '''.whoisset <github> <wiki> <timezone> <realname> <location> - set whois info;
 multiword values go in quotes;
 all values are optional; use x to omit a value;
@@ -179,7 +177,7 @@ gci/gsoc mentors append name on gci tasks/gsoc to end of command;
 gci/gsoc admins append 'admin' to end of command;
 gci/gsoc admins/mentors, pls remember to rerun this command without gci/gsoc info after gci/gsoc ends'''
     try:
-        text = shlex.split(input.group())
+        text = shlex.split(msg.text)
         if len(text) < 6:
             phenny.say('usage: .whoisset <github> <wiki> <timezone> <realname> <location>')
             return
@@ -199,29 +197,26 @@ gci/gsoc admins/mentors, pls remember to rerun this command without gci/gsoc inf
             except Exception:
                 pass
 
-            cursor.execute('''delete from users where nick = ?;''', (input.nick,))
-            cursor.execute('''insert into users values (?, ?, ?, ?, ?, ?, ?, ?, ?);''', (input.nick, text_or_none(text[1]), text_or_none(text[2]), text_or_none(text[3]), ( is_admin or is_mentor ) , (text[6] if is_mentor else None), is_admin, text_or_none(text[4]), text_or_none(text[5])))
+            cursor.execute('''delete from users where nick = ?;''', (msg.nick,))
+            cursor.execute('''insert into users values (?, ?, ?, ?, ?, ?, ?, ?, ?);''', (msg.nick, text_or_none(text[1]), text_or_none(text[2]), text_or_none(text[3]), ( is_admin or is_mentor ) , (text[6] if is_mentor else None), is_admin, text_or_none(text[4]), text_or_none(text[5])))
             cursor.close()
-        phenny.say('OK, I recorded all that. Type `.whois ' + input.nick + '` to verify it.')
+        phenny.say('OK, I recorded all that. Type `.whois ' + msg.nick + '` to verify it.')
     except Exception as e:
         phenny.say('Sorry, an error occurred.')
         phenny.say('Say `.help whoisset` in private chat with me to see usage.')
         raise e
-whoisset.commands = ['whoisset']
-whoisset.priority = 'medium'
-whoisset.example = '.whoisset scoopgracie ScoopGracie utc-8:00 "Scoop Gracie" "Oregon, USA"'
 
-
-def whoisdrop(phenny, input):
+@command('whoisdrop')
+def whoisdrop(phenny, msg):
     '''.whoisdrop <nick> - drop a record from the whois database (must be <nick> or a phenny admin)'''
     try:
         try:
-            text = input.group().split(' ')[1]
+            text = msg.command_args
         except IndexError:
             phenny.say('usage: .whoisdrop <nick>')
             return
 
-        if input.nick.casefold() in caseless_list(phenny.config.admins) or input.nick.lower() is text.lower():
+        if msg.nick.casefold() in caseless_list(phenny.config.admins) or msg.nick.lower() is text.lower():
             with DatabaseCursor(phenny.whois_db) as cursor:
                 make_table(cursor)
                 cursor.execute('''delete from users where nick = ?;''', (text,))
@@ -231,11 +226,6 @@ def whoisdrop(phenny, input):
     except Exception as e:
         phenny.say('Sorry, an error occurred.')
         raise e
-whoisdrop.commands = ['whoisdrop']
-whoisdrop.priority = 'medium'
-
-
-logger = logging.getLogger('phenny')
 
 if __name__ == '__main__':
     print(__doc__.strip())

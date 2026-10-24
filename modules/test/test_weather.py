@@ -3,16 +3,12 @@ test_weather.py - tests for the weather module
 author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
 import unittest
-from mock import MagicMock
-from modules import weather
+from modules.test.command_test import CommandTest
 from web import catch_timeout
 
 
-class TestWeather(unittest.TestCase):
-
-    def setUp(self):
-        self.phenny = MagicMock()
-        self.input = MagicMock()
+class TestWeather(CommandTest, unittest.TestCase):
+    modules = ['weather']
 
     @catch_timeout
     def test_locations(self):
@@ -42,29 +38,25 @@ class TestWeather(unittest.TestCase):
         ]
 
         for query, expected in locations:
-            result = weather.location(query)
+            result = self.get_module().location(query)
             check_location(result, expected)
 
     @catch_timeout
     def test_code_94110(self):
-        icao = weather.code(self.phenny, '94110')
+        icao = self.get_module().code(self.phenny, '94110')
         self.assertEqual(icao, 'KSFO')
 
     @catch_timeout
     def test_airport(self):
-        self.input.group.return_value = 'KIAD'
-        weather.f_weather(self.phenny, self.input)
-        self.assertTrue(self.phenny.say.called)
+        out = self.message_response('.weather KIAD')
+        self.assertTrue(out)
 
     @catch_timeout
     def test_place(self):
-        self.input.group.return_value = 'Blacksburg'
-        weather.f_weather(self.phenny, self.input)
-        self.assertTrue(self.phenny.say.called)
+        out = self.message_response('.weather KIAD')
+        self.assertTrue(out)
 
     @catch_timeout
     def test_notfound(self):
-        self.input.group.return_value = 'Hell, Mars'
-        weather.f_weather(self.phenny, self.input)
-        self.phenny.say.assert_called_once_with(
-            "No NOAA data available for that location.")
+        self.check_response('.weather Hell, Mars',
+                            "No NOAA data available for that location.")

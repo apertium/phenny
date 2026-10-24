@@ -1,31 +1,25 @@
 import unittest
-from mock import MagicMock
-from modules import botsnack
+from modules.test.command_test import CommandTest
 
-
-class TestBotsnack(unittest.TestCase):
-    def setUp(self):
-        self.phenny = MagicMock()
-        self.input = MagicMock()
+class TestBotsnack(CommandTest, unittest.TestCase):
+    modules = ['botsnack']
 
     def test_botsnack(self):
-        botsnack.botsnack(self.phenny, self.input)
-        self.assertTrue(self.phenny.say.called or self.phenny.do.called)
+        self.message_response('.botsnack')
 
     def test_botslap(self):
-        botsnack.botslap(self.phenny, self.input)
         messages = {"hides in corner", "eats own hat", "apologises", "stares at feet", "points at zfe",
                     "didn't do anything", "doesn't deserve this", "hates you guys", "did it on purpose",
                     "is an inconsistent sketchy little bot", "scurries off"}
-        out = self.phenny.do.call_args[0][0]
-        self.assertTrue(out in messages)
+        self.check_response('.botslap',
+                            [f'\x01ACTION {x}\x01' for x in messages])
 
     def test_increase(self):
         oldhunger = 12
-        newhunger = botsnack.increase_hunger(oldhunger, 5)
+        newhunger = self.get_module().increase_hunger(oldhunger, 5)
         self.assertTrue(oldhunger >= newhunger)
 
     def test_decrease(self):
         oldhunger = 12
-        newhunger = botsnack.decrease_hunger(oldhunger, 5)
+        newhunger = self.get_module().decrease_hunger(oldhunger, 5)
         self.assertTrue(oldhunger <= newhunger)

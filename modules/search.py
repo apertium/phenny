@@ -9,27 +9,28 @@ http://inamidst.com/phenny/
 
 import re
 import web
-import requests
 from tools import truncate
 from modules import more
-from web import catch_timeout, is_up, REQUEST_TIMEOUT
+import web
+from bot import command
 
 ddg_uri = 'https://api.duckduckgo.com/?format=json&pretty=1&q='
 suggest_uri = 'http://suggestqueries.google.com/complete/search?client=firefox&hl=en&q='
 
-def gsearch(phenny, input):
+@command('g')
+def gsearch(phenny, msg):
     phenny.reply('.g is deprecated. Try .search powered by Duck Duck Go instead.')
-gsearch.commands = 'g'
 
-def topics(phenny, input):
-    if not is_up('https://api.duckduckgo.com'):
+@command('topics')
+def topics(phenny, msg):
+    if not web.is_up('https://api.duckduckgo.com'):
         return phenny.say('Sorry, DuckDuckGo API is down.')
 
-    if not input.group(1):
+    if not msg.command_args:
         return phenny.reply('.topics about what?')
-    query = input.group(1)
+    query = msg.command_args
 
-    r = requests.get(ddg_uri + query, timeout=REQUEST_TIMEOUT).json()
+    r = web.api_call(ddg_uri + query)
     topics = r['RelatedTopics']
     if len(topics) == 0:
         return phenny.say('Sorry, no topics found.')
@@ -42,18 +43,18 @@ def topics(phenny, input):
             continue
     phenny.say(topics_list[0])
     phenny.reply('Check PM for more topics.')
-    more.add_messages(phenny, input.nick, topics_list[1:])
-topics.commands = ['topics']
+    more.add_messages(phenny, msg.nick, topics_list[1:])
 
-def search(phenny, input):
-    if not input.group(1):
+@command('search')
+def search(phenny, msg):
+    if not msg.command_args:
         return phenny.reply('.search for what?')
-    query = input.group(1)
+    query = msg.command_args
 
-    if not is_up('https://api.duckduckgo.com'):
+    if not web.is_up('https://api.duckduckgo.com'):
         return phenny.say('Sorry, DuckDuckGo API is down.')
 
-    r = requests.get(ddg_uri + query, timeout=REQUEST_TIMEOUT).json()
+    r = web.api_call(ddg_uri + query)
     try:
         answer = r['AbstractText']
         answer_url = r['AbstractURL']
@@ -67,31 +68,30 @@ def search(phenny, input):
     # Removes html tags, if exist
     answer = re.sub('<.+?>', '', answer)
     phenny.say(truncate(answer, '{} - ' + answer_url))
-search.commands = ['search']
 
-def suggest(phenny, input):
+@command('suggest')
+def suggest(phenny, msg):
     ''' Shows first 10 results from Google Suggestion API.'''
-    if not input.group(1):
+    if not msg.command_args:
         return phenny.reply("No query term.")
-    query = input.group(1)
-    answer = requests.get(suggest_uri + query)
-    suggestions = answer.json()[1][:10]
+    query = msg.command_args
+    answer = web.api_call(suggest_uri + query)
+    suggestions = answer[1][:10]
     phenny.reply(suggestions[0])
     phenny.reply('Check PM for more.')
-    more.add_messages(phenny, input.nick, suggestions[1:])
-suggest.commands = ['suggest']
+    more.add_messages(phenny, msg.nick, suggestions[1:])
 
-def lmgtfy(phenny, input):
-    if not input.group(1):
+@command('lmgtfy')
+def lmgtfy(phenny, msg):
+    if not msg.command_args:
         phenny.reply('.lmgtfy what f who?')
     try:
-        (who, what) = input.group(1).split(' ', 1)
+        (who, what) = msg.command_args.split(' ', 1)
         response = "%s: http://lmgtfy.com/?q=%s"
         what = web.quote(what)
         phenny.say(response % (who, what))
     except ValueError:
         phenny.reply('.lmgtfy what for who? (enter a nick and a query)')
-lmgtfy.commands = ['lmgtfy']
 
-if __name__ == '__main__': 
+if __name__ == '__main__':
     print(__doc__.strip())

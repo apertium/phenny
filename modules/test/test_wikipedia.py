@@ -3,47 +3,25 @@ test_wikipedia.py - tests for the wikipedia module
 author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
 import unittest
-from mock import MagicMock
-from modules import wikipedia
+from modules.test.command_test import CommandTest
 from web import catch_timeout
 import wiki
 
 
-class TestWikipedia(unittest.TestCase):
-
-    def setUp(self):
-        self.phenny = MagicMock()
-        self.input = MagicMock()
-
-        self.term = None
-        self.section = None
-
-    def prepare(self):
-        if self.section:
-            self.text = self.term + '#' + self.section
-            url_text = wiki.format_term(self.term) +\
-                '#' + wiki.format_section(self.section)
-        else:
-            self.text = self.term
-            url_text = wiki.format_term(self.term)
-
-        self.input.group = lambda x: [None, None, None, self.text, None][x]
-        self.url = 'https://en.wikipedia.org/wiki/%s' % url_text
+class TestWikipedia(CommandTest, unittest.TestCase):
+    modules = ['wikipedia']
 
     def check_snippet(self, output):
-        self.assertIn(self.url, output)
+        block = '\n'.join(output)
+        self.assertIn(self.url, block)
 
         for keyword in self.keywords:
-            self.assertIn(keyword, output)
+            self.assertIn(keyword, block)
 
     @unittest.skip('Wikipedia formatting has changed; needs new scraper')
     @catch_timeout
     def test_wik(self):
-        self.term = "Human back"
-        self.prepare()
-
-        wikipedia.wik(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
+        out = self.run_message('.wik Human Back')
 
         self.keywords = ['human', 'back', 'body', 'buttocks', 'neck']
         self.check_snippet(out)
@@ -51,35 +29,17 @@ class TestWikipedia(unittest.TestCase):
     @unittest.skip('Wikipedia formatting has changed; needs new scraper')
     @catch_timeout
     def test_wik_fragment(self):
-        self.term = "New York City"
-        self.section = "Climate"
-        self.prepare()
-
-        wikipedia.wik(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
+        out = self.run_message('.wik New York City#Climate')
 
         self.keywords = ['New York', 'climate', 'humid', 'subtropical']
         self.check_snippet(out)
 
     @catch_timeout
     def test_wik_invalid(self):
-        self.term = "New York City"
-        self.section = "Physics"
-        self.prepare()
-
-        wikipedia.wik(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
-
-        message = "No '%s' section found." % self.section
-        self.assertEqual(out, '"%s" - %s' % (message, self.url))
+        self.check_response('.wik New York City#Physics',
+                            '"No \'Physics\' section found." - https://en.wikipedia.org/wiki/New_York_City#Physics')
 
     @catch_timeout
     def test_wik_none(self):
-        self.term = "Ajgoajh"
-        self.prepare()
-
-        wikipedia.wik(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
-
-        expected = "Can't find anything in Wikipedia for \"%s\"."
-        self.assertEqual(out, expected % self.text)
+        self.check_response('.wik Ajgoajh',
+                            "Can't find anything in Wikipedia for \"Ajgoajh\".")

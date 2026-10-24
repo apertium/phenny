@@ -21,6 +21,8 @@ import logging
 import subprocess
 from decimal import Decimal as dec
 
+from bot import command
+
 logger = logging.getLogger('phenny')
 
 r_local = re.compile(r'\([a-z]+_[A-Z]+\)')
@@ -153,34 +155,11 @@ def give_time(phenny, tz, input_nick, to_user=None):
 
     phenny.reply(msg, target=to_user)
 
-def f_time(phenny, input):
+@command('time', example='.time UTC')
+def f_time(phenny, msg):
     """.time [timezone] - Show current time in defined timezone. Defaults to GMT. (supports pointing)"""
-    tz = input.group(1) or 'GMT'
-    nick = input.group(2)
-
-    give_time(phenny, tz, input.nick)
-
-f_time.name = 'time'
-f_time.commands = ['time']
-f_time.example = '.time UTC'
-f_time.point = True
-
-
-def f_time2(phenny, input):
-    nick, _, __, tz = input.groups()
-
-    give_time(phenny, tz, input.nick, to_user=nick)
-
-f_time2.rule = r'(\S*)(:|,)\s\.(time)\s(.*)'
-
-
-def f_time3(phenny, input):
-    nick, _, __ = input.groups()
-
-    give_time(phenny, "", input.nick, to_user=nick)
-
-f_time3.rule = r'(\S*)(:|,)\s\.(time)$'
-
+    give_time(phenny, msg.command_args or 'GMT',
+              msg.nick, to_user=msg.command_point)
 
 @web.with_scraped_page('https://en.wikipedia.org/wiki/List_of_time_zone_abbreviations')
 def scrape_wiki_time_zone_abbreviations(doc):
@@ -274,30 +253,24 @@ def scrape_wiki_zones(phenny):
     phenny.time_zone_abbreviations = scrape_wiki_time_zone_abbreviations()
     phenny.tz_database_time_zones = scrape_wiki_tz_database_time_zones()
 
-def refresh_database_tz(phenny, raw=None):
-    if raw.admin or raw is None:
+@command('tzdb', admin=True, thread=True)
+def tzdb(phenny, msg):
+    if msg.command_args.lower() == 'update':
         scrape_wiki_zones(phenny)
         phenny.say('Timezone database successfully written')
-    else:
-        phenny.say('Only admins can execute that command!')
-refresh_database_tz.name = 'refresh_timezone_database'
-refresh_database_tz.commands = ['tzdb update']
-refresh_database_tz.thread = True
-
-def thread_check_tz(phenny, raw):
-    for t in threading.enumerate():
-        if t.name == refresh_database_tz.name:
-            phenny.say('A timezone updating thread is currently running')
-            break
-    else:
-        phenny.say('No timezone updating thread running')
-thread_check_tz.name = 'timezone_thread_check'
-thread_check_tz.commands = ['tzdb status']
+    elif msg.command_args.lower() == 'status':
+        for t in threading.enumerate():
+            if t.name == refresh_database_tz.name:
+                phenny.say('A timezone updating thread is currently running')
+                break
+        else:
+            phenny.say('No timezone updating thread running')
 
 def setup(phenny):
     scrape_wiki_zones(phenny)
 
-def npl(phenny, input):
+@command('npl', priority='high')
+def npl(phenny, msg):
     """Shows the time from NPL's SNTP server."""
     # for server in ('ntp1.npl.co.uk', 'ntp2.npl.co.uk'):
     client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -315,9 +288,6 @@ def npl(phenny, input):
         result = datetime.datetime.fromtimestamp(int(d)).strftime(f) + '.' + b[:6]
         phenny.say(result + ' - ntp1.npl.co.uk')
     else: phenny.say('No data received, sorry')
-npl.commands = ['npl']
-npl.priority = 'high'
-
 
 def time_zone_convert(phenny, input_txt, to_user=None):
     format_regex = re.compile(r"(\d*)([a-zA-Z\s,-]*)\sin\s([a-zA-z\s]*)")
@@ -367,30 +337,16 @@ def time_zone_convert(phenny, input_txt, to_user=None):
                      regex_match.groups()[2].upper(),
                      target=to_user)
 
-def tz(phenny, input):
+@command('tz', priority='high')
+def tz(phenny, msg):
     """Usage: .tz <time><from timezone> in <destination> - Convert time to destination zone. (supports pointing)"""
 
-    input_txt = input.group(1)
+    input_txt = msg.command_args
     if not input_txt:
         phenny.reply(tz.__doc__.strip())
         return
 
-    to_nick = input.group(2)
-
-    time_zone_convert(phenny, input_txt, to_user=to_nick)
-
-
-tz.commands = ['tz']
-tz.priority = 'high'
-tz.point = True
-
-
-def time_zone3(phenny, input):
-    nick, _, __, input_txt = input.groups()
-
-    time_zone_convert(phenny, input_txt, to_user=nick)
-
-time_zone3.rule = r'(\S*)(:|,)\s\.(tz)\s(.*)'
+    time_zone_convert(phenny, input_txt, to_user=msg.command_point)
 
 if __name__ == '__main__':
     print(__doc__.strip())

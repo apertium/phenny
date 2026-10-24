@@ -29,19 +29,15 @@ abbrs = {
     "fyi": "for your information"
 }
 
-def abbr(phenny, input):
+from bot import command
+
+@command('abbr', ping=False, example='.abbr lol')
+def abbr(phenny, msg):
     '''.abbr <abbreviation> - search for meaning of abbreviation '''
-    if len(input.group().split(' ', 1)) < 2:
-        phenny.say('usage: .abbr <query>')
-        return 0
-
-    text = input.group().split(' ', 1)[1]
-
-    try:
-        phenny.say('{} means "{}"'.format(text, abbrs[text]))
-    except KeyError as e:
-        phenny.say("I'm not sure what {} means.".format(text))
-
-abbr.commands = ['abbr']
-abbr.priority = 'medium'
-abbr.example = '.abbr lol'
+    if not msg.command_args:
+        return 'usage: .abbr <query>'
+    elif msg.command_args in abbrs:
+        return '{} means "{}"'.format(msg.command_args,
+                                      abbrs[msg.command_args])
+    else:
+        return "I'm not sure what {} means.".format(msg.command_args)

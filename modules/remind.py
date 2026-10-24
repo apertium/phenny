@@ -12,6 +12,7 @@ import threading
 import time
 from modules import clock
 from tools import GrumbleError, read_db, write_db
+from bot import command
 
 def load_database(phenny):
     try:
@@ -22,19 +23,19 @@ def load_database(phenny):
 def dump_database(phenny):
     write_db(phenny, 'reminders', phenny.remind_data)
 
-def setup(phenny): 
+def setup(phenny):
     phenny.remind_data = load_database(phenny)
 
-    def monitor(phenny): 
+    def monitor(phenny):
         time.sleep(5)
-        while True: 
+        while True:
             now = int(time.time())
             unixtimes = [int(key) for key in phenny.remind_data]
             oldtimes = [t for t in unixtimes if t <= now]
-            if oldtimes: 
-                for oldtime in oldtimes: 
+            if oldtimes:
+                for oldtime in oldtimes:
                     for (channel, nick, message) in phenny.remind_data[oldtime]:
-                        if message: 
+                        if message:
                             phenny.msg(channel, nick + ': ' + message)
                         else: phenny.msg(channel, nick + '!')
                     del phenny.remind_data[oldtime]
@@ -47,41 +48,41 @@ def setup(phenny):
     t.start()
 
 scaling = {
-    'years': 365.25 * 24 * 3600, 
-    'year': 365.25 * 24 * 3600, 
-    'yrs': 365.25 * 24 * 3600, 
-    'y': 365.25 * 24 * 3600, 
+    'years': 365.25 * 24 * 3600,
+    'year': 365.25 * 24 * 3600,
+    'yrs': 365.25 * 24 * 3600,
+    'y': 365.25 * 24 * 3600,
 
-    'months': 29.53059 * 24 * 3600, 
-    'month': 29.53059 * 24 * 3600, 
-    'mo': 29.53059 * 24 * 3600, 
+    'months': 29.53059 * 24 * 3600,
+    'month': 29.53059 * 24 * 3600,
+    'mo': 29.53059 * 24 * 3600,
 
-    'weeks': 7 * 24 * 3600, 
-    'week': 7 * 24 * 3600, 
-    'wks': 7 * 24 * 3600, 
-    'wk': 7 * 24 * 3600, 
-    'w': 7 * 24 * 3600, 
+    'weeks': 7 * 24 * 3600,
+    'week': 7 * 24 * 3600,
+    'wks': 7 * 24 * 3600,
+    'wk': 7 * 24 * 3600,
+    'w': 7 * 24 * 3600,
 
-    'days': 24 * 3600, 
-    'day': 24 * 3600, 
-    'd': 24 * 3600, 
+    'days': 24 * 3600,
+    'day': 24 * 3600,
+    'd': 24 * 3600,
 
-    'hours': 3600, 
-    'hour': 3600, 
-    'hrs': 3600, 
-    'hr': 3600, 
-    'h': 3600, 
+    'hours': 3600,
+    'hour': 3600,
+    'hrs': 3600,
+    'hr': 3600,
+    'h': 3600,
 
-    'minutes': 60, 
-    'minute': 60, 
-    'mins': 60, 
-    'min': 60, 
-    'm': 60, 
+    'minutes': 60,
+    'minute': 60,
+    'mins': 60,
+    'min': 60,
+    'm': 60,
 
-    'seconds': 1, 
-    'second': 1, 
-    'secs': 1, 
-    'sec': 1, 
+    'seconds': 1,
+    'second': 1,
+    'secs': 1,
+    'sec': 1,
     's': 1
 }
 
@@ -89,10 +90,11 @@ periods = '|'.join(list(scaling.keys()))
 p_command = r'\.in ([0-9]+(?:\.[0-9]+)?)\s?((?:%s)\b)?:?\s?(.*)' % periods
 r_command = re.compile(p_command)
 
-def remind(phenny, input): 
+@command('in', example='.in 15 minutes do work')
+def remind(phenny, msg):
     """Set a reminder"""
-    m = r_command.match(input.bytes)
-    if not m: 
+    m = r_command.match(msg.text)
+    if not m:
         return phenny.reply("Sorry, didn't understand the input.")
     length, scale, message = m.groups()
 
@@ -100,45 +102,43 @@ def remind(phenny, input):
     factor = scaling.get(scale, 60)
     duration = length * factor
 
-    if duration % 1: 
+    if duration % 1:
         duration = int(duration) + 1
     else: duration = int(duration)
 
     t = int(time.time()) + duration
-    reminder = (input.sender, input.nick, message)
+    reminder = (msg.sender, msg.nick, message)
 
     try: phenny.remind_data[t].append(reminder)
     except KeyError: phenny.remind_data[t] = [reminder]
 
     dump_database(phenny)
 
-    if duration >= 60: 
+    if duration >= 60:
         w = ''
-        if duration >= 3600 * 12: 
+        if duration >= 3600 * 12:
             w += time.strftime(' on %d %b %Y', time.gmtime(t))
         w += time.strftime(' at %H:%MZ', time.gmtime(t))
         phenny.reply('Okay, will remind%s' % w)
     else: phenny.reply('Okay, will remind in %s secs' % duration)
-remind.name = 'in'
-remind.example = 'in 15 minutes do work'
-remind.commands = ['in']
 
 r_time = re.compile(r'^([0-9]{2}[:.][0-9]{2})')
 r_zone = re.compile(r'( ?([A-Za-z]+|[+-]\d\d?))')
 
 import calendar
 
-def at(phenny, input):
-    message = input[4:]
+@command('at')
+def at(phenny, msg):
+    message = msg.command_args
 
     m = r_time.match(message)
-    if not m: 
+    if not m:
         return phenny.reply("Sorry, didn't understand the time spec.")
     t = m.group(1).replace('.', ':')
     message = message[len(t):]
 
     m = r_zone.match(message)
-    if not m: 
+    if not m:
         return phenny.reply("Sorry, didn't understand the zone spec.")
     z = m.group(2)
     message = message[len(m.group(1)):].strip()
@@ -162,7 +162,7 @@ def at(phenny, input):
 
     # phenny.say("%s %s %s" % (t, tz, d))
 
-    reminder = (input.sender, input.nick, message)
+    reminder = (msg.sender, msg.nick, message)
     # phenny.say(str((d, reminder)))
     try: phenny.remind_data[d].append(reminder)
     except KeyError: phenny.remind_data[d] = [reminder]
@@ -172,7 +172,6 @@ def at(phenny, input):
     phenny.sending.release()
 
     phenny.reply("Reminding at %s %s - in %s minute(s)" % (t, z, duration))
-at.commands = ['at']
 
-if __name__ == '__main__': 
+if __name__ == '__main__':
     print(__doc__.strip())

@@ -4,43 +4,30 @@ author: nu11us <work.willeggleston@gmail.com>
 """
 
 import unittest
-from mock import MagicMock
-from modules import eleda
+from modules.test.command_test import CommandTest
 
-
-class TestEleda(unittest.TestCase):
-    def setUp(self):
-        self.phenny = MagicMock()
-        self.input = MagicMock()
+class TestEleda(CommandTest, unittest.TestCase):
+    modules = ['eleda']
 
     def test_follow(self):
-        self.input.group = lambda x: [None, 'firespeaker eng-spa'][x]
-        eleda.follow(self.phenny, self.input)
-        out = self.phenny.reply.call_args[0][0]
-        eleda.follows = []
-        self.assertTrue("now following" in out)
+        out = self.message_response('.follow firespeaker eng-spa')
+        self.assertIn('now following', out)
+        self.get_module().follows = []
 
     def test_unfollow_invalid(self):
-        self.user = MagicMock()
-        self.user.nick = "firespeaker"
-        eleda.follows = [self.user]
-        self.input.group = lambda x: [None, 'not_firespeaker'][x]
-        eleda.unfollow(self.phenny, self.input)
-        out = self.phenny.reply.call_args[0][0]
-        self.assertTrue("Sorry, you aren't following that user" in out)
+        self.check_response('.unfollow not_firespeaker',
+                            nick='test',
+                            expected="test: Sorry, you aren't following that user!")
 
     def test_following(self):
-        self.user = MagicMock()
-        self.user.nick = "firespeaker"
-        self.user2 = MagicMock()
-        self.user2.nick = "begiak"
-        eleda.follows = [self.user, self.user2]
-        eleda.following(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
-        self.assertTrue("firespeaker" in out and "begiak" in out)
+        obj = self.get_module().Eleda
+        self.get_module().follows = [obj('bob', 'firespeaker', 'a-b'),
+                                     obj('bob', 'begiak', 'c-b')]
+        out = self.message_response('.following')
+        self.assertIn('firespeaker', out)
+        self.assertIn('begiak', out)
+        self.get_module().follows = []
 
     def test_no_one_following(self):
-        eleda.follows = []
-        eleda.following(self.phenny, self.input)
-        out = self.phenny.reply.call_args[0][0]
-        self.assertTrue("No one is being followed at the moment." in out)
+        self.check_response('.following', nick='bob',
+                            expected='bob: No one is being followed at the moment.')

@@ -3,26 +3,15 @@ test_ping.py - tests for the ping module
 author: nu11us <work.willeggleston@gmail.com>
 """
 import unittest
-from mock import MagicMock
-from modules import ping
-import tools
+from modules.test.command_test import CommandTest
 
-
-class TestPing(unittest.TestCase):
-    def setUp(self):
-        self.phenny = MagicMock()
-        self.input = MagicMock()
-        self.phenny.nick = "user"
-        self.phenny.config.host = "host"
+class TestPing(CommandTest, unittest.TestCase):
+    modules = ['ping']
 
     def test_get_guests_user(self):
-        self.input.admin = False
-        ping.getGuests(self.phenny, self.input)
-        out = self.phenny.reply.call_args[0][0]
-        self.assertTrue("admin-only" in out)
+        out = self.message_response('.getguests', nick='admin')
+        self.assertEqual(out, "{''}")
 
     def test_interjection(self):
-        self.input.nick = "user"
-        ping.interjection(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
-        self.assertTrue("user!" in out)
+        self.phenny.nick = 'begiak'
+        self.check_response('begiak!', nick='user', expected='user!')

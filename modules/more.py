@@ -6,6 +6,7 @@ Author - mandarj
 
 import sqlite3
 from tools import break_up, calling_module, DatabaseCursor, db_path, max_message_length
+from bot import command, event
 
 def setup(self):
     self.more_db = db_path(self, 'more')
@@ -23,6 +24,8 @@ def setup(self):
     cursor.close()
     connection.close()
 
+buffer_threshold = 2
+
 def add_messages(phenny, target, messages, tag=None):
     if not type(messages) is list:
         messages = [messages]
@@ -35,7 +38,7 @@ def add_messages(phenny, target, messages, tag=None):
     if not tag:
         tag = calling_module()
 
-    if len(messages) <= 2:
+    if len(messages) <= buffer_threshold:
         for message in messages:
             phenny.msg(target, message)
 
@@ -50,32 +53,37 @@ def add_messages(phenny, target, messages, tag=None):
         values = [(target, message, tag) for message in messages]
         cursor.executemany("INSERT INTO more (target, message, tag) VALUES (?, ?, ?)", values)
 
-def joinAlert(phenny, input):
-    if count_more(phenny, input.nick):
+@event('JOIN')
+def joinAlert(phenny, msg):
+    if count_more(phenny, msg.nick):
         phenny.reply('You have queued messages. Type ".more", and I\'ll read them out.')
-joinAlert.event = 'JOIN'
-joinAlert.rule = r'.*'
 
-def more(phenny, input):
+@command('more')
+def more(phenny, msg):
     ''''.more [N] [tag]' shows queued messages.
     Optional N: number of messages to show
     Optional tag: which messages to show (usually a module name)'''
 
-    count = int(input.group(1)) if input.group(1) else 1
-    tag = input.group(2)
+    count = 1
+    tag = ''
+    if msg.command_args_list:
+        count = msg.command_args_list[0]
+        if count.isdigit():
+            count = int(count)
+        else:
+            return
+        if len(msg.command_args_list) > 1:
+            tag = msg.command_args_list[1]
 
-    if count_more(phenny, input.nick, tag):
-        show_more(phenny, input.nick, count, tag)
-    elif count_more(phenny, input.sender, tag):
-        if input.admin:
-            show_more(phenny, input.sender, count, tag)
+    if count_more(phenny, msg.nick, tag):
+        show_more(phenny, msg.nick, count, tag)
+    elif count_more(phenny, msg.sender, tag):
+        if phenny.is_admin(msg.nick):
+            show_more(phenny, msg.sender, count, tag)
         else:
             phenny.reply("Only admins can use .more on channels.")
     else:
         phenny.reply("No more queued messages")
-
-more.name = 'more'
-more.rule = r'[.]more(?: ([1-9][0-9]*))?(?: (\S+))?'
 
 def count_more(phenny, target, tag=None):
     target = target.casefold()

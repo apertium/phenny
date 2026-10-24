@@ -6,16 +6,15 @@ choose.py - sometimes you just can't decide, a phenny module
 
 import random
 import re
+from bot import command
 
-def choose(phenny, input):
+@command('choose')
+def choose(phenny, msg):
     """.choose <red> <blue> - for when you just can't decide"""
-    origterm = input.group(1)
-    if not origterm:
+    if not msg.command_args:
         return phenny.say(".choose <red> <blue> - for when you just can't decide")
-    c = re.findall(r'([^, ]+)', origterm)
-    fate = random.choice(c).strip()
-    return phenny.reply("%s" % (fate))
-choose.rule = (['choose'], r'(.*)')
+    fate = random.choice(msg.command_args.replace(',', ' ').split())
+    return phenny.reply(fate)
 
-if __name__ == '__main__': 
+if __name__ == '__main__':
     print(__doc__.strip())

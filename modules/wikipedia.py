@@ -11,6 +11,7 @@ import re
 
 from tools import truncate
 import wiki
+from bot import command
 
 endpoints = {
     'api': 'https://%s.wikipedia.org/w/api.php?format=json&action=query&list=search&srsearch={0}&prop=snippet&limit=1',
@@ -45,37 +46,15 @@ def wikipedia(phenny, origterm, lang, to_user=None):
         phenny.say(truncate(snippet, '"{}" - ' + url))
 
 
-def wik(phenny, input):
+@command(['wik', 'wiki', 'wikipedia'], example='.wik Human')
+def wik(phenny, msg):
     """Search for something on Wikipedia (supports pointing)"""
 
-    origterm = input.group(3)
-    if input.group(2):
-        lang = input.group(2)[1:]
-    else:
-        lang = "en"
+    wikipedia(phenny, msg.command_args, msg.sub_command or 'en',
+              to_user=msg.command_point)
 
-    to_nick = input.group(4)
-
-    wikipedia(phenny, origterm, lang, to_user=to_nick)
-
-wik.rule = r'\.(wik|wiki|wikipedia)(\.[a-z]{2,3})?\s(.*)'
-wik.priority = 'low'
-wik.example = '.wik Human'
-wik.point = True
-
-
-def wik2(phenny, input):
-    nick, _, __, lang, origterm = input.groups()
-    if not lang: lang = "en"
-
-    wikipedia(phenny, origterm, lang, to_user=nick)
-
-wik2.rule = r'(\S*)(:|,)\s\.(wik|wiki|wikipedia)(\.[a-z]{2,3})?\s(.*)'
-wik2.priority = 'high'
-wik2.example = 'svineet: .wik Linguistics'
-
-
-def pointing(phenny, input):
+@command('pointing')
+def pointing(phenny, msg):
     """ Begiak also supports pointing users to the output of other commands.
     For example, .wik India -> nick will make Begiak say:
     nick, "India, officially the Republic of India (Bhārat Gaṇarājya),
@@ -83,9 +62,6 @@ def pointing(phenny, input):
     . Do .awik Begiak for more information on supported commands.
     """
     pass
-
-pointing.commands = ['pointing']
-
 
 if __name__ == '__main__':
     print(__doc__.strip())

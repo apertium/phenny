@@ -9,14 +9,15 @@ http://inamidst.com/phenny/
 """
 
 import re
-import web
 import sympy
 import re
+from bot import command
 
-def c(phenny, input):
-    if not input.group(1):
+@command('c', example='.c 5 + 3')
+def c(phenny, msg):
+    if not msg.command_args:
         return phenny.reply("Nothing to calculate.")
-    calc = input.group(1)
+    calc = msg.command_args
 
     if '=' in calc:
         calc = calc.replace(' ', '')
@@ -63,20 +64,6 @@ def c(phenny, input):
             return phenny.say('Sorry, no result.')
     else:
         phenny.say(res)
-    
-c.commands = ['c']
-c.example = '.c 5 + 3'
-
-def py(phenny, input): 
-   """evaluates a python2 expression via a remote sandbox"""
-   query = input.group(1).encode('utf-8')
-   uri = 'http://tumbolia.appspot.com/py/'
-   answer = web.get(uri + web.quote(query))
-   if answer: 
-      phenny.say(answer)
-   else: phenny.reply('Sorry, no result.')
-py.commands = ['py']
-py.example = '.py if not False: print "hello world!"'
 
 if __name__ == '__main__':
     print(__doc__.strip())

@@ -1,21 +1,15 @@
 import unittest
-from mock import MagicMock
-from modules import apertiumchill
+from modules.test.command_test import CommandTest
 
-class TestApertiumchill(unittest.TestCase):
-    def setUp(self):
-        self.phenny = MagicMock()
-        self.input = MagicMock()
-        self.input.sender = "Testsworth"
+class TestApertiumchill(CommandTest, unittest.TestCase):
+    modules = ['apertiumchill']
 
     def test_chill_chill(self):
-        apertiumchill.measure.channels["Testsworth"] = 20
-        apertiumchill.chill(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
-        self.assertTrue("chill level is currently:" in out)
+        self.get_module().chill_channels['Testsworth'] = 20
+        out = self.message_response('.chill', channel='Testsworth')
+        self.assertIn('chill level is currently:', out)
 
     def test_chill_notchill(self):
-        apertiumchill.measure.channels["Testsworth"] = 0
-        apertiumchill.chill(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
-        self.assertTrue("WARNING: CHILL LEVEL IS DANGEROUSLY LOW. RECOMMEND" in out)
+        self.get_module().chill_channels['Testsworth'] = 0
+        out = self.message_response('.chill', channel='Testsworth')
+        self.assertIn('WARNING: CHILL LEVEL IS DANGEROUSLY LOW. RECOMMEND', out)

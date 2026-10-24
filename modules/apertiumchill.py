@@ -7,7 +7,7 @@ author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 so chill bro.
 """
 import random, time
-
+from bot import keyword, command
 
 # chill decay rate per minute
 chill_decay_rate = 5
@@ -99,38 +99,40 @@ chill_things = [
     ("trip to Shupashkar", "trips to Shupashkar")
 ]
 
-# keeps a finger on the pulse of the chillness
-def measure(phenny, input):
-    chill = measure.channels.get(input.sender, 0)
+chill_last_tick = time.time()
+chill_channels = {}
+
+@keyword('.*', priority='low')
+def measure(phenny, msg):
+    '''keeps a finger on the pulse of the chillness'''
+    global chill_last_tick, chill_channels
+    chill = chill_channels.get(msg.sender, 0)
     now = time.time()
-    if now - measure.last_tick > 60:
-        measure.last_tick = now
+    if now - chill_last_tick > 60:
+        chill_last_tick = now
         if chill > 0:
             chill -= chill_decay_rate
             chill = max(0, chill)
         elif chill < 0:
             chill += chill_decay_rate
             chill = min(0, chill)
-        measure.channels[input.sender] = chill
+        chill_channels[msg.sender] = chill
 
-    if ".chill" in input:
+    text = msg.text.lower()
+
+    if ".chill" in text:
         return # dont self count
 
     for w in chill_words:
-        if w[0] in input.lower():
+        if w[0].lower() in text:
             chill += w[1]
 
-    measure.channels[input.sender] = chill
+    chill_channels[msg.sender] = chill
 
-
-measure.rule = r'.*'
-measure.priority = 'low'
-measure.last_tick = time.time()
-measure.channels = {}
-
-def chill(phenny, input):
+@command('chill', priority='low')
+def chill(phenny, msg):
     """.chill - Measure the current channel chillness level."""
-    level = measure.channels.get(input.sender, 0)
+    level = chill_channels.get(msg.sender, 0)
 
     n = random.randint(1,2)
     items = []
@@ -155,7 +157,6 @@ def chill(phenny, input):
         items.append("%s %s" % (amount, item))
 
     item_str = ", ".join(items)
-    #print level, item_str
 
     if level <= 0:
         message = "WARNING: CHILL LEVEL IS DANGEROUSLY LOW. RECOMMEND %s" % (item_str.upper())
@@ -163,10 +164,6 @@ def chill(phenny, input):
         message = "chill level is currently: %s" % (item_str)
 
     phenny.say(message)
-
-
-chill.commands = ['chill']
-chill.priority = 'low'
 
 if __name__ == '__main__':
     print(__doc__.strip())

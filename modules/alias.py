@@ -8,9 +8,10 @@ http://inamidst.com/phenny/
 """
 
 from tools import GrumbleError, read_db, write_db
+from bot import command
 
 # nick aliases (saved in ~/<User phenny dir>/<nick>-<host>.alias.db)
-# format (each row is an alias group, aliases are separated by '\t'): 
+# format (each row is an alias group, aliases are separated by '\t'):
 #
 # spectre\tspectie\tspectei
 # nick\talias
@@ -45,16 +46,15 @@ def aliasPairMerge(phenny, nick1, nick2):
 
     dumpAliases(phenny)
 
-def c_alias(phenny, raw):
-    if raw.group(1) :
-        if raw.group(1) == 'add':
-            nick1 = raw.nick
-            nick2 = raw.group(2)
-            if (nick2 == None):
-                phenny.reply("Usage: .alias add <nick>")
-            elif (nick1 == nick2):
+@command('alias')
+def c_alias(phenny, msg):
+    global nick_aliases, nick_pairs
+    match msg.command_args_list:
+        case ['add', nick2]:
+            nick1 = msg.nick
+            if (nick1 == nick2):
                 phenny.reply("I don't think that will be necessary.")
-            elif (nick2 in aliasGroupFor(nick1)):  
+            elif (nick2 in aliasGroupFor(nick1)):
                 phenny.reply("You and " + nick2 + " are already paired.")
             elif ([nick2, nick1] in nick_pairs):
                 nick_pairs.remove([nick2, nick1])
@@ -65,14 +65,14 @@ def c_alias(phenny, raw):
             else:
                 nick_pairs.append([nick1, nick2])
                 phenny.reply("Alias request created. Switch your nick to " + nick2 + " and call \".alias add " + nick1 + "\" to confirm.")
-        elif raw.group(1) == 'list':
-            if raw.group(2):
-                nick = raw.group(2)
-                phenny.reply("%s's current aliases are: " % nick + ', '.join(aliasGroupFor(nick)) + ".")
-            else:
-               phenny.reply("Your current aliases are: " + ', '.join(aliasGroupFor(raw.nick)) + ".")
-        elif raw.group(1) == 'remove':
-            nick = raw.nick
+        case ['add'] | ['add', *_]:
+            phenny.reply("Usage: .alias add <nick>")
+        case ['list', nick]:
+            phenny.reply("%s's current aliases are: " % nick + ', '.join(aliasGroupFor(nick)) + ".")
+        case ['list']:
+            phenny.reply("Your current aliases are: " + ', '.join(aliasGroupFor(msg.nick)) + ".")
+        case ['remove']:
+            nick = msg.nick
             group = aliasGroupFor(nick)
             if len(group) > 1:
                 nick_aliases.remove(group)
@@ -80,12 +80,8 @@ def c_alias(phenny, raw):
                 nick_aliases.append(group)
                 dumpAliases(phenny)
             phenny.reply("You have removed %s from its alias group" % nick)
-        else:
+        case _:
             phenny.reply("Usage: .alias add <nick>, .alias list <nick>?, .alias remove")
-    else:
-        phenny.reply("Usage: .alias add <nick>, .alias list <nick>?, .alias remove")
-
-c_alias.rule = r'\.alias(?:\s(\S+))?(?:\s(\S+))?'
 
 def loadAliases(self):
     try:
@@ -95,4 +91,3 @@ def loadAliases(self):
 
 def dumpAliases(self):
     write_db(self, 'alias', nick_aliases)
-

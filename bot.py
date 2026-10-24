@@ -7,13 +7,17 @@ Licensed under the Eiffel Forum License 2.
 http://inamidst.com/phenny/
 """
 
+import asyncio
+import collections
+import dataclasses
+import functools
 import importlib
-import irc
 import logging
 import os
 import re
 import sys
 import threading
+import time
 import traceback
 import tools
 from tools import GrumbleError, decorate, rephrase_errors
@@ -21,20 +25,6 @@ from tools import GrumbleError, decorate, rephrase_errors
 logger = logging.getLogger('phenny')
 
 home = os.getcwd()
-
-def decode(bytes):
-    if type(bytes) == str:
-        return bytes
-    try:
-        text = bytes.decode('utf-8')
-    except UnicodeDecodeError:
-        try:
-            text = bytes.decode('iso-8859-1')
-        except UnicodeDecodeError:
-            text = bytes.decode('cp1252')
-    except AttributeError:
-        return bytes
-    return text
 
 def module_control(phenny, module, func):
     if not hasattr(module, func):
@@ -52,14 +42,131 @@ def module_control(phenny, module, func):
     logger.error("Error during %s of %s module:\n%s" % (func, name, desc))
     return False
 
-class Phenny(irc.Bot):
+@dataclasses.dataclass
+class Message:
+    line: str
+    source: str = ''
+    body: str = ''
+    nick: str = ''
+    user: str = ''
+    host: str = ''
+    text: str = ''
+    args: tuple = ()
+    sender: str = ''
+    command: str = ''
+    sub_command: str = ''
+    command_args: str = ''
+    command_point: str = ''
+    command_args_list: list = None
+
+    source_pattern = re.compile(r'([^!]*)!?([^@]*)@?(.*)')
+
+    def __post_init__(self):
+        if self.line.startswith(':'):
+            self.source, self.body = self.line[1:].split(' ', 1)
+            m = self.source_pattern.match(self.source)
+            self.nick, self.user, self.host = m.groups()
+        else:
+            self.body = self.line
+        if ' :' in self.body:
+            self.body, self.text = self.body.split(' :', 1)
+            self.text = self.text.rstrip()
+        self.args = tuple(self.body.split())
+        if len(self.args) > 1:
+            self.sender = self.args[1]
+
+COMMANDS = {}
+KEYWORDS = []
+EVENTS = collections.defaultdict(list)
+
+def return_msg(ping=True):
+    def decorator(fn):
+        @functools.wraps(fn)
+        def wrapper(bot, msg):
+            val = fn(bot, msg)
+            if val:
+                target = msg.command_point or msg.nick
+                if not ping or not target:
+                    target = None
+                bot.msg(msg.sender, val, target=target)
+        return wrapper
+    return decorator
+
+def command(commands, admin=False, owner=False, private=False, ping=True,
+            priority='medium', example=None, thread=False):
+    def decorator(fn):
+        @functools.wraps(fn)
+        @return_msg(ping=ping)
+        def wrapper(bot, msg):
+            if private and msg.sender.startswith('#'):
+                return
+            if owner and msg.nick != bot.config.owner:
+                return
+            if admin and msg.nick not in bot.config.admins and msg.nick != bot.config.owner:
+                return
+            return fn(bot, msg)
+        global COMMANDS
+        cmd = [commands] if isinstance(commands, str) else commands
+        for c in cmd:
+            COMMANDS[c] = wrapper
+        if example:
+            wrapper.example = example
+        if thread:
+            wrapper.thread = True
+        return wrapper
+    return decorator
+
+def keyword(pattern, ping=True, priority='medium'):
+    def decorator(fn):
+        @functools.wraps(fn)
+        @return_msg(ping=ping)
+        def wrapper(bot, msg):
+            return fn(bot, msg)
+        global KEYWORDS
+        pat = pattern
+        if isinstance(pattern, str):
+            pat = re.compile(pat)
+        KEYWORDS.append((pat, wrapper))
+        return wrapper
+    return decorator
+
+def event(etype, admin=False, thread=False):
+    def decorator(fn):
+        @functools.wraps(fn)
+        def wrapper(bot, msg):
+            if admin and msg.nick not in bot.config.admins and msg.nick != bot.config.owner:
+                return
+            return fn(bot, msg)
+        global EVENTS
+        evt = [etype] if isinstance(etype, str) else etype
+        for e in evt:
+            EVENTS[e].append(wrapper)
+        if thread:
+            wrapper.thread = True
+        return wrapper
+    return decorator
+
+def every_message(fn):
+    @functools.wraps(fn)
+    @event('*')
+    def wrapper(bot, msg):
+        if 'PRIVMSG' not in msg.args:
+            return
+        fn(bot, msg)
+    return wrapper
+
+class Phenny:
     def __init__(self, config):
-        args = (config.nick, config.name, config.channels, config.password)
-        irc.Bot.__init__(self, *args)
         self.config = config
         self.doc = {}
-        self.stats = {}
+        self.stats = collections.Counter()
+        self.nick = config.nick
+        self.channels = config.channels or []
         self.setup()
+        self.sending = threading.RLock()
+        self.stack = []
+        np = re.escape(self.nick.lower())
+        self.command_pattern = re.compile(r'(?i)^(?:'+np+r':\s+|\.|(?P<point1>\w+)[:,]\s+\.)(?P<cmd>\w+)(?:\.(?P<subcmd>\w+))?\s*(?P<args>.*)(?:\s*(?:->|→)\s*(?P<point2>\w+))?$')
 
     def setup(self):
         self.variables = {}
@@ -92,8 +199,10 @@ class Phenny(irc.Bot):
             if name in excluded_modules: continue
 
             try:
-                module_loader = importlib.machinery.SourceFileLoader(name, filename)
-                module = module_loader.load_module()
+                spec = importlib.util.spec_from_file_location(name, filename)
+                module = importlib.util.module_from_spec(spec)
+                sys.modules[name] = module
+                spec.loader.exec_module(module)
             except Exception as e:
                 trace = traceback.format_exc()
                 logger.error("Error loading %s module:\n%s" % (name, trace))
@@ -110,7 +219,106 @@ class Phenny(irc.Bot):
         else:
             logger.warning("Couldn't find any modules")
 
-        self.bind_commands()
+    def run(self, host, port=6667, ssl=False, ipv6=False, ca_certs=None,
+            ssl_context=None):
+        asyncio.run(self.main_loop(host, port, ssl))
+
+    def prepare_outgoing_message(self, args, text=None):
+        def safe(arg):
+            if isinstance(arg, str):
+                arg = arg.encode('utf-8')
+            return re.sub(b' ?[\r\n]+', b' ', arg)
+        line = b' '.join([safe(arg) for arg in args])
+        if text:
+            line += b' :' + safe(text)
+        return line
+
+    def write(self, args, text=None):
+        line = self.prepare_outgoing_message(args, text)
+        self.sending.acquire()
+        self.writer.write(line + b'\r\n')
+        self.sending.release()
+
+    def msg(self, recipient, text, target=None):
+        if target:
+            text = target + ': ' + text
+
+        # Cf. http://swhack.com/logs/2006-03-01#T19-43-25
+        if isinstance(text, str):
+            try: text = text.encode('utf-8')
+            except UnicodeEncodeError as error:
+                logger.error(str(error))
+                text = error.__class__ + ': ' + str(error)
+        if isinstance(recipient, str):
+            try: recipient = recipient.encode('utf-8')
+            except UnicodeEncodeError as error:
+                logger.error(str(error))
+                return
+
+        # Split long messages
+        if len(text) > tools.max_message_length:
+            for message in tools.break_up(text, max_count=3):
+                self.msg(recipient, message)
+            return
+
+        # No messages within the last 3 seconds? Go ahead!
+        # Otherwise, wait so it's been at least 0.8 seconds + penalty
+        if self.stack:
+            elapsed = time.time() - self.stack[-1][0]
+            if elapsed < 3:
+                penalty = float(max(0, len(text) - 50)) / 70
+                wait = 0.8 + penalty
+                if elapsed < wait:
+                    time.sleep(wait - elapsed)
+
+        # Loop detection
+        messages = [m[1:3] for m in self.stack[-10:]]
+        if messages.count((recipient, text)) >= 3:
+            text = '...'
+            if messages.count((recipient, text)) >= 3:
+                self.sending.release()
+                return
+
+        self.write(('PRIVMSG', recipient), text)
+        self.stack.append((time.time(), recipient, text))
+        self.stack = self.stack[-10:]
+
+    def handle_line(self, line):
+        try:
+            line = line.decode('utf-8')
+        except UnicodeDecodeError:
+            line = line.decode('iso-8859-1')
+
+        msg = Message(line)
+        self.dispatch(msg)
+
+        if msg.args[0] == 'PING':
+            self.write(('PONG', msg.args[-1]))
+
+    def error(self, report):
+        logger.error(str(traceback.format_exc()))
+
+    async def main_loop(self, host, port, ssl):
+        self.reader, self.writer = await asyncio.open_connection(
+            host, port, ssl=ssl)
+
+        self.write(('NICK', self.config.nick))
+        self.write(('USER', self.config.nick, '+iw', self.config.name))
+        if hasattr(self.config, 'password'):
+            self.write(('PRIVMSG', 'NickServ'),
+                       'IDENTIFY %s' % self.config.password)
+        for channel in self.config.channels:
+            self.write(('JOIN', channel))
+
+        while True:
+            line = await self.reader.readline()
+            if not line:
+                break
+            self.handle_line(line)
+
+        self.writer.close()
+        await self.writer.wait_closed()
+        logger.info('Closed!')
 
     def register(self, module):
         # This is used by reload.py, hence it being methodised
@@ -121,123 +329,34 @@ class Phenny(irc.Bot):
             if hasattr(obj, 'commands') or hasattr(obj, 'rule'):
                 self.variables[module.__name__][name] = obj
 
-    def bind(self, module, name, func, regexp):
-        # register documentation
-        if not hasattr(func, 'name'):
-            func.name = func.__name__
-
-        if func.__doc__:
-            if hasattr(func, 'example'):
-                example = func.example
-                example = example.replace('$nickname', self.nick)
-            else: example = None
-
-            self.doc[func.name] = (func.__doc__, example)
-
-        commands = self.commands[func.priority]
-        keys = []
-
-        if func.point:
-            keys.append('(?!.*(?:->|→))' + regexp + '()')
-            keys.append(regexp + r'\s(?:->|→)\s(\S*)')
-        else:
-            keys.append(regexp)
-
-        for key in keys:
-            key = re.compile(key)
-            commands.setdefault(key, []).append(func)
-
-    def bind_command(self, module, name, func):
-        logger.debug("Binding module '{:}' command '{:}'".format(module, name))
-
-        defaults = {
-            'priority': 'medium',
-            'thread': True,
-            'point': False,
-            'event': 'PRIVMSG',
-        }
-
-        for key, value in defaults.items():
-            if not hasattr(func, key):
-                setattr(func, key, value)
-
-        func.event = func.event.upper()
-
-        def sub(pattern, self=self):
-            # These replacements have significant order
-            pattern = pattern.replace('$nickname', re.escape(self.nick))
-            return pattern.replace('$nick', r'%s[,:] +' % re.escape(self.nick))
-
-        if hasattr(func, 'rule'):
-            if isinstance(func.rule, str):
-                pattern = sub(func.rule)
-                regexp = pattern
-                self.bind(module, name, func, regexp)
-
-            if isinstance(func.rule, tuple):
-                # 1) e.g. ('$nick', '(.*)')
-                if len(func.rule) == 2 and isinstance(func.rule[0], str):
-                    prefix, pattern = func.rule
-                    prefix = sub(prefix)
-                    regexp = prefix + pattern
-                    self.bind(module, name, func, regexp)
-
-                # 2) e.g. (['p', 'q'], '(.*)')
-                elif len(func.rule) == 2 and isinstance(func.rule[0], list):
-                    prefix = self.config.prefix
-                    commands, pattern = func.rule
-                    command = r'(?:%s)(?: +(%s))?' % ('|'.join(commands), pattern)
-                    regexp = prefix + command
-                    self.bind(module, name, func, regexp)
-
-                # 3) e.g. ('$nick', ['p', 'q'], '(.*)')
-                elif len(func.rule) == 3:
-                    prefix, commands, pattern = func.rule
-                    prefix = sub(prefix)
-                    command = r'(?:%s) +' % '|'.join(commands)
-                    regexp = prefix + command + pattern
-                    self.bind(module, name, func, regexp)
-
-        if hasattr(func, 'commands'):
-            template = r'(?:%s)(?: +(.+))?'
-            pattern = template % '|'.join(func.commands)
-            regexp = self.config.prefix + pattern
-            self.bind(module, name, func, regexp)
-
-    def bind_commands(self):
-        self.commands = {'high': {}, 'medium': {}, 'low': {}}
-
-        for module, functions in self.variables.items():
-            for name, func in functions.items():
-                self.bind_command(module, name, func)
-
-    def wrapped(self, origin, text, match):
-        sender = origin.sender or text
+    def wrapped(self, message):
+        sender = message.sender or message.text
+        if sender == self.nick:
+            sender = message.nick
         delegate = {
-            'reply': lambda msg, target=origin.nick: self.msg(sender, msg, target=target),
+            'reply': lambda msg, target=message.nick: self.msg(sender, msg, target=target),
             'say': lambda msg, target=None: self.msg(sender, msg, target=target),
             'do': lambda msg: self.action(sender, msg),
         }
 
         return decorate(self, delegate)
 
-    def input(self, origin, text, match, args):
-        class CommandInput(str):
-            def __new__(cls, text, origin,  match, args):
-                s = str.__new__(cls, text)
-                s.sender = decode(origin.sender)
-                s.nick = decode(origin.nick)
-                s.bytes = text
-                s.group = match.group
-                s.groups = match.groups
-                s.args = args
-                s.owner = s.nick == self.config.owner
-                s.admin = (s.nick in self.config.admins) or s.owner
-                return s
+    def call(self, func, msg):
+        if msg.sender.startswith('#') and hasattr(self.config, 'limit'):
+            limits = self.config.limit.get(msg.sender)
+            if limits and func.__module__ not in limits:
+                return
+        if hasattr(func, 'thread') and func.thread:
+            t = threading.Thread(target=self.call_unthreaded,
+                                 args=(func, msg), name=func.__name__)
+            t.start()
+        else:
+            self.call_unthreaded(func, msg)
+        self.stats[(func.__name__, msg.sender)] += 1
+        self.stats[(func.__name__, msg.nick)] += 1
 
-        return CommandInput(text, origin, match, args)
-
-    def call(self, func, origin, phenny, input):
+    def call_unthreaded(self, func, msg):
+        phenny = self.wrapped(msg)
         def report(*lines, verbose=True):
             for admin in self.config.admins:
                 if verbose:
@@ -247,53 +366,85 @@ class Phenny(irc.Bot):
                     self.msg(admin, line)
 
         try:
-            rephrase_errors(func, phenny, input)
+            rephrase_errors(func, phenny, msg)
         except GrumbleError as e:
             report(str(e), verbose=False)
         except Exception as e:
             self.error(report)
 
-    def limit(self, origin, func):
-        if origin.sender and origin.sender.startswith('#'):
-            if hasattr(self.config, 'limit'):
-                limits = self.config.limit.get(origin.sender)
-                if limits and (func.__module__ not in limits):
-                    return True
-        return False
+    def dispatch(self, msg):
+        if msg.nick in self.config.ignore:
+            return
+        for fn in EVENTS['*']:
+            self.call(fn, msg)
+        if msg.args and msg.args[0] in EVENTS:
+            for fn in EVENTS[msg.args[0]]:
+                self.call(fn, msg)
+        if msg.args and msg.args[0] != 'PRIVMSG':
+            return
+        m = self.command_pattern.fullmatch(msg.text)
+        if m:
+            cmd = m.group('cmd').lower()
+            if cmd in COMMANDS:
+                msg.command = cmd
+                msg.sub_command = m.group('subcmd')
+                msg.command_args = m.group('args')
+                msg.command_args_list = msg.command_args.split()
+                msg.command_point = m.group('point1') or m.group('point2') or None
+                self.call(COMMANDS[cmd], msg)
+                return
+        for pat, fn in KEYWORDS:
+            if pat.fullmatch(msg.text):
+                self.call(fn, msg)
 
-    def dispatch(self, origin, args, text):
-        event = args[0]
+    def join(self, channels, keys=None):
+        if isinstance(channels, list):
+            self.join(','.join(channels), keys)
+            return
+        if keys:
+            if isinstance(keys, list):
+                self.join(channels, ','.join(keys))
+                return
+            self.write(('JOIN', channels, keys))
+        else:
+            self.write(('JOIN', channels))
 
-        if origin.nick in self.config.ignore:
-             return
+    def nick(self, nickname):
+        self.write(('NICK', nickname))
 
-        for priority in ('high', 'medium', 'low'):
-            items = list(self.commands[priority].items())
+    def notice(self, msgtarget, message):
+        self.write(('NOTICE', msgtarget), message)
 
-            for regexp, funcs in items:
-                for func in funcs:
-                    if event != func.event and func.event != '*': continue
+    def part(self, channels, message=None):
+        if isinstance(channels, list):
+            self.part(','.join(channels), keys)
+            return
+        self.write(('PART', channels), message)
 
-                    match = regexp.fullmatch(text)
-                    if not match: continue
+    def pass_(self, password):
+        self.write(('PASS', password))
 
-                    if self.limit(origin, func): continue
+    def ping(self, server1, server2=None):
+        self.write(('PING', server1), server2)
 
-                    phenny = self.wrapped(origin, text, match)
-                    input = self.input(origin, text, match, args)
+    def pong(self, server1, server2=None):
+        self.write(('PONG', server1), server2)
 
-                    if func.thread:
-                        targs = (func, origin, phenny, input)
-                        t = threading.Thread(target=self.call, args=targs, name=func.name)
-                        t.start()
-                    else:
-                        self.call(func, origin, phenny, input)
+    def privmsg(self, msgtarget, message):
+        self.write(('PRIVMSG', msgtarget), message)
 
-                    for source in [decode(origin.sender), decode(origin.nick)]:
-                        try:
-                            self.stats[(func.name, source)] += 1
-                        except KeyError:
-                            self.stats[(func.name, source)] = 1
+    def quit(self, message=None):
+        self.write(('QUIT'), message)
+
+    def user(self, user, mode, realname):
+        self.write(('USER', user, mode, '_'), realname)
+
+    def action(self, recipient, text):
+        text = "\x01ACTION {0}\x01".format(text)
+        return self.msg(recipient, text)
+
+    def is_admin(self, nick):
+        return nick in self.config.admins or nick == self.config.owner
 
 if __name__ == '__main__':
     print(__doc__)

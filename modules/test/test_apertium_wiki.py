@@ -1,4 +1,5 @@
 import unittest
+from modules.test.command_test import CommandTest
 from mock import MagicMock
 from modules import apertium_wiki
 from web import catch_timeout, get
@@ -6,26 +7,23 @@ from datetime import date, timedelta
 import wiki
 
 
-class TestApertiumWiki(unittest.TestCase):
+class TestApertiumWiki(CommandTest, unittest.TestCase):
+    modules = ['apertium_wiki']
 
-    def setUp(self):
-        self.phenny = MagicMock()
-        self.input = MagicMock()
-        self.phenny.channels = ['#apertium']
-        self.term = None
-        self.section = None
+    def add_config(self):
+        self.config.channels = ['#apertium']
 
-    def prepare(self):
-        if self.section:
-            self.text = self.term + '#' + self.section
-            url_text = wiki.format_term(self.term) +\
-                '#' + wiki.format_section(self.section)
+    def prepare(self, section, term):
+        if section:
+            self.text = term + '#' + section
+            url_text = wiki.format_term(term) +\
+                '#' + wiki.format_section(section)
         else:
-            self.text = self.term
-            url_text = wiki.format_term(self.term)
+            self.text = term
+            url_text = wiki.format_term(term)
 
-        self.input.group = lambda x: [None, None, self.text, None][x]
         self.url = 'https://wiki.apertium.org/wiki/%s' % url_text
+        return self.message_response('.awik '+self.text)
 
     def check_snippet(self, output):
         self.assertIn(self.url, output)
@@ -35,106 +33,55 @@ class TestApertiumWiki(unittest.TestCase):
 
     @catch_timeout
     def test_awik(self):
-        self.term = 'Apertium Turkic'
-        self.prepare()
-
-        apertium_wiki.awik(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
-
+        out = self.prepare(None, 'Apertium Turkic')
         self.keywords = ['Apertium', 'Turkic', 'working', 'group']
         self.check_snippet(out)
 
     @catch_timeout
     def test_awik_fragment(self):
-        self.term = 'Apertium Turkic'
-        self.section = 'Translation pairs'
-        self.prepare()
-
-        apertium_wiki.awik(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
-
+        out = self.prepare('Translation pairs', 'Apertium Turkic')
         self.keywords = ['work', 'systems', 'Turkic', 'languages']
         self.check_snippet(out)
 
     @catch_timeout
     def test_awik_invalid(self):
-        self.term = 'Apertium Turkic'
-        self.section = 'Doner'
-        self.prepare()
-
-        apertium_wiki.awik(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
-
-        message = 'No \'%s\' section found.' % self.section
+        out = self.prepare('Doner', 'Apertium Turkic')
+        message = 'No \'Doner\' section found.'
         self.assertEqual(out, '"%s" - %s' % (message, self.url))
 
     @catch_timeout
     def test_awik_none(self):
-        self.term = 'Ajgoajh'
-        self.prepare()
-
-        apertium_wiki.awik(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
-
+        out = self.prepare(None, 'Ajgoajh')
         expected = 'Can\'t find anything in the Apertium Wiki for "%s".'
         self.assertEqual(out, expected % self.text)
 
     def test_logs_today(self):
-        self.input.group = lambda x: [None, 'today'][x]
-        apertium_wiki.logs(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
-        string_check = 'Log at ' in out
-
-        if string_check:
-            url = out[7:]
-            out_check = str(date.today()) in out
-        self.assertTrue(string_check and out_check)
+        out = self.message_response('.logs today', nick='bob')
+        self.assertIn('Log at ', out)
+        self.assertIn(str(date.today()), out)
 
     def test_logs_yesterday(self):
-        self.input.group = lambda x: [None, 'yesterday'][x]
-        apertium_wiki.logs(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
-        string_check = 'Log at ' in out
-
-        if string_check:
-            url = out[7:]
-            out_check = str(date.today() - timedelta(1)) in out
-        self.assertTrue(string_check and out_check)
+        out = self.message_response('.logs yesterday', nick='bob')
+        self.assertIn('Log at ', out)
+        self.assertIn(str(date.today() - timedelta(1)), out)
 
     def test_logs_last_week(self):
-        self.input.group = lambda x: [None, 'last monday'][x]
-        apertium_wiki.logs(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
-        string_check = 'Log at ' in out
-
-        if string_check:
-            url = out[7:]
-            last_mon = str(date.today() + timedelta(-7 - date.today().weekday()))
-            out_check = last_mon in out
-            self.assertTrue(string_check and out_check)
+        out = self.message_response('.logs last monday', nick='bob')
+        self.assertIn('Log at ', out)
+        last_mon = str(date.today() + timedelta(-7 - date.today().weekday()))
+        self.assertIn(last_mon, out)
 
     def test_logs_good_date(self):
-        self.input.group = lambda x: [None, '10/23/2025'][x]
-        apertium_wiki.logs(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
+        out = self.message_response('.logs 10/23/2025')
         self.assertIn('Log at ', out)
         self.assertIn('2025-10-23', out)
 
     def test_logs_bad_date(self):
-        self.input.group = lambda x: [None, '99/99/9999'][x]
-        apertium_wiki.logs(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
-        string_check = 'Log at ' in out
-
-        if string_check:
-            url = out[7:]
-            day_query = str(date(9999, 99, 99))
-            out_check = day_query in out
-        self.assertFalse(string_check and out_check)
+        out = self.message_response('.logs 99/99/9999')
+        self.assertNotIn('Log at ', out)
+        self.assertNotIn('9999', out)
 
     def test_logs_no_date(self):
-        self.input.group = lambda x: [None, None][x]
-        apertium_wiki.logs(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
+        out = self.message_response('.logs')
         self.assertIn('Log at ', out)
         self.assertNotRegex(out, r'\.log$')

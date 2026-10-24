@@ -12,7 +12,7 @@ import logging
 import os
 import re
 import signal
-from threading import Lock, Thread
+from threading import Lock, Thread, Timer
 import time
 import urllib.parse
 
@@ -367,10 +367,13 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
 
         return channels, [truncate(tmpl.format_map(params))]
 
+initial_setup_retry_time = 120 # 2 minutes
+setup_retry_time = initial_setup_retry_time
+
 def setup_server(phenny):
     '''Set up and start hooks server.'''
 
-    global httpd, thread
+    global httpd, thread, setup_retry_time
 
     with lock:
         if httpd:
@@ -379,8 +382,16 @@ def setup_server(phenny):
         MyHandler.phenny = phenny
         try:
             httpd = PortReuseTCPServer(("", PORT), MyHandler)
+            setup_retry_time = initial_setup_retry_time
         except OSError as e:
             logger.error("Could not start git hook server on port %s: %s", PORT, e)
+            if setup_retry_time < (60 * 60): # 1 hour
+                logger.error(f'Retrying in {setup_retry_time} seconds')
+                t = Timer(setup_retry_time, setup_server, args=[phenny])
+                t.start()
+                setup_retry_time *= 2
+            else:
+                logger.error('Giving up on starting git hook server')
             return
         thread = Thread(target=httpd.serve_forever)
         thread.daemon = True

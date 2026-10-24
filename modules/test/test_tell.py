@@ -23,6 +23,11 @@ class TestTell(CommandTest, unittest.TestCase):
             'begiak-test: ask tests eat a cake', nick='Testsworth',
             expected=['Testsworth: I\'ll pass that on when tests is around.', 'Testsworth: yeah, yeah', 'Testsworth: yeah, sure, whatever'])
 
+    def test_fremind_valid_odd_caps(self):
+        self.check_response(
+            'BeGiaK-tEst: ask tests eat a cake', nick='Testsworth',
+            expected=['Testsworth: I\'ll pass that on when tests is around.', 'Testsworth: yeah, yeah', 'Testsworth: yeah, sure, whatever'])
+
     def test_fremind_edgecase(self):
         self.check_response('begiak-test: ask me eat a cake',
                             expected='Hey, I\'m not as stupid as Monty you know!')

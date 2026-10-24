@@ -166,7 +166,7 @@ class Phenny:
         self.sending = threading.RLock()
         self.stack = []
         np = re.escape(self.nick.lower())
-        self.command_pattern = re.compile(r'^(?:'+np+r':\s+|\.|(?P<point1>\w+)[:,]\s+\.)(?P<cmd>\w+)(?:\.(?P<subcmd>\w+))?\s*(?P<args>.*)(?:\s*(?:->|→)\s*(?P<point2>\w+))?$')
+        self.command_pattern = re.compile(r'(?i)^(?:'+np+r':\s+|\.|(?P<point1>\w+)[:,]\s+\.)(?P<cmd>\w+)(?:\.(?P<subcmd>\w+))?\s*(?P<args>.*)(?:\s*(?:->|→)\s*(?P<point2>\w+))?$')
 
     def setup(self):
         self.variables = {}

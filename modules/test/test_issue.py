@@ -1,42 +1,32 @@
-import unittest, json
-from mock import MagicMock, patch
-from modules import issue
+import unittest
+import unittest.mock
+import json
+from modules.test.command_test import CommandTest
 
-class TestIssue(unittest.TestCase):
-    
-    def setUp(self):
-        self.phenny = MagicMock()
-        self.phenny.nick = 'phenny'
-        self.phenny.config.gh_oauth_token = 'test_token'
-        
-        self.input = MagicMock()
-        self.input.nick = 'tester'
-        
-        issue.allowed_owners = ['test']
-        
-    @patch('modules.issue.post')
-    def test_success(self, mock_post):
-        mock_response = MagicMock()
-        mock_response.return_value = '{"html_url": "https://github.com/test/test"}'
-        mock_post.return_value = mock_response.return_value
-        
+@unittest.mock.patch('web.is_up', return_value=True)
+@unittest.mock.patch('web.post')
+class TestIssue(CommandTest, unittest.TestCase):
+    modules = ['issue']
+
+    def add_config(self):
+        self.config.gh_oauth_token = 'test_token'
+
+    def test_success(self, mock_post, mock_up):
+        mock_post.return_value = '{"html_url": "https://github.com/test/test"}'
         mock_body = json.dumps({ "title": "Create a test issue.", "body": "This issue was automatically made by begiak, Apertium\'s beloved IRC bot, by the order of tester on #apertium. A human still needs to update the description."})
         mock_head = {'Authorization': 'token test_token'}
-        self.input.group = lambda x: ['.issue', 'test/test Create a test issue.'][x]
-        self.input.group.return_value = mock_response
-        issue.issue(self.phenny, self.input)
-        
+        self.get_module().allowed_owners = ['test']
+        self.check_response('.issue test/test Create a test issue.',
+                            nick='tester',
+                            expected='tester: Issue created. You should add a description at https://github.com/test/test')
         mock_post.assert_called_with('https://api.github.com/repos/test/test/issues', mock_body, mock_head)
-        self.phenny.reply.assert_called_with('Issue created. You should add a description at https://github.com/test/test')
-             
-    def test_illegal(self):
-        self.input.group = lambda x: ['.issue', 'octocat/Hello-World Create an illegal issue.'][x]
-        self.input.group.return_value = 'Begiak cannot create an issue there.'
-        issue.issue(self.phenny, self.input)
-        self.phenny.reply.assert_called_with('Begiak cannot create an issue there.')
-        
-    def test_invalid(self):
-        self.input.group = lambda x: ['.issue', 'boing boing boing someone is hungry'][x]
-        self.input.group.return_value = 'Invalid .issue command. Usage: .issue <owner>/<repository> <title>'
-        issue.issue(self.phenny, self.input)
-        self.phenny.reply.assert_called_with('Invalid .issue command. Usage: .issue <owner>/<repository> <title>')
+
+    def test_illegal(self, mock_post, mock_up):
+        self.check_response('.issue octocat/Hello-World Create an illegal issue.',
+                            nick='tester',
+                            expected='tester: Begiak cannot create an issue there.')
+
+    def test_invalid(self, mock_post, mock_up):
+        self.check_response('.issue boing boing boing someone is hungry',
+                            nick='bob',
+                            expected='bob: Invalid .issue command. Usage: .issue <owner>/<repository> <title>')

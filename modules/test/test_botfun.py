@@ -1,20 +1,14 @@
 import unittest
-from mock import MagicMock
-from modules import botfun
+from modules.test.command_test import CommandTest
 
-
-class TestBotfun(unittest.TestCase):
-    def setUp(self):
-        self.phenny = MagicMock()
-        self.input = MagicMock()
+class TestBotfun(CommandTest, unittest.TestCase):
+    modules = ['botfun']
 
     def test_botfight(self):
         messages = {"hits ChanServ", "punches ChanServ", "kicks ChanServ", "hits ChanServ with a rubber hose",
                     "stabs ChanServ with a clean kitchen knife"}
-        botfun.botfight(self.phenny, self.input)
-        out = self.phenny.do.call_args[0][0]
-        self.assertTrue(out in messages)
+        self.check_response('.botfight',
+                            [f'\x01ACTION {x}\x01' for x in messages])
 
     def test_bothug(self):
-        botfun.bothug(self.phenny, self.input)
-        self.phenny.do.assert_called_once_with("hugs ChanServ")
+        self.check_response('.bothug', '\x01ACTION hugs ChanServ\x01')

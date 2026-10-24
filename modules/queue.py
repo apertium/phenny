@@ -88,7 +88,7 @@ def get_index(phenny, raw, queue_name, queue):
     return index
 
 def get_indices(phenny, raw, queue_name, queue):
-    raw = map(lambda x: x.strip(), raw.split(','))
+    raw = raw.replace(',', ' ').split()
     indices = map(lambda x: get_index(phenny, x, queue_name, queue), raw)
     return tuple(indices)
 
@@ -157,7 +157,7 @@ def queue(phenny, msg):
             return
 
         if len(msg.command_args_list) > 2:
-            queue = ','.join(msg.command_args_list[2:]).split(',')
+            queue = ' '.join(msg.command_args_list[2:]).replace(',', ' ').split()
             queue = list(map(lambda x: x.strip(), queue))
             phenny.queue_data[queue_name] = {'owner': owner, 'queue': queue}
             write_db(phenny, 'queue', phenny.queue_data)
@@ -209,7 +209,7 @@ def queue(phenny, msg):
                 phenny.reply('Syntax: .queue <name> add <item1>, <item2> ...')
                 return
 
-            new_queue = ','.join(msg.command_args_list[2:]).split(',')
+            new_queue = ' '.join(msg.command_args_list[2:]).replace(',', ' ').split()
             queue['queue'] += new_queue
             write_db(phenny, 'queue', phenny.queue_data)
             more.add_messages(phenny, msg.sender, print_queue(queue_name, queue))
@@ -219,7 +219,7 @@ def queue(phenny, msg):
                 return
 
             try:
-                id1, id2 = get_indices(phenny, msg.command_args_list[2], queue_name, queue)
+                id1, id2 = get_indices(phenny, ','.join(msg.command_args_list[2:]), queue_name, queue)
             except ValueError:
                 return
 
@@ -244,7 +244,8 @@ def queue(phenny, msg):
                 phenny.reply('Syntax: .queue <name> replace <index/item> <new_item>')
                 return
 
-            old, new = msg.command_args[2:]
+            old, new = msg.command_args_list[2:]
+            old = old.rstrip(',')
 
             try:
                 old_id = int(old)

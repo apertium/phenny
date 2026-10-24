@@ -25,7 +25,7 @@ def away(phenny, msg):
 @command('back')
 def back(phenny, msg):
     """Set your status to being available."""
-    nick = input.nick.casefold()
+    nick = msg.nick.casefold()
     statuses[nick] = msg.command_args or "I'm around at the minute"
 
 if __name__ == '__main__':

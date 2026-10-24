@@ -20,9 +20,6 @@ def help(phenny, msg):
     except AttributeError:
         helpurl = "https://wiki.apertium.org/wiki/Begiak"
 
-    commands = [func for priority, commands in phenny.commands.items()
-            for regex, funcs in commands.items() for func in funcs]
-
     if msg.sender.startswith('#'):
         # channels get a brief message instead
         phenny.say(

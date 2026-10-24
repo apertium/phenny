@@ -3,8 +3,7 @@ Tests for phenny's more.py
 """
 
 import unittest
-from mock import MagicMock, call
-from modules import more
+from modules.test.command_test import CommandTest
 
 def assert_call(mock, *args):
     mock.assert_called_once_with(*args)
@@ -19,21 +18,16 @@ def formatting(message, target):
         message = target + ": " + message
     return message
 
-class TestMore(unittest.TestCase):
+class TestMore(CommandTest, unittest.TestCase):
+    modules = ['more']
+
+    def add_config(self):
+        self.config.channels = ['#example', '#test']
 
     def setUp(self):
-        self.phenny = MagicMock()
-        self.phenny.nick = 'phenny'
-        self.phenny.config.channels = ['#example', '#test']
-        self.phenny.config.host = 'irc.oftc.net'
-
-        self.input = MagicMock()
-        self.input.sender = '#test'
-        self.input.nick = 'Testsworth'
-
-        more.setup(self.phenny)
-        more.delete_all(self.phenny, target=self.input.nick)
-        more.delete_all(self.phenny, target=self.input.sender)
+        super().setUp()
+        self.get_module().delete_all(self.phenny, target='Testsworth')
+        self.get_module().delete_all(self.phenny, target='#test')
 
         self.messages = [
             'Lorem ipsum dolor sit amet',
@@ -45,149 +39,134 @@ class TestMore(unittest.TestCase):
         ]
 
     def create_messages(self, target, num, tag='test'):
-        more.add_messages(self.phenny, target, self.messages[:num], tag=tag)
+        self.get_module().add_messages(self.phenny, target, self.messages[:num], tag=tag)
+        self.phenny.write_queue = []
+        self.target = target
 
-    def fetch(self, admin, owner, count, tag):
-        self.input.admin = admin
-        self.input.owner = owner
-        self.input.group = lambda x: [None, count, tag][x]
-        more.more(self.phenny, self.input)
-
-    def assert_msg(self, target, index, remaining):
-        message = formatting(self.messages[index], target)
-        if remaining:
-            message += " (%s remaining)" % remaining
-        assert_call(self.phenny.say, message)
-
-    def assert_msgs(self, target, start, end, remaining):
-        calls = [call(formatting(message, target)) for message in self.messages[start:end]]
-        if remaining:
-            calls.append(call(str(remaining) + " message(s) remaining"))
-        assert_calls(self.phenny.say, calls)
+    def fetch(self, admin, owner, count, tag, index, remaining):
+        nick = 'user'
+        if owner:
+            nick = 'owner'
+        elif admin:
+            nick = 'admin'
+        out = self.run_message(f'.more {count or 1} {tag or ""}', nick=nick,
+                               channel=self.target)
+        prefix = f'PRIVMSG {self.target} :'
+        if self.target == '#test' and nick == 'user':
+            self.assertEqual(out, [prefix+nick+': Only admins can use .more on channels.'])
+        elif index == 0 and remaining == 0:
+            self.assertEqual(out, [prefix+nick+': No more queued messages'])
+        elif not count or count == 1:
+            if self.target == 'user':
+                prefix += self.target + ': '
+            message = prefix+self.messages[index]
+            if remaining:
+                message += " (%s remaining)" % remaining
+            self.assertEqual(out, [message])
+        else:
+            messages = [prefix+m for m in self.messages[index:index+(count or 1)]]
+            if remaining:
+                messages.append(prefix+f'{remaining} message(s) remaining')
 
     def test_more_user_user(self):
-        self.create_messages(self.input.nick, 3)
+        self.create_messages('user', 3)
 
-        self.fetch(False, False, None, None)
-        self.assert_msg(self.input.nick, 1, 1)
+        self.fetch(False, False, None, None, 1, 1)
 
-        self.fetch(False, False, None, None)
-        self.assert_msg(self.input.nick, 2, 0)
+        self.fetch(False, False, None, None, 2, 0)
 
     def test_more_user_user_one(self):
-        self.create_messages(self.input.nick, 3)
+        self.create_messages('user', 3)
 
-        self.fetch(False, False, None, None)
-        self.assert_msg(self.input.nick, 1, 1)
+        self.fetch(False, False, None, None, 1, 1)
 
-        self.fetch(False, False, 1, None)
-        self.assert_msg(self.input.nick, 2, 0)
+        self.fetch(False, False, 1, None, 2, 0)
 
     def test_more_user_user_three(self):
-        self.create_messages(self.input.nick, 4)
+        self.create_messages('user', 4)
 
-        self.fetch(False, False, 3, None)
-        self.assert_msgs(self.input.nick, 1, 4, 0)
+        self.fetch(False, False, 3, None, 1, 0)
 
     def test_more_user_user_three_two(self):
-        self.create_messages(self.input.nick, 6)
+        self.create_messages('user', 6)
 
-        self.fetch(False, False, 3, None)
-        self.assert_msgs(self.input.nick, 1, 4, 0)
+        self.fetch(False, False, 3, None, 1, 0)
 
     def test_more_user_user_none(self):
-        self.fetch(False, False, None, None)
-        assert_call(self.phenny.reply, "No more queued messages")
+        self.target = 'user'
+        self.fetch(False, False, None, None, 0, 0)
 
     def test_more_user_channel(self):
-        self.create_messages(self.input.sender, 3)
+        self.create_messages('#test', 3)
 
-        self.fetch(False, False, None, None)
-        assert_call(self.phenny.reply, "Only admins can use .more on channels.")
+        self.fetch(False, False, None, None, 0, 0)
 
     def test_more_admin_user(self):
-        self.create_messages(self.input.nick, 3)
+        self.create_messages('user', 3)
 
-        self.fetch(True, False, None, None)
-        self.assert_msg(self.input.nick, 1, 1)
+        self.fetch(True, False, None, None, 1, 1)
 
-        self.fetch(True, False, None, None)
-        self.assert_msg(self.input.nick, 2, 0)
+        self.fetch(True, False, None, None, 2, 0)
 
     def test_more_admin_user_one(self):
-        self.create_messages(self.input.nick, 3)
+        self.create_messages('user', 3)
 
-        self.fetch(True, False, None, None)
-        self.assert_msg(self.input.nick, 1, 1)
+        self.fetch(True, False, None, None, 1, 1)
 
-        self.fetch(True, False, 1, None)
-        self.assert_msg(self.input.nick, 2, 0)
+        self.fetch(True, False, 1, None, 2, 0)
 
     def test_more_admin_user_three(self):
-        self.create_messages(self.input.nick, 4)
+        self.create_messages('user', 4)
 
-        self.fetch(True, False, 3, None)
-        self.assert_msgs(self.input.nick, 1, 4, 0)
+        self.fetch(True, False, 3, None, 1, 0)
 
     def test_more_admin_user_three_two(self):
-        self.create_messages(self.input.nick, 6)
+        self.create_messages('user', 6)
 
-        self.fetch(True, False, 3, None)
-        self.assert_msgs(self.input.nick, 1, 4, 2)
+        self.fetch(True, False, 3, None, 1, 2)
 
     def test_more_admin_channel(self):
-        self.create_messages(self.input.sender, 3)
+        self.create_messages('#test', 3)
 
-        self.fetch(True, False, None, None)
-        self.assert_msg(self.input.sender, 1, 1)
+        self.fetch(True, False, None, None, 1, 1)
 
-        self.fetch(True, False, None, None)
-        self.assert_msg(self.input.sender, 2, 0)
+        self.fetch(True, False, None, None, 2, 0)
 
     def test_more_admin_channel_one(self):
-        self.create_messages(self.input.sender, 3)
+        self.create_messages('#test', 3)
 
-        self.fetch(True, False, None, None)
-        self.assert_msg(self.input.sender, 1, 1)
+        self.fetch(True, False, None, None, 1, 1)
 
-        self.fetch(True, False, 1, None)
-        self.assert_msg(self.input.sender, 2, 0)
+        self.fetch(True, False, 1, None, 2, 0)
 
     def test_more_admin_channel_three(self):
-        self.create_messages(self.input.sender, 4)
+        self.create_messages('#test', 4)
 
-        self.fetch(True, False, 3, None)
-        self.assert_msgs(self.input.sender, 1, 4, 0)
+        self.fetch(True, False, 3, None, 1, 0)
 
     def test_more_admin_channel_three_two(self):
-        self.create_messages(self.input.sender, 6)
+        self.create_messages('#test', 6)
 
-        self.fetch(True, False, 3, None)
-        self.assert_msgs(self.input.sender, 1, 4, 2)
+        self.fetch(True, False, 3, None, 1, 2)
 
     def test_more_admin_both_three(self):
-        self.create_messages(self.input.nick, 4)
-        self.create_messages(self.input.sender, 4)
+        self.create_messages('user', 4)
+        self.create_messages('#test', 4)
 
-        self.fetch(True, False, 3, None)
-        self.assert_msgs(self.input.nick, 1, 4, 0)
+        self.fetch(True, False, 3, None, 1, 0)
 
-        self.fetch(True, False, 3, None)
-        self.assert_msgs(self.input.sender, 1, 4, 0)
+        self.fetch(True, False, 3, None, 1, 0)
 
     def test_more_admin_both_three_two(self):
-        self.create_messages(self.input.nick, 6)
-        self.create_messages(self.input.sender, 6)
+        self.create_messages('user', 6)
+        self.create_messages('#test', 6)
 
-        self.fetch(True, False, 3, None)
-        self.assert_msgs(self.input.nick, 1, 4, 2)
+        self.fetch(True, False, 3, None, 1, 2)
 
-        self.fetch(True, False, 2, None)
-        self.assert_msgs(self.input.nick, 4, 6, 0)
+        self.fetch(True, False, 2, None, 4, 0)
 
-        self.fetch(True, False, 3, None)
-        self.assert_msgs(self.input.sender, 1, 4, 2)
+        self.fetch(True, False, 3, None, 1, 2)
 
     def test_more_admin_both_none(self):
-        self.fetch(False, False, None, None)
-        assert_call(self.phenny.reply, "No more queued messages")
+        self.target = 'user'
+        self.fetch(False, False, None, None, 0, 0)

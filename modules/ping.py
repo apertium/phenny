@@ -35,13 +35,13 @@ def countGuest(phenny, nick):
     with open(global_filename, 'w') as dbFile:
         dbFile.write(','.join(guests))
 
-@command('getGuests', admin=True)
+@command('getguests', admin=True)
 def getGuests(phenny, msg):
     global_filename = db_path(phenny, 'guests')
     if not os.path.exists(global_filename):
-        try: f = open(global_filename, 'r')
+        try:
+            with open(global_filename, 'w') as fin: pass
         except OSError: pass
-        f.close()
     guests = {}
     with open(global_filename, 'r') as dbFile:
         guests = set(dbFile.read().strip().split(','))

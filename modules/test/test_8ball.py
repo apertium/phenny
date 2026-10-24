@@ -1,13 +1,11 @@
 import unittest
-from mock import MagicMock, Mock
 from modules import eightball
+from modules.test.command_test import CommandTest
 
-class TestEightBall(unittest.TestCase):
-    def setUp(self):
-        self.phenny = MagicMock()
-        self.input = MagicMock()
+class TestEightBall(CommandTest, unittest.TestCase):
+    modules = ['eightball']
 
     def testEightBall(self):
-        eightball.eightball(self.phenny, self.input)
-        out = self.phenny.reply.call_args[0][0]
-        self.assertTrue(out in eightball.QUOTES)
+        out = self.message_response('.8ball are you there?')
+        self.assertIn(': ', out)
+        self.assertIn(out.split(': ', 1)[1], eightball.QUOTES)

@@ -24,6 +24,8 @@ def setup(self):
     cursor.close()
     connection.close()
 
+buffer_threshold = 2
+
 def add_messages(phenny, target, messages, tag=None):
     if not type(messages) is list:
         messages = [messages]
@@ -36,7 +38,7 @@ def add_messages(phenny, target, messages, tag=None):
     if not tag:
         tag = calling_module()
 
-    if len(messages) <= 2:
+    if len(messages) <= buffer_threshold:
         for message in messages:
             phenny.msg(target, message)
 
@@ -62,16 +64,22 @@ def more(phenny, msg):
     Optional N: number of messages to show
     Optional tag: which messages to show (usually a module name)'''
 
-    count, tag = (msg.command_args_list + ['1', ''])[:2]
-    if not count.isdigit():
-        return
-    count = int(count)
+    count = 1
+    tag = ''
+    if msg.command_args_list:
+        count = msg.command_args_list[0]
+        if count.isdigit():
+            count = int(count)
+        else:
+            return
+        if len(msg.command_args_list) > 1:
+            tag = msg.command_args_list[1]
 
-    if count_more(phenny, input.nick, tag):
-        show_more(phenny, input.nick, count, tag)
-    elif count_more(phenny, input.sender, tag):
-        if input.admin:
-            show_more(phenny, input.sender, count, tag)
+    if count_more(phenny, msg.nick, tag):
+        show_more(phenny, msg.nick, count, tag)
+    elif count_more(phenny, msg.sender, tag):
+        if phenny.is_admin(msg.nick):
+            show_more(phenny, msg.sender, count, tag)
         else:
             phenny.reply("Only admins can use .more on channels.")
     else:

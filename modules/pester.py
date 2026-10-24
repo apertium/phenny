@@ -36,7 +36,7 @@ def start_pester(phenny, msg):
     if c.fetchall() == []:
         current_time = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
         c.execute('''INSERT INTO to_pester VALUES(?,?,?,?,?,?);''', [pesternick, inputnick, text, current_time, "", current_time])
-        start_pester.conn.commit()
+        conn.commit()
         msg = msg.nick + ": I will start pestering " + msg.command_args_list[0] + " " + text
         phenny.say(msg)
     else:
@@ -47,8 +47,8 @@ def start_pester(phenny, msg):
 
 @every_message
 def pester(phenny, msg):
-    pester.conn = sqlite3.connect(phenny.pester_db)
-    c = pester.conn.cursor()
+    conn = sqlite3.connect(phenny.pester_db)
+    c = conn.cursor()
     inputnick = msg.nick.casefold()
 
     pesterees = []
@@ -89,7 +89,7 @@ def pester(phenny, msg):
                         phenny.say(msg)
                         c.execute('''UPDATE to_pester SET last_pestered=? WHERE pesteree=? AND pesterer=? AND reason=?''',
                                 (current_time, inputnick, pesterer, reason))
-                        pester.conn.commit()
+                        conn.commit()
                 else:
                     dismissed = datetime.strptime(last_dismissed, "%Y-%m-%d %H:%M:%S")
                     delta = dismissed - datetime.now(UTC)
@@ -100,7 +100,8 @@ def pester(phenny, msg):
                         c.execute('''UPDATE to_pester SET last_pestered=? WHERE pesteree=? AND pesterer=? AND reason=?''',
                                 (current_time, inputnick, pesterer, reason))
                         c.execute('''UPDATE to_pester SET dismissed=? WHERE pesteree=? AND pesterer=? AND reason=?''', ("", inputnick, pesterer, reason))
-                        pester.conn.commit()
+                        conn.commit()
+    conn.close()
 
 def pester_exists(cur, pesteree, pesterer):
     qr = 'SELECT * FROM to_pester WHERE pesteree = ? AND pesterer = ?'

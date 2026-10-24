@@ -2,32 +2,20 @@
 test_urbandict.py - tests for the urban dictionary module
 author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
-import re
 import unittest
-from mock import MagicMock
-from modules import urbandict
+from modules.test.command_test import CommandTest
 from web import catch_timeout
 
-
-class TestUrbandict(unittest.TestCase):
-
-    def setUp(self):
-        self.phenny = MagicMock()
-        self.input = MagicMock()
+class TestUrbandict(CommandTest, unittest.TestCase):
+    modules = ['urbandict']
 
     @catch_timeout
     def test_result(self):
-        word = 'slemp'
-        self.input.group.return_value = word
-        urbandict.urbandict(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
-        m = re.match(r'^.* - http://www\.urbandictionary\.com/define\.php\?term=.*$',
-                     out, flags=re.UNICODE)
-        self.assertTrue(m)
+        out = self.message_response('.urb slemp')
+        self.assertRegex(out, r'^.* - http://www\.urbandictionary\.com/define\.php\?term=.*$')
 
     @catch_timeout
     def test_none(self):
-        word = '__no_word_here__'
-        self.input.group.return_value = word
-        urbandict.urbandict(self.phenny, self.input)
-        self.phenny.say.assert_called_once_with('No results found for {0}'.format(word))
+        self.check_response(
+            '.urb __no_word_here__',
+            'No results found for __no_word_here__')

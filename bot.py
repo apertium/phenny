@@ -199,8 +199,10 @@ class Phenny:
             if name in excluded_modules: continue
 
             try:
-                module_loader = importlib.machinery.SourceFileLoader(name, filename)
-                module = module_loader.load_module()
+                spec = importlib.util.spec_from_file_location(name, filename)
+                module = importlib.util.module_from_spec(spec)
+                sys.modules[name] = module
+                spec.loader.exec_module(module)
             except Exception as e:
                 trace = traceback.format_exc()
                 logger.error("Error loading %s module:\n%s" % (name, trace))
@@ -221,7 +223,7 @@ class Phenny:
             ssl_context=None):
         asyncio.run(self.main_loop(host, port, ssl))
 
-    def write(self, args, text=None):
+    def prepare_outgoing_message(self, args, text=None):
         def safe(arg):
             if isinstance(arg, str):
                 arg = arg.encode('utf-8')
@@ -229,6 +231,10 @@ class Phenny:
         line = b' '.join([safe(arg) for arg in args])
         if text:
             line += b' :' + safe(text)
+        return line
+
+    def write(self, args, text=None):
+        line = self.prepare_outgoing_message(args, text)
         self.sending.acquire()
         self.writer.write(line + b'\r\n')
         self.sending.release()
@@ -374,7 +380,6 @@ class Phenny:
         if msg.args and msg.args[0] in EVENTS:
             for fn in EVENTS[msg.args[0]]:
                 self.call(fn, msg)
-            return
         if msg.args and msg.args[0] != 'PRIVMSG':
             return
         m = self.command_pattern.fullmatch(msg.text)

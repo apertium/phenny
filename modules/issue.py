@@ -2,7 +2,7 @@
 issue.py - create a new GitHub issue
 author: amuritna
 """
-from web import is_up, post
+import web
 from requests import HTTPError
 import json
 from bot import command
@@ -16,7 +16,7 @@ invalidmsg = 'Invalid .issue command. Usage: .issue <owner>/<repository> <title>
 def issue(phenny, msg):
     """ .issue <owner>/<repository> <title> - create a new GitHub issue """
 
-    if not is_up(gh_uri):
+    if not web.is_up(gh_uri):
         return phenny.reply('Sorry, GitHub is down.')
 
     # check if GitHub auth token is available in default.py
@@ -54,10 +54,11 @@ def issue(phenny, msg):
     })
 
     try:
-        req_str = post(req_url, req_body, req_headers)
+        req_str = web.post(req_url, req_body, req_headers)
         req_json = json.loads(req_str)
         phenny.reply('Issue created. You should add a description at {}'.format(req_json['html_url']))
-    except HTTPError:
+    except HTTPError as e:
+        print(e)
         phenny.reply('It appears that the repository you provided does not exist.')
 
 if __name__ == "__main__":

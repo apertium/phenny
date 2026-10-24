@@ -9,10 +9,9 @@ http://inamidst.com/phenny/
 
 import re
 import web
-import requests
 from tools import truncate
 from modules import more
-from web import catch_timeout, is_up, REQUEST_TIMEOUT
+import web
 from bot import command
 
 ddg_uri = 'https://api.duckduckgo.com/?format=json&pretty=1&q='
@@ -24,14 +23,14 @@ def gsearch(phenny, msg):
 
 @command('topics')
 def topics(phenny, msg):
-    if not is_up('https://api.duckduckgo.com'):
+    if not web.is_up('https://api.duckduckgo.com'):
         return phenny.say('Sorry, DuckDuckGo API is down.')
 
     if not msg.command_args:
         return phenny.reply('.topics about what?')
     query = msg.command_args
 
-    r = requests.get(ddg_uri + query, timeout=REQUEST_TIMEOUT).json()
+    r = web.api_call(ddg_uri + query)
     topics = r['RelatedTopics']
     if len(topics) == 0:
         return phenny.say('Sorry, no topics found.')
@@ -52,10 +51,10 @@ def search(phenny, msg):
         return phenny.reply('.search for what?')
     query = msg.command_args
 
-    if not is_up('https://api.duckduckgo.com'):
+    if not web.is_up('https://api.duckduckgo.com'):
         return phenny.say('Sorry, DuckDuckGo API is down.')
 
-    r = requests.get(ddg_uri + query, timeout=REQUEST_TIMEOUT).json()
+    r = web.api_call(ddg_uri + query)
     try:
         answer = r['AbstractText']
         answer_url = r['AbstractURL']
@@ -76,8 +75,8 @@ def suggest(phenny, msg):
     if not msg.command_args:
         return phenny.reply("No query term.")
     query = msg.command_args
-    answer = requests.get(suggest_uri + query)
-    suggestions = answer.json()[1][:10]
+    answer = web.api_call(suggest_uri + query)
+    suggestions = answer[1][:10]
     phenny.reply(suggestions[0])
     phenny.reply('Check PM for more.')
     more.add_messages(phenny, msg.nick, suggestions[1:])

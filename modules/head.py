@@ -18,7 +18,7 @@ from web import REQUEST_TIMEOUT
 from modules import apertium_wiki
 from modules import wikipedia
 from modules import wiktionary
-from bot import command, event
+from bot import command, every_message
 
 APERTIUM_URLS = [
     r'.*\bapertium\.(org|com)(/.*)?',
@@ -37,7 +37,7 @@ def setup(self):
 @command('head', example='.head http://www.w3.org/')
 def head(phenny, msg):
     """Provide HTTP HEAD information."""
-    uri = msg.group(1)
+    uri = msg.command_args
     uri = (uri or '')
     if ' ' in uri:
         uri, header = uri.rsplit(' ', 1)
@@ -95,10 +95,10 @@ r_title = re.compile(r'(?ims)<title[^>]*>(.*?)</title\s*>')
 r_entity = re.compile(r'&[A-Za-z0-9#]+;')
 r_url = re.compile(r'((?:(?:https?:(?://)?)|w{3})[a-zA-Z0-9-._+]+(?::[0-9]+)?(?:/[a-zA-Z0-9-+_~/.,;&=?!#%]+?)?)\)?(?:$|\s+|(?:[.,:;](?: |$)))')
 
-@event('*')
+@every_message
 def note_and_snarf_uri(phenny, msg):
-    if 'PRIVMSG' not in msg.args:
-        return
+    if msg.text.startswith('.'):
+        return # skip commands
     m = r_url.search(msg.text)
     if not m:
         return

@@ -1,50 +1,37 @@
 import unittest
-from mock import MagicMock
-from modules import noexceptions
+from modules.test.command_test import CommandTest
 
-
-class TestNoexceptions(unittest.TestCase):
-    def setUp(self):
-        self.phenny = MagicMock()
-        self.input = MagicMock()
-        self.input.nick = 'Testuser'
-        self.input.group = lambda x: ['', 'test'][x]
+class TestNoexceptions(CommandTest, unittest.TestCase):
+    modules = ['noexceptions']
 
     def test_noexceptions(self):
-        noexceptions.noexceptions(self.phenny, self.input)
-        self.phenny.say.assert_called_once_with('NO EXCEPTIONS, Testuser!')
+        self.check_response('there are some exceptions here',
+                            nick='Testuser',
+                            expected='NO EXCEPTIONS, Testuser!')
 
     def test_harglebarglep(self):
-        noexceptions.harglebargleP(self.phenny, self.input)
-        self.phenny.say.assert_called_once_with('HARGLE BARGLE, test!')
+        self.check_response('.hargle', nick='test',
+                            expected='HARGLE BARGLE, test!')
 
     def test_bargle(self):
-        self.input = 'hargle'
-        noexceptions.bargle(self.phenny, self.input)
-        self.phenny.say.assert_called_once_with('bargle!')
+        self.check_response('hargle', expected='bargle!')
 
     def test_hargle(self):
-        self.input = 'bargle'
-        noexceptions.hargle(self.phenny, self.input)
-        self.phenny.say.assert_called_once_with('HARGLE BARGLE!')
+        self.check_response('bargle', expected='HARGLE BARGLE!')
 
     def test_udmurt(self):
-        self.input = 'udmurt'
-        noexceptions.udmurt(self.phenny, self.input)
-        self.phenny.say.assert_called_once_with('\o/ \o/ \o/ U D M U R T \o/ \o/ \o/')
+        self.check_response('udmurt', expected=r'\o/ \o/ \o/ U D M U R T \o/ \o/ \o/')
 
     def test_particles(self):
-        noexceptions.particles(self.phenny, self.input)
-        self.phenny.say.assert_called_once_with('Testuser: this is my particles face :(((((')
+        self.check_response('I call this a particle', nick='Testuser',
+                            expected='Testuser: this is my particles face :(((((')
 
     def test_nightnight(self):
         message = {'nn, Testuser!', 'night, Testuser!', 'жашкы жат, Testuser!', 'later, Testuser!', 'sweet dreams, Testuser!', 'o/, Testuser!'}
-        noexceptions.nightnight(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
-        self.assertTrue(out in message)
+        out = self.message_response('nn', nick='Testuser')
+        self.assertIn(out, message)
 
     def test_uderp(self):
-        message = {'\o/ UD \o/, Testuser!', '（。々°） #u_dep, Testuser!', 'ᕕ(ᐛ)ᕗ #u_dep, Testuser!', 'universal derpendencies!, Testuser!', 'treegrams ftw!, Testuser!'}
-        noexceptions.uderp(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
-        self.assertTrue(out in message)
+        message = {r'\o/ UD \o/, Testuser!', '（。々°） #u_dep, Testuser!', 'ᕕ(ᐛ)ᕗ #u_dep, Testuser!', 'universal derpendencies!, Testuser!', 'treegrams ftw!, Testuser!'}
+        out = self.message_response('#u_dep', nick='Testuser')
+        self.assertIn(out, message)

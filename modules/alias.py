@@ -46,16 +46,13 @@ def aliasPairMerge(phenny, nick1, nick2):
 
     dumpAliases(phenny)
 
-@command('.alias')
+@command('alias')
 def c_alias(phenny, msg):
-    args = msg.command_args_list
-    if len(args) > 0:
-        if args[0] == 'add':
+    global nick_aliases, nick_pairs
+    match msg.command_args_list:
+        case ['add', nick2]:
             nick1 = msg.nick
-            nick2 = args[1] if len(args) > 1 else None
-            if (nick2 == None):
-                phenny.reply("Usage: .alias add <nick>")
-            elif (nick1 == nick2):
+            if (nick1 == nick2):
                 phenny.reply("I don't think that will be necessary.")
             elif (nick2 in aliasGroupFor(nick1)):
                 phenny.reply("You and " + nick2 + " are already paired.")
@@ -68,13 +65,13 @@ def c_alias(phenny, msg):
             else:
                 nick_pairs.append([nick1, nick2])
                 phenny.reply("Alias request created. Switch your nick to " + nick2 + " and call \".alias add " + nick1 + "\" to confirm.")
-        elif args[0] == 'list':
-            if len(args) > 1:
-                nick = args[1]
-                phenny.reply("%s's current aliases are: " % nick + ', '.join(aliasGroupFor(nick)) + ".")
-            else:
-               phenny.reply("Your current aliases are: " + ', '.join(aliasGroupFor(msg.nick)) + ".")
-        elif args[0] == 'remove':
+        case ['add'] | ['add', *_]:
+            phenny.reply("Usage: .alias add <nick>")
+        case ['list', nick]:
+            phenny.reply("%s's current aliases are: " % nick + ', '.join(aliasGroupFor(nick)) + ".")
+        case ['list']:
+            phenny.reply("Your current aliases are: " + ', '.join(aliasGroupFor(msg.nick)) + ".")
+        case ['remove']:
             nick = msg.nick
             group = aliasGroupFor(nick)
             if len(group) > 1:
@@ -83,10 +80,8 @@ def c_alias(phenny, msg):
                 nick_aliases.append(group)
                 dumpAliases(phenny)
             phenny.reply("You have removed %s from its alias group" % nick)
-        else:
+        case _:
             phenny.reply("Usage: .alias add <nick>, .alias list <nick>?, .alias remove")
-    else:
-        phenny.reply("Usage: .alias add <nick>, .alias list <nick>?, .alias remove")
 
 def loadAliases(self):
     try:

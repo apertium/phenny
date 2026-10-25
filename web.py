@@ -17,8 +17,9 @@ from time import time
 from requests.exceptions import ConnectionError, HTTPError, Timeout
 from html.entities import name2codepoint
 from urllib.parse import quote, unquote
-from tools import read_cache, write_cache
+from tools import read_cache, write_cache, GrumbleError
 from requests.packages import urllib3
+import json
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -36,11 +37,11 @@ class ServerFault(Exception):
     def __str__(self):
         return str(self.description)
 
-class Grab(urllib.request.URLopener): 
-    def __init__(self, *args): 
+class Grab(urllib.request.URLopener):
+    def __init__(self, *args):
         self.version = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.52 Safari/537.17'
         urllib.request.URLopener.__init__(self, *args)
-    def http_error_default(self, url, fp, errcode, errmsg, headers): 
+    def http_error_default(self, url, fp, errcode, errmsg, headers):
         return urllib.addinfourl(fp, [headers, errcode], "http:" + url)
 urllib.request._urlopener = Grab()
 
@@ -135,33 +136,46 @@ def get(url, cache=False, headers={}, verify=True, timeout=REQUEST_TIMEOUT, **kw
                     return response.text
     return response.text
 
-def head(uri, headers={}, verify=True, **kwargs): 
-    if not uri.startswith('http'): 
+def head(uri, headers={}, verify=True, **kwargs):
+    if not uri.startswith('http'):
         return
     headers.update(default_headers)
     r = requests.head(uri, headers=headers, verify=verify, **kwargs)
     r.raise_for_status()
     return r.headers
 
-def post(uri, data, headers={}, verify=True, **kwargs): 
-    if not uri.startswith('http'): 
+def post(uri, data, headers={}, verify=True, **kwargs):
+    if not uri.startswith('http'):
         return
     headers.update(default_headers)
     r = requests.post(uri, data=data, headers=headers, verify=verify, **kwargs)
     r.raise_for_status()
     return r.text
 
+def api_call(uri, headers=None):
+    opener = urllib.request.build_opener()
+    if headers:
+        opener.addheaders = headers
+    try:
+        response = opener.open(uri).read()
+    except urllib.error.HTTPError as error:
+        resp = error.read()
+        blob = json.loads(resp.decode('utf-8'))
+        desc = blob.get('explanation', blob.get('message', '<no error message>'))
+        raise GrumbleError('Error {:d}: {:s}'.format(blob.get('code', 500), desc)) from error
+    return json.loads(response.decode('utf-8'))
+
 r_entity = re.compile(r'&([^;\s]+);')
 
-def entity(match): 
+def entity(match):
     value = match.group(1).lower()
-    if value.startswith('#x'): 
+    if value.startswith('#x'):
         return chr(int(value[2:], 16))
-    elif value.startswith('#'): 
+    elif value.startswith('#'):
         return chr(int(value[1:]))
-    elif value in name2codepoint: 
+    elif value in name2codepoint:
         return chr(name2codepoint[value])
     return '[' + value + ']'
 
-def decode(html): 
+def decode(html):
     return r_entity.sub(entity, html)

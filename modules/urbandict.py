@@ -8,7 +8,7 @@ from tools import GrumbleError
 import web
 import json
 import re
-
+from bot import command
 
 API_URL = "http://api.urbandictionary.com/v0/define?term={0}"
 WEB_URL = "http://www.urbandictionary.com/define.php?term={0}"
@@ -29,33 +29,17 @@ def get_definition(phenny, word, to_user=None):
     response = "{0} - {1}".format(result['definition'].strip()[:256], url)
     phenny.say(response, target=to_user)
 
-
-def urbandict(phenny, input):
+@command('urb', example='.urb troll')
+def urbandict(phenny, msg):
     """.urb <word> - Search Urban Dictionary for a definition. (supports pointing)"""
 
-    word = input.group(1)
+    word = msg.command_args
     if not word:
         phenny.say(urbandict.__doc__.strip())
         return
-    to_nick = input.group(2)
+    to_nick = msg.command_point
 
     get_definition(phenny, word, to_user=to_nick)
-
-
-urbandict.name = 'urb'
-urbandict.rule = (['urb'], r'(.*)')
-urbandict.example = '.urb troll'
-urbandict.point = True
-
-
-def urbandict3(phenny, input):
-    nick, _, __, word = input.groups()
-
-    get_definition(phenny, word, nick)
-
-urbandict3.rule = r'(\S*)(:|,)\s\.(urb)\s(.*)'
-urbandict3.example = 'svineet: .urb seppuku'
-
 
 if __name__ == '__main__':
     print(__doc__.strip())

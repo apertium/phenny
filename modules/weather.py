@@ -11,6 +11,7 @@ import re
 import metar
 import json
 import web
+from bot import command
 
 r_from = re.compile(r'(?i)([+-]\d+):00 from')
 
@@ -72,10 +73,10 @@ def code(phenny, search):
 
         return sumOfSquares[1]
 
-
-def f_weather(phenny, input):
+@command('weather')
+def f_weather(phenny, msg):
     """.weather <ICAO> - Show the weather at airport with the code <ICAO>."""
-    icao_code = input.group(2)
+    icao_code = msg.command_args
 
     if not icao_code:
         return phenny.say("Try .weather London, for example?")
@@ -99,7 +100,6 @@ def f_weather(phenny, input):
         return
 
     phenny.say(str(metar.parse(bytes)))
-f_weather.rule = (['weather'], r'(.*)')
 
 if __name__ == '__main__':
     print(__doc__.strip())

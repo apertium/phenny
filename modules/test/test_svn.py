@@ -4,17 +4,15 @@ author: nu11us <work.willeggleston@gmail.com>
 """
 
 import unittest
-from mock import MagicMock
-from modules import svnpoller
-import tools
+from modules.test.command_test import CommandTest
 
+class TestSVNPoller(CommandTest, unittest.TestCase):
+    modules = ['svnpoller']
 
-class TestSVNPoller(unittest.TestCase):
-    def setUp(self):
-        self.phenny = MagicMock()
-        self.input = MagicMock()
+    def add_config(self):
+        self.config.svn_repositories = []
 
     def test_esan_false(self):
-        svnpoller.esan(self.phenny, self.input)
-        out = self.phenny.reply.call_args[0][0]
-        self.assertTrue("Sorry, there was nothing to report." in out)
+        out = self.run_message('.esan', nick='joe', channel='#ch')
+        self.assertEqual(out, ["PRIVMSG #ch :joe: Hold on a second, I'm polling!",
+                               'PRIVMSG #ch :joe: Sorry, there was nothing to report.'])

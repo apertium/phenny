@@ -3,49 +3,35 @@
 test_wiktionary.py - tests for the wiktionary module
 author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
-import re
 import unittest
-from mock import MagicMock
-from modules import wiktionary
+from modules.test.command_test import CommandTest
 from web import catch_timeout
 
-
-class TestWiktionary(unittest.TestCase):
-
-    def setUp(self):
-        self.phenny = MagicMock()
-        self.input = MagicMock()
+class TestWiktionary(CommandTest, unittest.TestCase):
+    modules = ['wiktionary']
 
     @catch_timeout
     def test_wiktionary(self):
-        w = wiktionary.wiktionary(self.phenny, 'test')
+        w = self.get_module().wiktionary(self.phenny, 'test')
         self.assertTrue(len(w[1]) > 0)
 
     @catch_timeout
     def test_wiktionary_none(self):
-        w = wiktionary.wiktionary(self.phenny, 'Hell!')
+        w = self.get_module().wiktionary(self.phenny, 'Hell!')
         self.assertEqual(len(w[0]), 0)
         self.assertEqual(len(w[1]), 0)
 
     @catch_timeout
     def test_w(self):
-        self.input.group.return_value = 'test'
-        wiktionary.w(self.phenny, self.input)
-        out = self.phenny.say.call_args[0][0]
-        m = re.match('^test — noun: .*$', out, flags=re.UNICODE)
-        self.assertTrue(m)
+        out = self.message_response('.w test')
+        self.assertIn('test — noun: ', out)
 
     @catch_timeout
     def test_w_none(self):
-        word = 'boook'
-        self.input.group.return_value = word
-        wiktionary.w(self.phenny, self.input)
-        out = self.phenny.say.call_args_list
-        self.assertEqual('Perhaps you meant \'book\'?', out[0][0][0])
-        self.assertTrue(re.match(r'^book — noun:', out[1][0][0], flags=re.UNICODE))
-        self.phenny.say.reset_mock()
+        out = self.run_message('.w boook')
+        self.assertEqual(len(out), 2)
+        self.assertIn('Perhaps you meant \'book\'?', out[0])
+        self.assertIn('book — noun:', out[1])
 
-        word = 'vnuericjnrfu'
-        self.input.group.return_value = word
-        wiktionary.w(self.phenny, self.input)
-        self.phenny.say.assert_called_once_with("Couldn't find any definitions for {0}.".format(word))
+        self.check_response('.w vnuericjnrfu',
+                            "Couldn't find any definitions for vnuericjnrfu.")

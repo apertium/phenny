@@ -8,6 +8,7 @@ import os
 import random
 import sqlite3
 from tools import DatabaseCursor, db_path
+from bot import every_message
 
 def setup(self):
     self.logger_db = db_path(self, 'logger')
@@ -28,12 +29,13 @@ def setup(self):
     cursor.close()
     connection.close()
 
-def logger(phenny, input):
+@every_message
+def logger(phenny, msg):
     sqlite_data = {
-        'channel': input.sender,
-        'nick': input.nick.casefold(),
-        'msg': input.group(1),
-        'chars': len(input.group(1)),
+        'channel': msg.sender,
+        'nick': msg.nick.casefold(),
+        'msg': msg.text,
+        'chars': len(msg.text),
     }
 
     # format action messages
@@ -52,8 +54,6 @@ def logger(phenny, input):
                     );''', sqlite_data)
 
         cursor.execute('update lines_by_nick set quote=:msg where channel=:channel and nick=:nick', sqlite_data)
-logger.priority = 'low'
-logger.rule = r'(.*)'
 
 if __name__ == '__main__':
     print(__doc__.strip())

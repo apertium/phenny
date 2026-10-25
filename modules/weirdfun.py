@@ -5,13 +5,15 @@ author: firespeaker <firespeaker@firespeaker.org>
 """
 
 import random
+from bot import command
 
 otherweird = "zfe"
 
-def fight(phenny, input):
+@command('fight', priority='low', example='.fight ChanServ')
+def fight(phenny, msg):
     """Have begiak fight someone for you."""
     global otherweird
-    whouser = input.group(1)
+    whouser = msg.command_args
     already = False
     if whouser:
         otherweird = whouser
@@ -26,14 +28,11 @@ def fight(phenny, input):
     if not already:
         phenny.do(response % otherweird)
 
-fight.commands = ['fight']
-fight.priority = 'low'
-fight.example = '.fight ChanServ'
-
-def hug(phenny, input):
+@command('hug', priority='low', example='.hug ChanServ')
+def hug(phenny, msg):
     """Have begiak hug someone for you."""
     global otherweird
-    whouser = input.group(1)
+    whouser = msg.command_args
     if whouser:
         otherweird = whouser
 
@@ -44,8 +43,5 @@ def hug(phenny, input):
     else:
         phenny.do("hugs %s" % otherweird)
 
-hug.commands = ['hug']
-hug.priority = 'low'
-hug.example = '.hug ChanServ'
 if __name__ == '__main__':
     print(__doc__.strip())

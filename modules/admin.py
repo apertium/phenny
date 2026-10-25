@@ -13,6 +13,8 @@ import subprocess
 
 from modules import reload
 
+from bot import command, event
+
 def check_return(command):
     try:
         subprocess.check_call(command)
@@ -29,9 +31,13 @@ def get_output(command):
 def check_signature(message, signature):
     return check_return(['./ssh/verify-msg.sh'] + message + [signature])
 
-def upgrade(phenny, input):
+@command('upgrade', owner=True, private=True)
+def upgrade(phenny, msg):
     """Request remote upgrade using a cryptographic signature"""
-    commit, signature = input.group(1), input.group(2)
+    if ' ' not in msg.command_args:
+        return
+    pieces = msg.command_args.split()
+    commit, signature = pieces[0], pieces[1]
 
     # check if we have a cryptographic public key
 
@@ -74,65 +80,45 @@ def upgrade(phenny, input):
         return
 
     reload.restart(phenny)
-upgrade.rule = r'\.upgrade (\S+) (\S+)'
 
-def join(phenny, input): 
+@command('join', admin=True, private=True, priority='low', example='.join #example or .join #example key')
+def join(phenny, msg):
     """Join the specified channel. This is an admin-only command."""
-    # Can only be done in privmsg by an admin
-    if input.sender.startswith('#'): return
-    if input.admin: 
-        channel, key = input.group(1), input.group(2)
-        phenny.proto.join(channel, key)
-join.rule = r'\.join (#\S+)(?: *(\S+))?'
-join.priority = 'low'
-join.example = '.join #example or .join #example key'
+    channel, key = msg.command_args, None
+    if ' ' in channel:
+        channel, key = channel.split(' ', 1)
+        key = key.lstrip()
+    phenny.join(channel, key)
 
-def autojoin(phenny, input): 
+@event('INVITE', admin=True)
+def autojoin(phenny, msg):
     """Join the specified channel when invited by an admin."""
-    if input.admin: 
-        channel = input.group(1)
-        phenny.proto.join(channel)
-autojoin.event = 'INVITE'
-autojoin.rule = r'(.*)'
+    phenny.join(msg.text)
 
-def part(phenny, input): 
+@command('part', admin=True, private=True, priority='low', example='.part #example')
+def part(phenny, msg):
     """Part the specified channel. This is an admin-only command."""
-    # Can only be done in privmsg by an admin
-    if input.sender.startswith('#'): return
-    if input.admin: 
-        phenny.proto.part(input.group(2))
-part.rule = (['part'], r'(#\S+)')
-part.priority = 'low'
-part.example = '.part #example'
+    if msg.command_args.startswith('#'):
+        phenny.part(msg.command_args)
 
-def quit(phenny, input): 
-    """Quit from the server. This is an owner-only command."""
-    # Can only be done in privmsg by the owner
-    if input.sender.startswith('#'): return
-    if input.owner: 
-        phenny.proto.quit()
-        __import__('os')._exit(0)
-quit.commands = ['quit']
-quit.priority = 'low'
+@command('quit', owner=True, private=True, priority='low')
+def quit(phenny, msg):
+    phenny.quit()
+    os.exit(0)
 
-def msg(phenny, input): 
-    # Can only be done in privmsg by an admin
-    if input.sender.startswith('#'): return
-    a, b = input.group(2), input.group(3)
-    if (not a) or (not b): return
-    if input.admin: 
-        phenny.msg(a, b)
-msg.rule = (['msg'], r'(#?\S+) (.+)')
-msg.priority = 'low'
+@command('msg', admin=True, private=True, priority='low')
+def msg(phenny, msg):
+    if ' ' not in msg.text:
+        return
+    channel, text = msg.command_args.split(' ', 1)
+    phenny.msg(channel, text)
 
-def me(phenny, input): 
-    # Can only be done in privmsg by an admin
-    if input.sender.startswith('#'): return
-    if input.admin: 
-        msg = '\x01ACTION %s\x01' % input.group(3)
-        phenny.msg(input.group(2), msg)
-me.rule = (['me'], r'(#?\S+) (.*)')
-me.priority = 'low'
+@command('me', admin=True, private=True, priority='low')
+def me(phenny, msg):
+    if ' ' not in msg.text:
+        return
+    channel, action = msg.command_args.split(' ', 1)
+    phenny.msg(channel, '\x01ACTION %s\x01' % action)
 
-if __name__ == '__main__': 
+if __name__ == '__main__':
     print(__doc__.strip())

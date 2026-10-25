@@ -10,10 +10,11 @@ http://inamidst.com/phenny/
 import logging
 import threading
 import time
+from bot import event
 
 logger = logging.getLogger('phenny')
 
-def setup(phenny): 
+def setup(phenny):
     logger.info("Setting up phenny")
     # by clsn
     phenny.data = {}
@@ -31,58 +32,55 @@ def setup(phenny):
             timer = threading.Timer(refresh_delay, close, ())
             phenny.data['startup.setup.timer'] = timer
             phenny.data['startup.setup.timer'].start()
-            phenny.proto.ping(phenny.config.host)
+            phenny.ping(phenny.config.host)
         phenny.data['startup.setup.pingloop'] = pingloop
 
+        @event('PONG', thread=True)
         def pong(phenny, input):
             try:
                 phenny.data['startup.setup.timer'].cancel()
                 time.sleep(refresh_delay + 60.0)
                 pingloop()
             except: pass
-        pong.event = 'PONG'
-        pong.thread = True
-        pong.rule = r'.*'
 
         phenny.variables.setdefault('startup', {})['pong'] = pong
 
-def startup(phenny, input):
+@event('251')
+def startup(phenny, msg):
     import time
 
     # Start the ping loop. Has to be done after USER on e.g. quakenet
     if phenny.data.get('startup.setup.pingloop'):
         phenny.data['startup.setup.pingloop']()
 
-    if hasattr(phenny.config, 'serverpass'): 
-        phenny.proto.pass_(phenny.config.serverpass)
+    if hasattr(phenny.config, 'serverpass'):
+        phenny.pass_(phenny.config.serverpass)
         logger.info(phenny.config.serverpass)
 
-    if hasattr(phenny.config, 'password'): 
+    if hasattr(phenny.config, 'password'):
         logger.info("identifying with nickserv...")
         phenny.msg('NickServ', 'IDENTIFY %s' % phenny.config.password)
         logger.info("sent message to nickserv...")
-    
-    afterauth(phenny, input)
 
-startup.rule = r'(.*)'
-startup.event = '251'
-startup.priority = 'low'
+    afterauth(phenny, msg)
 
-def afterauth(phenny, input):
-    global afterauth
+afterauth_has_run = False
 
-    logger.info('authed')
-    # Cf. http://swhack.com/logs/2005-12-05#T19-32-36
-    for channel in phenny.channels: 
-        phenny.proto.join(channel)
-        logger.info(channel)
+@event('NOTICE')
+def afterauth(phenny, msg):
+    global afterauth_has_run
 
-    afterauth.event = None
+    if afterauth_has_run:
+        return
 
-afterauth.rule = r'.*identified for.*'
-afterauth.event = 'NOTICE'
-afterauth.priority = 'high'
-afterauth.thread = False
+    if 'identified for' in msg.text:
+        logger.info('authed')
+        # Cf. http://swhack.com/logs/2005-12-05#T19-32-36
+        for channel in phenny.channels:
+            phenny.join(channel)
+            logger.info(channel)
 
-if __name__ == '__main__': 
+        afterauth_has_run = True
+
+if __name__ == '__main__':
     print(__doc__.strip())

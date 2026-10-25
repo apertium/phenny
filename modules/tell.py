@@ -13,6 +13,7 @@ from collections import Counter
 from modules import caseless_list
 from tools import GrumbleError, read_db, write_db
 from modules import alias
+from bot import command, event
 
 maximum = 4
 
@@ -29,11 +30,16 @@ def setup(self):
     loadReminders(self)
     alias.loadAliases(self)
 
-def f_remind(phenny, input, verb):
-    teller = input.nick
-
-    # @@ Multiple comma-separated tellees? Cf. Terje, #swhack, 2006-04-15
-    tellee, msg = input.groups()
+@command(['tell', 'ask'])
+def f_remind(phenny, msg):
+    verb = msg.command
+    teller = msg.nick
+    tellee = msg.command_point
+    text = msg.command_args
+    if not tellee:
+        if ' ' not in text:
+            return
+        tellee, text = text.split(' ', 1)
 
     aliases = alias.aliasGroupFor(teller)
 
@@ -51,11 +57,11 @@ def f_remind(phenny, input, verb):
         # @@ <deltab> and year, if necessary
         warn = False
         if tellee_original not in phenny.reminders:
-            phenny.reminders[tellee_original] = [(teller, verb, timenow, msg)]
+            phenny.reminders[tellee_original] = [(teller, verb, timenow, text)]
         else:
             # if len(phenny.reminders[tellee]) >= maximum:
             #     warn = True
-            phenny.reminders[tellee_original].append((teller, verb, timenow, msg))
+            phenny.reminders[tellee_original].append((teller, verb, timenow, text))
         # @@ Stephanie's augmentation
         response = "I'll pass that on when %s is around." % tellee_original
         # if warn: response += (" I'll have to use a pastebin, though, so " +
@@ -69,16 +75,6 @@ def f_remind(phenny, input, verb):
     else: phenny.say("Hey, I'm not as stupid as Monty you know!")
 
     dumpReminders(phenny)
-
-def f_tell(phenny, input):
-    f_remind(phenny, input, 'tell')
-f_tell.rule = ('$nick', ['tell'], r'(\S+) (.*)')
-f_tell.thread = False
-
-def f_ask(phenny, input):
-    f_remind(phenny, input, 'ask')
-f_ask.rule = ('$nick', ['ask'], r'(\S+) (.*)')
-f_ask.thread = False
 
 def formatReminder(r, tellee, recipient=None):
     if not recipient:
@@ -102,12 +98,15 @@ def getReminders(phenny, channel, key, recipient):
     except KeyError: phenny.msg(channel, 'Er...')
     return lines
 
-def message(phenny, input):
-    if not input.sender.startswith('#'): return
+@event('*')
+def message(phenny, msg):
+    if not msg.sender.startswith('#'): return
+    if 'PRIVMSG' not in msg.args:
+        return
 
-    tellee = input.nick
+    tellee = msg.nick
     aliases = caseless_list(alias.aliasGroupFor(tellee))
-    channel = input.sender
+    channel = msg.sender
 
     reminders = []
     remkeys = list(reversed(sorted(phenny.reminders.keys())))
@@ -132,19 +131,13 @@ def message(phenny, input):
 
     if len(list(phenny.reminders.keys())) != remkeys:
         dumpReminders(phenny)
-message.rule = r'(.*)'
-message.priority = 'low'
-message.thread = False
 
-def messageAlert(phenny, input):
-    aliases = alias.aliasGroupFor(input.nick)
+@event('JOIN')
+def messageAlert(phenny, msg):
+    aliases = alias.aliasGroupFor(msg.nick)
     remkeys = set(map(str.lower, phenny.reminders.keys()))
     if any((alias.lower() in remkeys) for alias in aliases):
-        phenny.say(input.nick + ': You have messages. Say something, and I\'ll read them out.')
-messageAlert.event = 'JOIN'
-messageAlert.rule = r'.*'
-messageAlert.priority = 'low'
-messageAlert.thread = False
+        phenny.say(msg.nick + ': You have messages. Say something, and I\'ll read them out.')
 
 def datesort(tell):
     dt = tell[0][2]
@@ -155,11 +148,12 @@ def datesort(tell):
         t = datetime.datetime.strptime(dt, '%d %b %H:%MZ')
         return t + (datetime.datetime(year=2014, month=1, day=1) - datetime.datetime(year=t.year, month=1, day=1))
 
-def tells(phenny, input):
+@command('tells')
+def tells(phenny, msg):
     """
 Usage: ".tells" for a summary of queued reminders; ".tells [show ]<nick/num>" for reminders queued to a specific nick; ".tells rm <num>" to delete a reminder
     """
-    teller = input.nick
+    teller = msg.nick
     tells = []
     for tellee in phenny.reminders:
         for msg in phenny.reminders[tellee]:
@@ -168,18 +162,20 @@ Usage: ".tells" for a summary of queued reminders; ".tells [show ]<nick/num>" fo
     tells = sorted(tells, key=lambda x: datesort(x)) # consistently sort the list by date
 
     if tells:
-        if input.group(1):
-            if input.group(1) in ('rm', 'del'):
-                if input.group(2).isdigit() and int(input.group(2)) <= len(tells):
-                    msg, tellee = tells[int(input.group(2))-1]
+        g1 = (msg.command_args + [''])[0]
+        g2 = (msg.command_args + ['', ''])[1]
+        if g1:
+            if g1 in ('rm', 'del'):
+                if g2.isdigit() and int(g2) <= len(tells):
+                    msg, tellee = tells[int(g2)-1]
                     phenny.reminders[tellee].remove(msg)
                     if not phenny.reminders[tellee]:
                         del phenny.reminders[tellee]
-                    phenny.reply('Removed reminder {} that would have sent to {}. (reminder numbers have changed, use ".tells show" again)'.format(input.group(2), tellee))
+                    phenny.reply('Removed reminder {} that would have sent to {}. (reminder numbers have changed, use ".tells show" again)'.format(g2, tellee))
                 else:
                     phenny.reply("That isn't a valid reminder.")
             else:
-                search_term = input.group(2) or input.group(1)
+                search_term = g2 or g1
                 if search_term.isdigit() and int(search_term) <= len(tells):
                     filtered_tells = [tells[int(search_term)-1]]
                 else:
@@ -203,7 +199,6 @@ Usage: ".tells" for a summary of queued reminders; ".tells [show ]<nick/num>" fo
             phenny.reply('You have the following tells: ' + ', '.join(sorted(['{} ({})'.format(tellee, cnt) for tellee, cnt in count.items()])))
     else:
         phenny.reply("You don't have any tells queued.")
-tells.rule = r'\.tells(?:\s(rm|del|show|[\d\w]+)(?:\s([\d\w]+))?)?$'
 
 if __name__ == '__main__':
     print(__doc__.strip())

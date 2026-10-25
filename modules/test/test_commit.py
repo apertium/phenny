@@ -3,12 +3,13 @@ test_commit.py - tests for the what the commit module
 author: mutantmonkey <mutantmonkey@mutantmonkey.in>
 """
 import unittest
+from modules.test.command_test import CommandTest
 from mock import MagicMock
 from modules import commit
 from web import catch_timeout
 
 
-class TestCommit(unittest.TestCase):
+class TestCommit(CommandTest, unittest.TestCase):
     def setUp(self):
         self.phenny = MagicMock()
 

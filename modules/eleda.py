@@ -8,6 +8,7 @@ Any questions can go to Qasim Iqbal (nick: Qasim) (email: me@qas.im)
 import json
 import web
 from modules import caseless_equal, apy
+from bot import command, every_message
 
 follows = []
 
@@ -17,7 +18,8 @@ class Eleda(object):
         self.nick = nick # followed
         self.dir = dir
 
-def follow(phenny, input):
+@command('follow', example='.follow Qasim en-es')
+def follow(phenny, msg):
     """Follow someone and translate as they speak."""
 
     # TODO: what if the nick is not present in the channel?
@@ -26,7 +28,7 @@ def follow(phenny, input):
     global follows
 
     try:
-        nick, dir, *extra = input.group(1).split(' ')
+        nick, dir, *extra = msg.command_args_list
         dir = tuple(dir.split('-'))
         _ = dir[1]
     except:
@@ -58,10 +60,10 @@ def follow(phenny, input):
             return
 
     # only accept follower paramter if it exists and the nick is admin
-    if len(extra) >= 1 and input.admin:
+    if len(extra) >= 1 and (msg.nick in phenny.config.admins or msg.nick == phenny.owner):
         sender = extra[0]
     else:
-        sender = input.nick
+        sender = msg.nick
 
     for i in follows:
         if caseless_equal(i.nick, nick) and i.dir == dir and caseless_equal(i.sender, sender):
@@ -71,18 +73,16 @@ def follow(phenny, input):
     follows.append(Eleda(sender, nick, dir))
     phenny.reply("%s now following %s (%s)." % (sender, nick, '-'.join(dir)))
 
-follow.commands = ['follow']
-follow.example = '.follow Qasim en-es'
-
-def unfollow(phenny, input):
+@command('unfollow')
+def unfollow(phenny, msg):
     """Stop following someone."""
 
     global follows
 
-    target = input.group(1)
+    target = msg.command_args
 
     for i in follows:
-        if not (caseless_equal(i.nick, target) and caseless_equal(i.sender, input.nick)):
+        if not (caseless_equal(i.nick, target) and caseless_equal(i.sender, msg.nick)):
             continue
 
         follows.remove(i)
@@ -91,10 +91,8 @@ def unfollow(phenny, input):
 
     phenny.reply("Sorry, you aren't following that user!")
 
-unfollow.commands = ['unfollow']
-unfollow.example = '.unfollow Qasim'
-
-def following(phenny, input):
+@command('following')
+def following(phenny, msg):
     """List people currently being followed."""
 
     text = []
@@ -107,16 +105,14 @@ def following(phenny, input):
     else:
         phenny.reply("No one is being followed at the moment.")
 
-following.commands = ['following']
-following.example = '.following'
-
-def checkMessages(phenny, input):
+@every_message
+def checkMessages(phenny, msg):
     '''filter through each message in the channel'''
 
-    if input.sender not in phenny.channels:
+    if msg.sender not in phenny.channels:
         return
 
-    text = input.group(0)
+    text = msg.text
 
     # don't translate commands
     if text.startswith('.'):
@@ -125,7 +121,7 @@ def checkMessages(phenny, input):
     translations = {}
 
     for i in follows:
-        if not caseless_equal(i.nick, input.nick):
+        if not caseless_equal(i.nick, msg.nick):
             continue
 
         # this user is being followed, translate them
@@ -143,5 +139,3 @@ def checkMessages(phenny, input):
             continue
 
         phenny.msg(i.sender, '%s (%s): %s' % (i.nick, '-'.join(i.dir), translation))
-
-checkMessages.rule = r'(.*)'

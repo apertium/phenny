@@ -12,7 +12,7 @@ import importlib.machinery
 import os
 import sys
 import time
-from bot import module_control
+from bot import module_control, command, EVENTS, KEYWORDS, COMMANDS
 
 def restart(phenny):
     for module in phenny.modules:
@@ -20,11 +20,10 @@ def restart(phenny):
 
     os.execv('phenny', sys.argv)
 
-def f_reload(phenny, input):
+@command('reload', admin=True)
+def f_reload(phenny, msg):
     """Reloads a module, for use by admins only."""
-    if not (input.admin or input.owner): return
-
-    name = input.group(1)
+    name = msg.command_args
 
     if (not name) or (name == '*'):
         restart(phenny)
@@ -33,6 +32,12 @@ def f_reload(phenny, input):
     if name not in phenny.modules:
         return phenny.reply("No '%s' module loaded" % name)
     module = phenny.modules[name]
+
+    global EVENTS, KEYWORDS, COMMANDS
+    for key, funcs in EVENTS.items():
+        EVENTS[key] = [f for f in funcs if f.__module__ != name]
+    KEYWORDS = [k for k in KEYWORDS if k[1].__module__ != name]
+    COMMANDS = {k: v for k, v in COMMANDS.items() if v.__module__ != name}
 
     # Thanks to moot for prodding me on this
     path = module.__file__
@@ -53,13 +58,8 @@ def f_reload(phenny, input):
     modified = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(mtime))
 
     phenny.register(module)
-    phenny.bind_commands()
 
     phenny.reply('%r (version: %s)' % (module, modified))
-f_reload.name = 'reload'
-f_reload.rule = ('$nick', ['reload'], r'(\S+)?')
-f_reload.priority = 'low'
-f_reload.thread = False
 
 if __name__ == '__main__':
     print(__doc__.strip())

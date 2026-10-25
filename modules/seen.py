@@ -11,32 +11,26 @@ import logging
 import os
 import sqlite3
 import time
+from bot import command
 
 logger = logging.getLogger('phenny')
 
-def f_seen(phenny, input):
+@command('seen', example='.seen firespeaker')
+def f_seen(phenny, msg):
     """.seen <nick> - Reports when <nick> was last seen."""
-    try:
-        nick = str(input.group(2)).casefold()
-    except UnboundLocalError:
-        pass
-
-    if nick == "none":
+    nick = msg.command_args.lower()
+    if not nick:
         phenny.reply(".seen <nick> - Reports when <nick> was last seen.")
         return
     try:
         seen_info = seen(nick, phenny)
     except NotSeenError:
-        phenny.reply("Sorry, I haven't seen %s around." % str(input.group(2)))
+        phenny.reply("Sorry, I haven't seen %s around." % msg.command_args)
         return
 
     t = time.strftime('%Y-%m-%d %H:%M:%S UTC', seen_info['at'].timetuple())
-    msg = "I last saw %s at %s (%s) on %s" % (str(input.group(2)), t, seen_info['ago'], seen_info['channel'])
+    msg = "I last saw %s at %s (%s) on %s" % (msg.command_args, t, seen_info['ago'], seen_info['channel'])
     phenny.reply(msg)
-
-f_seen.name = 'seen'
-f_seen.example = '.seen firespeaker'
-f_seen.rule = (['seen'], r'(\S+)')
 
 class NotSeenError(BaseException):
     pass

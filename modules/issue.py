@@ -2,34 +2,35 @@
 issue.py - create a new GitHub issue
 author: amuritna
 """
-from web import is_up, post
+import web
 from requests import HTTPError
 import json
+from bot import command
 
 gh_uri = 'https://api.github.com'
 allowed_owners = ['apertium'] # makes checking for valid owner/repo combo faster
 default_desc = 'This issue was automatically made by begiak, Apertium\'s beloved IRC bot, by the order of {} on #apertium. A human still needs to update the description.'
 invalidmsg = 'Invalid .issue command. Usage: .issue <owner>/<repository> <title>'
 
-def issue(phenny, input):
-    """ .issue <owner>/<repository> <title> - create a new GitHub issue """    
- 
-    if not is_up(gh_uri):
+@command('issue', example='.issue apertium/phenny Commit messages with multiple authors showing the less relevant one')
+def issue(phenny, msg):
+    """ .issue <owner>/<repository> <title> - create a new GitHub issue """
+
+    if not web.is_up(gh_uri):
         return phenny.reply('Sorry, GitHub is down.')
-	
+
     # check if GitHub auth token is available in default.py
     try:
         oauth_token = phenny.config.gh_oauth_token
     except AttributeError:
         return phenny.reply('GitHub authentication token needs to first be set in the configuration file (default.py)')
-		
+
     # check input validity
-    if not input.group(1):
+    if not msg.command_args:
         return phenny.reply(invalidmsg)
 
-    content = ''.join(input.group(1)).strip()
-    ghpath = content.split()[0].split('/')
-        
+    ghpath = msg.command_args_list[0].split('/')
+
     # check whether likely in an owner/repository combo format
     if len(ghpath) != 2:
         return phenny.reply(invalidmsg)
@@ -40,7 +41,7 @@ def issue(phenny, input):
     if owner not in allowed_owners:
         return phenny.reply('Begiak cannot create an issue there.')
 
-    title = ' '.join(content.split()[1:]).strip()
+    title = ' '.join(msg.command_args_list[1:])
     if len(title) < 1:
         return phenny.reply(invalidmsg)
 
@@ -49,19 +50,16 @@ def issue(phenny, input):
     req_headers = {'Authorization': 'token {}'.format(oauth_token)}
     req_body = json.dumps({
         "title": title,
-        "body": default_desc.format(input.nick)
+        "body": default_desc.format(msg.nick)
     })
 
     try:
-        req_str = post(req_url, req_body, req_headers)
+        req_str = web.post(req_url, req_body, req_headers)
         req_json = json.loads(req_str)
         phenny.reply('Issue created. You should add a description at {}'.format(req_json['html_url']))
-    except HTTPError:
+    except HTTPError as e:
+        print(e)
         phenny.reply('It appears that the repository you provided does not exist.')
-
-issue.commands = ['issue']
-issue.priority = 'medium'
-issue.example = '.issue apertium/phenny Commit messages with multiple authors showing the less relevant one'
 
 if __name__ == "__main__":
     print(__doc__.strip())

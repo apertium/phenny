@@ -230,8 +230,7 @@ def rephrase_errors(fn, *args, **kw):
 
 def calling_module():
     frame = inspect.stack()[2]
-    module = inspect.getmodule(frame[0])
-    return module.__name__
+    return inspect.getmodulename(frame.filename)
 
 def generate_report(repo, author, comment, modified_paths, added_paths, removed_paths, rev, date=None):
     modified_paths = ['/' + x for x in modified_paths]
@@ -281,5 +280,5 @@ def generate_report(repo, author, comment, modified_paths, added_paths, removed_
 
     return msg
 
-if __name__ == '__main__': 
+if __name__ == '__main__':
     print(__doc__.strip())

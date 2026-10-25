@@ -9,6 +9,7 @@ import xml.etree.ElementTree as ET
 from io import StringIO
 import time
 from tools import db_path, generate_report, truncate
+from bot import command, event
 
 logger = logging.getLogger('phenny')
 
@@ -156,10 +157,10 @@ class SVNPoller:
         else:
             return 'https://sourceforge.net/p/' + self.repo + '/code/%s' % str(rev)
 
-
-def recentcommits(phenny, input):
+@command('recent', thread=True)
+def recentcommits(phenny, msg):
     """List the most recent SVN commits."""
-    print("POLLING recent")
+    logger.info("POLLING recent")
     for repo in phenny.config.svn_repositories:
         #phenny.say("{}: {}".format(repo, phenny.config.svn_repositories[repo]))
         poller = SVNPoller(repo, phenny.config.svn_repositories[repo])
@@ -168,20 +169,11 @@ def recentcommits(phenny, input):
         msg = poller.generateReport(rev, True)
         url = poller.sourceforgeURL(rev)
         phenny.say(truncate(msg, '{} ' + url))
-    print("POLLED recent")
+    logger.info("POLLED recent")
 
-
-recentcommits.name = 'recent'
-recentcommits.rule = ('$nick', 'recent')
-recentcommits.example = 'begiak: recent'
-#recentcommits.event = "PING"
-#recentcommits.rule = r'.*'
-recentcommits.priority = 'medium'
-recentcommits.thread = True
-
-
-def retrieve_commit_svn(phenny, input):
-    data = input.group(1).split(' ')
+@command('info')
+def retrieve_commit_svn(phenny, msg):
+    data = msg.command_args_list
 
     if len(data) != 2:
         phenny.reply("Invalid number of parameters.")
@@ -202,11 +194,8 @@ def retrieve_commit_svn(phenny, input):
     url = poller.sourceforgeURL(rev)
     phenny.say(truncate(msg, '{} ' + url))
 
-
-retrieve_commit_svn.rule = ('$nick', 'info(?: +(.*))')
-
-
-def pollsvn(phenny, input):
+@event('PONG')
+def pollsvn(phenny, msg):
     global global_revisions, global_filename
     results = False
     #print("POLLING")
@@ -248,18 +237,9 @@ def pollsvn(phenny, input):
     #print("POLLED")
     return results
 
-
-pollsvn.name = 'SVN poll'
-pollsvn.event = "PONG"
-pollsvn.rule = r'.*'
-pollsvn.priority = 'medium'
-
-
-def esan(phenny, input):
+@command('esan')
+def esan(phenny, msg):
     phenny.reply("Hold on a second, I'm polling!")
-    results = pollsvn(phenny, input)
+    results = pollsvn(phenny, msg)
     if not results:
         phenny.reply("Sorry, there was nothing to report.")
-
-
-esan.rule = ('$nick', 'esan!')

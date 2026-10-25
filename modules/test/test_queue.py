@@ -1,180 +1,140 @@
 import unittest
-from mock import MagicMock
+from modules.test.command_test import CommandTest
 
-from modules import queue
-import tools
-
-tools.debug = True
-
-class TestQueue(unittest.TestCase):
-    def setUp(self):
-        self.phenny = MagicMock()
-
-        self.input = MagicMock()
-        self.input.sender = '#test'
-        self.input.nick = 'tester'
-        self.input.admin = False
-
-        queue.setup(self.phenny)
-
-    def set_input(self, *args):
-        self.input.group = lambda x: ((None,) + args)[x]
-
-    def expect_msg(self, message):
-        self.phenny.msg.assert_called_once_with(self.input.sender, message)
-
-    def expect_reply(self, message):
-        self.phenny.reply.assert_called_once_with(message)
-
-    def _test_mutating(self, output, revert=True):
-        input = self.input.group
-
-        self.set_input('todo', 'reassign', 'devil')
-        queue.queue(self.phenny, self.input)
-
-        self.phenny.msg.reset_mock()
-        self.phenny.reply.reset_mock()
-
-        self.input.group = input
-        queue.queue(self.phenny, self.input)
-        self.expect_reply('You aren\'t the owner of this queue!')
-
-        self.input.admin = True
-
-        if revert:
-            self.set_input('todo', 'reassign', self.input.nick)
-            queue.queue(self.phenny, self.input)
-            self.phenny.msg.reset_mock()
-
-        self.input.group = input
-        queue.queue(self.phenny, self.input)
-        self.expect_msg(output)
+class TestQueue(CommandTest, unittest.TestCase):
+    modules = ['queue']
 
     def test_display_not_found(self):
-        self.set_input('display', 'todo', None)
-        queue.queue(self.phenny, self.input)
-        self.expect_reply('No queues found.')
+        self.check_response(
+            '.queue display todo', nick='tester',
+            expected='tester: No queues found.')
 
     def test_create_empty(self):
-        self.set_input('new', 'todo', None)
-        queue.queue(self.phenny, self.input)
-        self.expect_reply('Empty queue tester:todo created.')
+        self.check_response(
+            '.queue new todo', nick='tester',
+            expected='tester: Empty queue tester:todo created.')
 
     def test_create_with_items(self):
-        self.set_input('new', 'todo', 'lorem, ipsum')
-        queue.queue(self.phenny, self.input)
-        self.expect_reply('Queue tester:todo with items lorem, ipsum created.')
+        self.check_response(
+            '.queue new todo lorem, ipsum', nick='tester',
+            expected='tester: Queue tester:todo with items lorem, ipsum created.')
 
     def test_display_empty(self):
-        self.set_input('new', 'todo', None)
-        queue.queue(self.phenny, self.input)
-
-        self.set_input('display', 'todo', None)
-        queue.queue(self.phenny, self.input)
-        self.expect_msg('[tester:todo] - <empty>')
+        self.check_conversation([
+            ('tester', '.queue new todo', 'tester: Empty queue tester:todo created.'),
+            ('tester', '.queue display todo', '[tester:todo] - <empty>'),
+        ])
 
     def test_display_with_items(self):
-        self.set_input('new', 'todo', 'lorem, ipsum')
-        queue.queue(self.phenny, self.input)
-
-        self.set_input('display', 'todo', None)
-        queue.queue(self.phenny, self.input)
-        self.expect_msg('[tester:todo] - lorem, ipsum')
+        self.check_conversation([
+            ('tester', '.queue new todo lorem, ipsum',
+             'tester: Queue tester:todo with items lorem, ipsum created.'),
+            ('tester', '.queue display todo',
+             '[tester:todo] - lorem, ipsum'),
+        ])
 
     def test_add_items(self):
-        self.set_input('new', 'todo', None)
-        queue.queue(self.phenny, self.input)
-
-        self.set_input('todo', 'add', 'dolor, sit, amet')
-        self._test_mutating('[tester:todo] - dolor, sit, amet')
+        self.check_response(
+            '.queue new todo', nick='tester',
+            expected='tester: Empty queue tester:todo created.')
+        self.check_response(
+            '.queue todo add dolor, sit, amet', nick='tester',
+            expected='[tester:todo] - dolor, sit, amet')
 
     def test_swap_items(self):
-        self.set_input('new', 'todo', 'lorem, ipsum')
-        queue.queue(self.phenny, self.input)
-
-        self.set_input('todo', 'swap', 'lorem, ipsum')
-        self._test_mutating('[tester:todo] - ipsum, lorem')
+        self.check_conversation([
+            ('tester', '.queue new todo lorem, ipsum',
+             'tester: Queue tester:todo with items lorem, ipsum created.'),
+            ('tester', '.queue todo swap lorem, ipsum',
+             '[tester:todo] - ipsum, lorem'),
+        ])
 
     def test_move_items(self):
-        self.set_input('new', 'todo', 'dolor, sit, amet')
-        queue.queue(self.phenny, self.input)
-
-        self.set_input('todo', 'move', 'dolor, amet')
-        self._test_mutating('[tester:todo] - sit, amet, dolor')
+        self.check_conversation([
+            ('tester', '.queue new todo dolor, sit, amet',
+             'tester: Queue tester:todo with items dolor, sit, amet created.'),
+            ('tester', '.queue todo move dolor, amet',
+             '[tester:todo] - sit, amet, dolor'),
+        ])
 
     def test_swap_indices(self):
-        self.set_input('new', 'todo', 'lorem, ipsum')
-        queue.queue(self.phenny, self.input)
-
-        self.set_input('todo', 'swap', '0, 1')
-        self._test_mutating('[tester:todo] - ipsum, lorem')
+        self.check_conversation([
+            ('tester', '.queue new todo lorem, ipsum',
+             'tester: Queue tester:todo with items lorem, ipsum created.'),
+            ('tester', '.queue todo swap 0, 1',
+             '[tester:todo] - ipsum, lorem'),
+        ])
 
     def test_move_indices(self):
-        self.set_input('new', 'todo', 'dolor, sit, amet')
-        queue.queue(self.phenny, self.input)
-
-        self.set_input('todo', 'move', '2, 1')
-        self._test_mutating('[tester:todo] - dolor, amet, sit')
+        self.check_conversation([
+            ('tester', '.queue new todo dolor, sit, amet',
+             'tester: Queue tester:todo with items dolor, sit, amet created.'),
+            ('tester', '.queue todo move 2, 1',
+             '[tester:todo] - dolor, amet, sit'),
+        ])
 
     def test_replace_items(self):
-        self.set_input('new', 'todo', 'dolor, sit, amet')
-        queue.queue(self.phenny, self.input)
-
-        self.set_input('todo', 'replace', 'amet, meta')
-        self._test_mutating('[tester:todo] - dolor, sit, meta')
+        self.check_conversation([
+            ('tester', '.queue new todo dolor, sit, amet',
+             'tester: Queue tester:todo with items dolor, sit, amet created.'),
+            ('tester', '.queue todo replace amet meta',
+             '[tester:todo] - dolor, sit, meta'),
+        ])
 
     def test_replace_index(self):
-        self.set_input('new', 'todo', 'lorem, ipsum')
-        queue.queue(self.phenny, self.input)
-
-        self.set_input('todo', 'replace', '1, dolor')
-        self._test_mutating('[tester:todo] - lorem, dolor')
+        self.check_conversation([
+            ('tester', '.queue new todo lorem, ipsum',
+             'tester: Queue tester:todo with items lorem, ipsum created.'),
+            ('tester', '.queue todo replace 1, dolor',
+             '[tester:todo] - lorem, dolor'),
+        ])
 
     def test_remove_item(self):
-        self.set_input('new', 'todo', 'dolor, sit, amet')
-        queue.queue(self.phenny, self.input)
-
-        self.set_input('todo', 'remove', 'sit')
-        self._test_mutating('[tester:todo] - dolor, amet')
+        self.check_conversation([
+            ('tester', '.queue new todo dolor, sit, amet',
+             'tester: Queue tester:todo with items dolor, sit, amet created.'),
+            ('tester', '.queue todo remove sit',
+             '[tester:todo] - dolor, amet'),
+        ])
 
     def test_pop_item(self):
-        self.set_input('new', 'todo', 'lorem, ipsum')
-        queue.queue(self.phenny, self.input)
-
-        self.set_input('todo', 'pop', None)
-        self._test_mutating('[tester:todo] - ipsum')
+        self.check_conversation([
+            ('tester', '.queue new todo lorem, ipsum',
+             'tester: Queue tester:todo with items lorem, ipsum created.'),
+            ('tester', '.queue todo pop',
+             '[tester:todo] - ipsum'),
+        ])
 
     def test_random_item(self):
-        self.set_input('new', 'todo', 'dolor, sit, amet')
-        queue.queue(self.phenny, self.input)
-
-        self.set_input('todo', 'random', None)
-        queue.queue(self.phenny, self.input)
-        messages = ("'%s' is the lucky one." % x for x in ['dolor', 'sit', 'amet'])
-        self.assertIn(self.phenny.reply.call_args[0][0], messages)
+        self.check_conversation([
+            ('tester', '.queue new todo dolor, sit, amet',
+             'tester: Queue tester:todo with items dolor, sit, amet created.'),
+        ])
+        out = self.message_response('.queue todo random', nick='tester')
+        messages = ("tester: '%s' is the lucky one." % x for x in ['dolor', 'sit', 'amet'])
+        self.assertIn(out, messages)
 
     def test_reassign_queue(self):
-        self.set_input('new', 'todo', 'lorem, ipsum')
-        queue.queue(self.phenny, self.input)
-
-        self.set_input('todo', 'reassign', 'devil')
-        self._test_mutating('[devil:todo] - lorem, ipsum')
+        self.check_conversation([
+            ('tester', '.queue new todo lorem, ipsum',
+             'tester: Queue tester:todo with items lorem, ipsum created.'),
+            ('tester', '.queue todo reassign devil',
+             '[devil:todo] - lorem, ipsum'),
+        ])
 
     def test_rename_queue(self):
-        self.set_input('new', 'todo', 'dolor, sit, amet')
-        queue.queue(self.phenny, self.input)
-
-        self.set_input('todo', 'rename', 'nope')
-        self._test_mutating('[devil:nope] - dolor, sit, amet', revert=False)
+        self.check_conversation([
+            ('tester', '.queue new todo dolor, sit, amet',
+             'tester: Queue tester:todo with items dolor, sit, amet created.'),
+            ('tester', '.queue todo rename nope',
+             '[tester:nope] - dolor, sit, amet'),
+        ])
 
     def test_delete_queue(self):
-        self.set_input('new', 'todo', 'dolor, sit, amet')
-        queue.queue(self.phenny, self.input)
-        self.set_input('delete', 'todo', None)
-        queue.queue(self.phenny, self.input)
-
-        self.phenny.reply.reset_mock()
-
-        self.set_input('display', 'todo', None)
-        queue.queue(self.phenny, self.input)
-        self.expect_reply('No queues found.')
+        self.check_conversation([
+            ('tester', '.queue new todo dolor, sit, amet',
+             'tester: Queue tester:todo with items dolor, sit, amet created.'),
+            ('tester', '.queue delete todo',
+             'tester: Queue tester:todo deleted.'),
+            ('tester', '.queue display todo', 'tester: No queues found.'),
+        ])

@@ -7,6 +7,7 @@ author: popcorndude, scoopgracie
 from lxml.etree import ElementTree
 import web
 import json
+from bot import command
 
 def shorten_num(n):
     if n < 1000:
@@ -16,9 +17,10 @@ def shorten_num(n):
     else:
         return '{}M'.format(str(round(n/1000000, 1)).rstrip('0').rstrip('.'))
 
-def lang(phenny, input):
+@command(['wikidata', 'lg'], example='.lg khk')
+def lang(phenny, msg):
     """.lang <lg> - gives Wikidata info from partial language name or iso639"""
-    raw = str(input.group(1)).lower()
+    raw = msg.command_args.lower()
     iso = []
     if len(raw) == 3 and raw in phenny.ethno_data:
         iso.append(raw)
@@ -32,7 +34,7 @@ def lang(phenny, input):
     if len(iso) == 1:
         pop_query = '''
 SELECT ?language ?languageLabel ?population ?speaker_type ?speaker_typeLabel ?date
-WHERE 
+WHERE
 {
   ?language p:P1098 ?statement.
   ?statement ps:P1098 ?population.
@@ -113,8 +115,3 @@ WHERE {
         response = "That ISO code wasn't found. (Hint: use .iso639 for better results)"
 
     phenny.say(response)
-
-lang.name = 'wikidata'
-lang.commands = ['wikidata', 'lg']
-lang.example = '.wikidata khk'
-lang.priority = 'low'

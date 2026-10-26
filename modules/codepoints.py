@@ -129,5 +129,48 @@ def bytes(phenny, msg):
     b = msg.command_args.bytes
     phenny.reply('%r' % b[b.find(' ') + 1:])
 
+@command('uc')
+def compare(phenny, msg):
+    '''Compare two unicode strings'''
+    if len(msg.command_args_list) != 2:
+        phenny.reply(f'expected 2 strings, got {len(msg.command_args_list)}')
+        return
+    a, b = msg.command_args_list
+    pa = [about(c) for c in a]
+    pb = [about(c) for c in b]
+    if a == b:
+        ls = pa[:5]
+        if len(ls) != len(pa):
+            ls.append('...')
+        phenny.reply(f'"{a}" and "{b}" are identical: ' + ' '.join(ls))
+    else:
+        dots_start = False
+        dots_end = False
+        while pa[0] == pb[0]:
+            if len(pa) > 1 and len(pb) > 1:
+                pa.pop(0)
+                pb.pop(0)
+                dots_start = True
+            else:
+                break
+        while pa[-1] == pb[-1]:
+            if len(pa) > 1 and len(pb) > 1:
+                pa.pop()
+                pb.pop()
+                dots_end = True
+            else:
+                break
+        if dots_start:
+            pa = ['...'] + pa
+            pb = ['...'] + pb
+        if dots_end:
+            pa.append('...')
+            pb.append('...')
+        if unicodedata.normalize('NFC', a) == unicodedata.normalize('NFC', b):
+
+            phenny.reply(f'"{a}" and "{b}" normalize to the same string: ' + ' '.join(pa) + ' vs. ' + ' '.join(pb))
+        else:
+            phenny.reply(f'"{a}" and "{b}" are different strings: ' + ' '.join(pa) + ' vs. ' + ' '.join(pb))
+
 if __name__ == '__main__':
     print(__doc__.strip())

@@ -33,3 +33,13 @@ class TestCodepoints(CommandTest, unittest.TestCase):
                 status = True
                 break
         self.assertTrue(status)
+
+    def test_compare(self):
+        self.check_conversation([
+            ('bob', '.uc ab ab',
+             'bob: "ab" and "ab" are identical: U+0061 LATIN SMALL LETTER A (a) U+0062 LATIN SMALL LETTER B (b)'),
+            ('bob', '.uc á á',
+             'bob: "á" and "á" normalize to the same string: U+00E1 LATIN SMALL LETTER A WITH ACUTE (á) vs. U+0061 LATIN SMALL LETTER A (a) U+0301 COMBINING ACUTE ACCENT (\xe2\x97\x8c\u0301)'),
+            ('bob', '.uc áb ác',
+             'bob: "áb" and "ác" are different strings: ... U+0062 LATIN SMALL LETTER B (b) vs. ... U+0063 LATIN SMALL LETTER C (c)'),
+        ])

@@ -166,9 +166,10 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
              'url': ['issue', 'html_url'],
              'body': ['comment', 'body']}),
         'issues': (
-            '{repo}: {user} {action} issue #{num}{rest} {url}',
+            '{repo}: {user} {action} issue #{num}{rest} {url} "{title}"',
             {'num': ['issue', 'number'],
-             'url': ['issue', 'html_url']}),
+             'url': ['issue', 'html_url'],
+             'title': ['issue', 'title']}),
         'public': ('{user} made the {repo} repository public', {}),
         'pull_request': (
             '{repo}: {user} {action} pull request #{num} "{title}" {url}',

@@ -292,7 +292,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         in_config = False
         in_list = False
         if config.git_events:
-            for key, value in config.get_events.items():
+            for key, value in config.git_events.items():
                 if fnmatch(repo, key):
                     in_config = True
                     if event in value or (event + '_' + action) in value:

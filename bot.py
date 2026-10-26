@@ -283,6 +283,10 @@ class Phenny:
         self.stack.append((time.time(), recipient, text))
         self.stack = self.stack[-10:]
 
+    def msg_queued(self, recipient, text, queue):
+        # hook in case we ever need to re-implement flood control
+        self.msg(recipient, text)
+
     def handle_line(self, line):
         try:
             line = line.decode('utf-8')
@@ -336,6 +340,7 @@ class Phenny:
         delegate = {
             'reply': lambda msg, target=message.nick: self.msg(sender, msg, target=target),
             'say': lambda msg, target=None: self.msg(sender, msg, target=target),
+            'say_queued': lambda msg, target=None: self.msg_queued(sender, msg, target=target),
             'do': lambda msg: self.action(sender, msg),
         }
 

@@ -7,7 +7,7 @@ import unittest
 from modules.test.command_test import CommandTest
 
 class TestGit(CommandTest, unittest.TestCase):
-    modules = ['git', 'more']
+    modules = ['git']
 
     def add_config(self):
         self.config.nick = 'phenny'

@@ -10,7 +10,6 @@ http://inamidst.com/phenny/
 import re
 import web
 from tools import truncate
-from modules import more
 import web
 from bot import command
 
@@ -43,7 +42,8 @@ def topics(phenny, msg):
             continue
     phenny.say(topics_list[0])
     phenny.reply('Check PM for more topics.')
-    more.add_messages(phenny, msg.nick, topics_list[1:])
+    for topic in topics_list[1:]:
+        phenny.msg_queued(msg.nick, topic, 'search')
 
 @command('search')
 def search(phenny, msg):
@@ -79,7 +79,8 @@ def suggest(phenny, msg):
     suggestions = answer[1][:10]
     phenny.reply(suggestions[0])
     phenny.reply('Check PM for more.')
-    more.add_messages(phenny, msg.nick, suggestions[1:])
+    for sug in suggestions[1:]:
+        phenny.msg_queued(msg.nick, sug, 'search')
 
 @command('lmgtfy')
 def lmgtfy(phenny, msg):

@@ -12,7 +12,6 @@ from email.utils import parsedate_tz
 import datetime
 import re
 from tools import truncate
-from modules import more
 import logging
 from bot import command
 
@@ -105,12 +104,9 @@ def check_mail(phenny):
                     channels = [channels]
 
                 for channel in channels:
-                    messages.setdefault(channel, []).append(message)
+                    phenny.msg_queued(channel, message, 'mailing_list')
 
         rc, data = mail.uid('store', uid, '+FLAGS', '(\\Seen)')
-
-    for channel in messages.keys():
-        more.add_messages(phenny, channel, messages[channel])
 
     mail.logout()
     phenny.mailing_list_timer = threading.Timer(60*5, check_mail, (phenny,))

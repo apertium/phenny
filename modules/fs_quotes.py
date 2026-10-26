@@ -7,7 +7,6 @@ author: jonorthwash <jonorthwash@users.sourceforge.net>
 from tools import GrumbleError
 import web
 import json
-from modules import more
 from requests import HTTPError
 
 from bot import command
@@ -57,7 +56,9 @@ def randquote_fetcher(phenny, topic, to_user):
         phenny.say("Sorry, no quotes returned!")
         return
 
-    more.add_messages(phenny, to_user, response.split('\n'))
+    msg = response.splitlines()
+    if msg:
+        phenny.say(msg[0], target=to_user)
 
 @command('randquote', priority='low', example='.randquote linguistics')
 def randquote(phenny, msg):

@@ -9,7 +9,6 @@ import urllib.parse
 import json
 import web
 from tools import GrumbleError
-from modules import more
 import operator
 from humanize import naturaldelta
 from bot import command
@@ -155,12 +154,9 @@ def apertium_analyse(phenny, msg):
         '{:s}/analyse?lang={:s}&q={:s}'.format(
             phenny.config.APy_analyseURL, web.quote(cmd.group(1)), web.quote(cmd.group(2).strip())),
         headers=headers)
-    messages = []
 
     for analysis, original in jobj:
-        messages.append(original + '  →  ' + analysis)
-
-    more.add_messages(phenny, msg.nick, messages)
+        phenny.msg_queued(msg.nick, original + '  →  ' + analysis, 'apy')
 
 @command('generate', example='.generate kaz ^сен<v><tv><imp><p2><sg>$')
 def apertium_generate(phenny, msg):
@@ -175,12 +171,9 @@ def apertium_generate(phenny, msg):
         '{:s}/generate?lang={:s}&q={:s}'.format(
             phenny.config.APy_analyseURL, web.quote(cmd.group(1)), web.quote(cmd.group(2).strip())),
         headers=headers)
-    messages = []
 
     for generation, original in jobj:
-        messages.append(original + '  →  ' + generation)
-
-    more.add_messages(phenny, msg.nick, messages)
+        phenny.msg_queued(msg.nick, original + '  →  ' + generation, 'apy')
 
 @command('identlang', example='.identlang Whereas disregard and contempt for which have outraged the conscience of mankind')
 def apertium_identlang(phenny, msg):

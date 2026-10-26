@@ -13,7 +13,7 @@ import collections
 
 @unittest.mock.patch('web.api_call')
 class TestAPy(CommandTest, unittest.TestCase):
-    modules = ['apy', 'more']
+    modules = ['apy']
 
     def add_config(self):
         self.config.APy_url = 'http://faketestapy.com:2737'
@@ -153,7 +153,7 @@ class TestAPy(CommandTest, unittest.TestCase):
                                channel='#ch', nick='n')
         self.check_api(mock_open, '{:s}/analyse?lang={:s}&q={:s}'.format(
             self.phenny.config.APy_analyseURL, 'eng', quote(' '.join(words))))
-        msgs = ['PRIVMSG n :n: {:s}  →  {:s}'.format(orig, ana)
+        msgs = ['PRIVMSG n :{:s}  →  {:s}'.format(orig, ana)
                 for ana, orig in anas]
         self.assertEqual(out, msgs)
         mock_open.reset_mock()
@@ -165,7 +165,7 @@ class TestAPy(CommandTest, unittest.TestCase):
                                nick='bob')
         self.check_api(mock_open, '{:s}/generate?lang={:s}&q={:s}'.format(
             self.phenny.config.APy_analyseURL, 'eng', quote('^generate<tags>$')))
-        msgs = ['PRIVMSG bob :bob: {:s}  →  {:s}'.format(orig, gen)
+        msgs = ['PRIVMSG bob :{:s}  →  {:s}'.format(orig, gen)
                 for gen, orig in gens]
         self.assertEqual(out, msgs)
 
@@ -182,7 +182,6 @@ class TestAPy(CommandTest, unittest.TestCase):
     def test_identlang(self, mock_open):
         langs = {'eng': 1.0, 'fra': 0.2, 'spa': 0.0}
         mock_open.return_value = langs
-        self.get_module('apy').more.buffer_threshold = 5
         self.check_response('.identlang '+self.texts['eng'], nick='bob',
                             expected='bob: eng = 1.0; fra = 0.2; spa = 0.0')
         self.check_api(mock_open, '{:s}/identifyLang?q={:s}'.format(

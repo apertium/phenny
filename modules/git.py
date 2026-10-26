@@ -16,7 +16,6 @@ from threading import Lock, Thread, Timer
 import time
 import urllib.parse
 
-from modules import more
 from tools import generate_report, PortReuseTCPServer, truncate
 import web
 from bot import event, command
@@ -253,9 +252,9 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         status = 200 # OK
-        channels, messages = [], []
+        channels, message = [], []
         try:
-            channels, messages = self.process_github_payload(data)
+            channels, message = self.process_github_payload(data)
         except Exception as error:
             logger.error(str(error))
             status = 500 # Internal Server Error
@@ -269,8 +268,9 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
 
         # if anything went wrong, channels is an empty list, so this
         # does nothing
-        for channel in channels:
-            more.add_messages(self.phenny, channel, messages)
+        if message:
+            for channel in channels:
+                phenny.msg_queued(channel, message, 'git')
 
     def process_github_payload(self, data):
         config = self.phenny.config
@@ -278,12 +278,9 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         default_channels = config.git_channels.get('*', config.channels)
         channels = default_channels
 
-        # both commit reports and error reports
-        messages = []
-
         event = self.headers['X-GitHub-Event']
         if event in self.ignored_events:
-            return [], []
+            return [], None
 
         action = data.get('action', '')
         repo = data.get('repository', {}).get('full_name', '')
@@ -298,7 +295,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                         in_list = True
                         break
         if in_config and not in_list:
-            return [], []
+            return [], None
         if config.git_channels:
             for key, value in config.git_channels.items():
                 if fnmatch(repo, key):
@@ -341,12 +338,12 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             elif event == 'pull_request_review_comment':
                 blacklist = getattr(config, 'blacklist_pull_request_users', [])
                 if params['user'] in blacklist:
-                    return [], []
+                    return [], None
             elif event == 'push':
                 if 'ref' in data and data['ref'].split('/')[-1] not in ['main', 'master']:
                     channels = getattr(config, 'branch_channels', {}).get(repo, {}).get(data['ref'], [])
                     if not channels:
-                        return [], []
+                        return [], None
                 params['action'] = 'pushed'
                 if data.get('forced'):
                     params['action'] = 'force pushed'
@@ -359,12 +356,12 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 params['msgs'] = ' * '.join(msgs)
             elif event == 'star':
                 if action != 'created':
-                    return [], []
+                    return [], None
             elif event == 'workflow_run':
                 if action != 'completed':
-                    return [], []
+                    return [], None
 
-        return channels, [truncate(tmpl.format_map(params))]
+        return channels, truncate(tmpl.format_map(params))
 
 initial_setup_retry_time = 120 # 2 minutes
 setup_retry_time = initial_setup_retry_time

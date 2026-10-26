@@ -8,7 +8,6 @@ import json
 from bot import command
 
 gh_uri = 'https://api.github.com'
-allowed_owners = ['apertium'] # makes checking for valid owner/repo combo faster
 default_desc = 'This issue was automatically made by begiak, Apertium\'s beloved IRC bot, by the order of {} on #apertium. A human still needs to update the description.'
 invalidmsg = 'Invalid .issue command. Usage: .issue <owner>/<repository> <title>'
 
@@ -29,7 +28,12 @@ def issue(phenny, msg):
     if not msg.command_args:
         return phenny.reply(invalidmsg)
 
-    ghpath = msg.command_args_list[0].split('/')
+    dest = msg.command_args_list[0]
+    if dest.startswith('-'):
+        dest = 'apertium' + dest
+    if '/' not in dest:
+        dest = 'apertium/' + dest
+    ghpath = dest.split('/')
 
     # check whether likely in an owner/repository combo format
     if len(ghpath) != 2:
@@ -38,6 +42,8 @@ def issue(phenny, msg):
     owner = ghpath[0]
     repo = ghpath[1]
 
+    allowed_owners = getattr(phenny.config, 'git_issue_allowed_owners',
+                             ['apertium'])
     if owner not in allowed_owners:
         return phenny.reply('Begiak cannot create an issue there.')
 

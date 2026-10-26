@@ -126,21 +126,26 @@ def note_and_snarf_uri(phenny, msg):
     if title:
         phenny.msg(msg.sender, title)
 
+def get_wiki_term(uri):
+    split = urllib.parse.urlsplit(uri)
+    term = urllib.parse.unquote(split.path.replace('/wiki/', ''))
+    if split.fragment:
+        term += '#' + urllib.parse.unquote(split.fragment)
+    return term
+
 def gettitle(phenny, uri):
     if not ':' in uri:
         uri = 'http://' + uri
     uri = uri.replace('#!', '?_escaped_fragment_=')
 
     if uri.startswith('https://wiki.apertium.org/wiki/'):
-        item = uri[len('https://wiki.apertium.org/wiki/'):]
-        return apertium_wiki.awik(phenny, re.match(r'(blahblah)?(.*)()', item))
+        return apertium_wiki.awik(phenny, get_wiki_term(uri))
     if re.match(r'https?://en.wiktionary.org/wiki/(.*)', uri):
-        item = re.match(r'https?://en.wiktionary.org/wiki/(.*)', uri).group(1)
-        return wiktionary.w(phenny, re.match(r'(blahblah)?(.*)()', web.unquote(item)))
+        return wiktionary.w(phenny, get_wiki_term(uri))
     if re.match(r'https?://([a-z]{2,3}).wikipedia.org/wiki/(.*)', uri):
         match = re.match(r'https?://([a-z]{2,3}).wikipedia.org/wiki/(.*)', uri)
-        lang, page = match.group(1), match.group(2)
-        return wikipedia.wikipedia(phenny, page, lang)
+        lang = match.group(1)
+        return wikipedia.wikipedia(phenny, get_wiki_term(uri), lang)
 
     parts = uri.split(".")
     start = parts[0]

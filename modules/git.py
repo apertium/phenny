@@ -262,8 +262,6 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
 
         self.send_response(status)
         self.end_headers()
-        self.finish()
-        self.connection.close()
 
         send_time = time.time()
         respond_time = send_time - receive_time

@@ -83,7 +83,7 @@ def getRevisionInfo(lang):
 
 def createStatsSection(fileCounts, requester=None):
     statsSection = '==Over-all stats=='
-    for countName in sorted(fileCounts.keys(), key=lambda countName: (fileCounts[countName] and fileCounts[countName][0] is 0, countName)):
+    for countName in sorted(fileCounts.keys(), key=lambda countName: (fileCounts[countName] and fileCounts[countName][0] == 0, countName)):
         if fileCounts[countName]:
             count, revisionInfo, fileUrl = fileCounts[countName]
             statsSection += '\n' + createStatSection(countName, count, revisionInfo, fileUrl, requester=requester)
@@ -94,7 +94,7 @@ def createStatsSection(fileCounts, requester=None):
     return statsSection
 
 def createStatSection(countName, count, revisionInfo, fileUrl, requester=None):
-    if count is 0:
+    if count == 0:
         statSection = "*<span style='opacity: .6'>'''[{6} {0}]''': <section begin={1} />{2:,d}<section end={1} /> as of [{3} {5}] by {4} ~ ~~~~".format(countName, countName.replace(' ', '_'), count, revisionInfo[0], revisionInfo[1], revisionInfo[2], fileUrl)
     else:
         statSection = "*'''[{6} {0}]''': <section begin={1} />{2}<section end={1} /> as of [{3} {5}] by {4} ~ ~~~~".format(countName, countName.replace(' ', '_'), count, revisionInfo[0], revisionInfo[1], revisionInfo[2], fileUrl)
@@ -102,7 +102,7 @@ def createStatSection(countName, count, revisionInfo, fileUrl, requester=None):
     if requester:
         statSection += ', run by %s' % requester
 
-    if count is 0:
+    if count == 0:
         statSection += '</span>'
 
     return statSection
@@ -133,7 +133,7 @@ def updatePairStatsSection(statsSection, pageContents, fileCounts, requester=Non
         pageContents = pageContents.replace(old, new)
 
     newStats = ''
-    for countName in sorted(fileCounts.keys(), key=lambda countName: (fileCounts[countName] and fileCounts[countName][0] is 0, countName)):
+    for countName in sorted(fileCounts.keys(), key=lambda countName: (fileCounts[countName] and fileCounts[countName][0] == 0, countName)):
         if fileCounts[countName]:
             count, revisionInfo, fileUrl = fileCounts[countName]
             newStats += '\n' + createStatSection(countName, count, revisionInfo, fileUrl, requester=requester)
@@ -165,7 +165,7 @@ def updateMonoLangStatsSection(statsSection, pageContents, fileCounts, requester
         pageContents = pageContents.replace(old, new)
 
     newStats = ''
-    for countName in sorted(fileCounts.keys(), key=lambda countName: (fileCounts[countName] and fileCounts[countName][0] is 0, countName)):
+    for countName in sorted(fileCounts.keys(), key=lambda countName: (fileCounts[countName] and fileCounts[countName][0] == 0, countName)):
         count, revisionInfo, fileUrl = fileCounts[countName]
         newStats += '\n' + createStatSection(countName, count, revisionInfo, fileUrl, requester=args.requester)
         logging.debug('Adding new count %s' % repr(countName))
@@ -267,7 +267,7 @@ def addCorporaSection(pageContents):
 def updateCoverageStats(pageContents, coverage, words, lang):
     newPageContents = ''
 
-    templateLine = re.compile('==\s*.*\s*==')
+    templateLine = re.compile(r'==\s*.*\s*==')
     wpName = 'wp%s' % datetime.datetime.now().year
 
     isCorpora = False
@@ -377,7 +377,7 @@ if __name__ == '__main__':
                 fileCounts = getStats(jsonResponse, False)
                 logging.debug('Acquired file counts %s' % fileCounts)
 
-                if len(fileCounts) is 0:
+                if len(fileCounts) == 0:
                     logging.error('No file counts available for %s, adding placeholder bidix stems entry.' % repr(langs))
                     fileCounts = {'%s-%s stems' % tuple(langs): None}
 

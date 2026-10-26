@@ -183,13 +183,10 @@ class TestAPy(CommandTest, unittest.TestCase):
         langs = {'eng': 1.0, 'fra': 0.2, 'spa': 0.0}
         mock_open.return_value = langs
         self.get_module('apy').more.buffer_threshold = 5
-        out = self.run_message('.identlang '+self.texts['eng'],
-                               nick='bob')
+        self.check_response('.identlang '+self.texts['eng'], nick='bob',
+                            expected='bob: eng = 1.0; fra = 0.2; spa = 0.0')
         self.check_api(mock_open, '{:s}/identifyLang?q={:s}'.format(
             self.phenny.config.APy_url, quote(self.texts['eng'])))
-        msgs = set('PRIVMSG bob :bob: {:s} = {:s}'.format(lg, str(val))
-                   for lg, val in langs.items())
-        self.assertEqual(set(out), msgs)
 
     def test_stats(self, mock_open):
         # asserting only that the appropriate request is made; reporting is customizable

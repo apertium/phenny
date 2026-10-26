@@ -196,12 +196,9 @@ def apertium_identlang(phenny, msg):
         '{:s}/identifyLang?q={:s}'.format(
             phenny.config.APy_url, web.quote(text.strip())),
         headers=headers)
-    messages = []
 
-    for key, value in jsdata.items():
-        messages.append(key + ' = ' + str(value))
-
-    more.add_messages(phenny, msg.nick, messages)
+    msg = '; '.join(f'{k} = {v}' for k, v in sorted(jsdata.items()))
+    phenny.reply(msg)
 
 @command('apystats')
 def apertium_stats(phenny, msg):

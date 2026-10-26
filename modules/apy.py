@@ -5,8 +5,7 @@ apy.py - Apertium APy Module
 '''
 
 import re
-import urllib.request
-import urllib
+import urllib.parse
 import json
 import web
 from tools import GrumbleError

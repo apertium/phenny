@@ -7,9 +7,8 @@ import os
 import requests
 import shlex
 import subprocess
-import urllib.request
-import urllib.error
-from web import REQUEST_TIMEOUT
+from web import REQUEST_TIMEOUT, head
+from requests import HTTPError
 from tools import dot_path
 from bot import command
 PARENT_DIRECTORY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -62,8 +61,8 @@ def awikstats(phenny, msg):
                 return
 
             try:
-                urllib.request.urlopen('https://wiki.apertium.org/wiki/Apertium-' + lang)
-            except urllib.error.HTTPError:
+                head('https://wiki.apertium.org/wiki/Apertium-' + lang)
+            except HTTPError:
                 phenny.say('%s: No wiki for specified language!' % msg.nick)
                 return
 

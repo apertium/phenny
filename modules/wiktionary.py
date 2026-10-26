@@ -10,7 +10,7 @@ http://inamidst.com/phenny/
 import re
 import web
 import json
-import re, urllib.request, urllib.parse, urllib.error
+import re
 from bot import command
 
 uri = 'https://en.wiktionary.org/wiki/{0}?printable=yes'
@@ -107,10 +107,8 @@ def get_between_all(strSource, strStart, strEnd): #get all the strings between t
 def etymology(phenny, word):
     ety_value = None
     try:
-        opener = urllib.request.build_opener()
-        opener.addheaders = [('User-agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.52 Safari/537.17')]
-        bytes = opener.open(uri.format(web.quote(word)))
-        html = bytes.read().decode('utf-8')
+        html = web.get(uri.format(wev.quote(word)), headers=[
+            ('User-agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.52 Safari/537.17')])
         ety_value = get_between_all(html, '">Etymology</span></h3>', '</p>')
         ety_value = " ".join(ety_value)
         ety_value = re.compile(r'<[^<]*?/?>').sub('', ety_value)

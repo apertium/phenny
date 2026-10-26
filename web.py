@@ -7,11 +7,9 @@ About: http://inamidst.com/phenny/
 
 import functools
 import re
-import urllib
 import requests
 import lxml.html as lhtml
 import unittest
-import inspect
 import socket
 from time import time
 from requests.exceptions import ConnectionError, HTTPError, Timeout
@@ -36,14 +34,6 @@ class ServerFault(Exception):
         self.description = description
     def __str__(self):
         return str(self.description)
-
-class Grab(urllib.request.URLopener):
-    def __init__(self, *args):
-        self.version = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.52 Safari/537.17'
-        urllib.request.URLopener.__init__(self, *args)
-    def http_error_default(self, url, fp, errcode, errmsg, headers):
-        return urllib.addinfourl(fp, [headers, errcode], "http:" + url)
-urllib.request._urlopener = Grab()
 
 def is_up(url):
     global up_down
@@ -139,31 +129,37 @@ def get(url, cache=False, headers={}, verify=True, timeout=REQUEST_TIMEOUT, **kw
 def head(uri, headers={}, verify=True, **kwargs):
     if not uri.startswith('http'):
         return
-    headers.update(default_headers)
-    r = requests.head(uri, headers=headers, verify=verify, **kwargs)
+    hdrs = default_headers[:]
+    hdrs.update(dict(headers))
+    r = requests.head(uri, headers=hdrs, verify=verify, **kwargs)
     r.raise_for_status()
     return r.headers
 
 def post(uri, data, headers={}, verify=True, **kwargs):
     if not uri.startswith('http'):
         return
-    headers.update(default_headers)
+    hdrs = default_headers[:]
+    hdrs.update(dict(headers))
     r = requests.post(uri, data=data, headers=headers, verify=verify, **kwargs)
     r.raise_for_status()
     return r.text
 
 def api_call(uri, headers=None):
-    opener = urllib.request.build_opener()
-    if headers:
-        opener.addheaders = headers
+    if not uri.startswith('http'):
+        return
+    hdrs = default_headers[:]
+    hdrs.update(dict(headers))
+    r = requests.get(uri, data=data, headers=headers, verify=verify, **kwargs)
+    ret = {}
     try:
-        response = opener.open(uri).read()
-    except urllib.error.HTTPError as error:
-        resp = error.read()
-        blob = json.loads(resp.decode('utf-8'))
-        desc = blob.get('explanation', blob.get('message', '<no error message>'))
-        raise GrumbleError('Error {:d}: {:s}'.format(blob.get('code', 500), desc)) from error
-    return json.loads(response.decode('utf-8'))
+        ret = r.json()
+        r.raise_for_status()
+    except requests.JSONDecodeError as error:
+        raise GrumbleError('Invalid JSON response') from error
+    except requests.HTTPError as error:
+        desc = ret.get('explanation', ret.get('message', '<no error message>'))
+        raise GrumbleError('Error {:d}: {:s}'.format(r.status_code, desc)) from error
+    return ret
 
 r_entity = re.compile(r'&([^;\s]+);')
 

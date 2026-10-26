@@ -10,7 +10,6 @@ import os
 import subprocess
 import shutil
 import importlib
-import urllib.request
 import collections
 import tempfile
 import xml.etree.ElementTree as etree
@@ -59,7 +58,7 @@ def getStats(rawStats, monoLang):
 
             statValue = int(stat['value'])
             statValue = formatNumberThousands(statValue)
-            
+
             fileCounts[countType] = (statValue, revisionInfo, githubBlobUrl % (statName, filePath))
     return fileCounts
 

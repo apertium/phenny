@@ -4,48 +4,13 @@ randomquote.py - urban dictionary module
 author: jonorthwash <jonorthwash@users.sourceforge.net>
 """
 
-import urllib.request
-from urllib.error import HTTPError
 from tools import GrumbleError
 import web
 import json
 from modules import more
+from requests import HTTPError
 
 from bot import command
-
-#FIXME: need to implement
-#def quote(phenny, input):
-#    """.quote <id> - Get a quote from quotes.firespeaker.org."""
-#
-#    word = input.group(1)
-#    if not word:
-#        phenny.say(fs_quotes.__doc__.strip())
-#        return
-#    # create opener
-#    opener = urllib.request.build_opener()
-#    opener.addheaders = [
-#        ('User-agent', web.Grab().version),
-#        ('Referer', "http://quotes.firespeaker.org"),
-#    ]
-#
-#    try:
-#        req = opener.open("http://api.urbandictionary.com/v0/define?term={0}"
-#                .format(web.quote(word)))
-#        data = req.read().decode('utf-8')
-#        data = json.loads(data)
-#    except (HTTPError, IOError, ValueError) as e:
-#        raise GrumbleError(
-#                "Urban Dictionary slemped out on me. Try again in a minute.") from e
-#
-#    if data['result_type'] == 'no_results':
-#        phenny.say("No results found for {0}".format(word))
-#        return
-#
-#    result = data['list'][0]
-#    url = 'http://www.urbandictionary.com/define.php?term={0}'.format(web.quote(word))
-#
-#    response = "{0} - {1}".format(result['definition'].strip()[:256], url)
-#    phenny.say(response)
 
 topics = {"particles": "\"particle\" stands for \"defeat\" -spectie",
     "installing apertium": "try \"installing apertium on <operating system>\"",
@@ -70,31 +35,20 @@ def information(phenny, msg):
 
 
 def randquote_fetcher(phenny, topic, to_user):
-    # create opener
-    opener = urllib.request.build_opener()
-    opener.addheaders = [
-        ('User-agent', web.Grab().version),
-        ('Referer', "http://quotes.firespeaker.org/"),
-    ]
-
+    url = "http://quotes.firespeaker.org/random.php"
+    if topic:
+        url += "?topic=%s" % web.quote(topic)
     try:
-        url = "http://quotes.firespeaker.org/random.php"
-        if topic:
-            url += "?topic=%s" % web.quote(topic)
-        req = opener.open(url)
-        data = req.read().decode('utf-8')
-        data = json.loads(data)
+        data = web.api_call(url, headers=[
+            ('User-agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.52 Safari/537.17'),
+            ('Referer', "http://quotes.firespeaker.org/"),
+        ])
     except (HTTPError, IOError, ValueError) as e:
         raise GrumbleError("Firespeaker.org down? Try again later.") from e
 
     if len(data) == 0:
         phenny.say("No results found")
         return
-
-    #result = data['list'][0]
-    #url = 'http://www.urbandictionary.com/define.php?term={0}'.format(web.quote(word))
-    #
-    #response = "{0} - {1}".format(result['definition'].strip()[:256], url)
 
     if data['quote'] != None:
         quote = data['quote'].replace('</p>', '').replace('<p>', '').replace('<em>', '_').replace('</em>', '_').replace('&mdash;', '—')

@@ -2,7 +2,7 @@ import unittest
 from modules.test.command_test import CommandTest
 
 class TestQueue(CommandTest, unittest.TestCase):
-    modules = ['queue']
+    modules = ['item_queue']
 
     def test_display_not_found(self):
         self.check_response(

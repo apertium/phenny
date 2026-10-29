@@ -270,7 +270,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         # does nothing
         if message:
             for channel in channels:
-                phenny.msg_queued(channel, message, 'git')
+                self.phenny.msg_queued(channel, message, 'git')
 
     def process_github_payload(self, data):
         config = self.phenny.config
